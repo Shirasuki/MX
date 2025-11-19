@@ -25,6 +25,7 @@ import moe.fuqiuluo.mamu.databinding.FloatingFullscreenLayoutBinding
 import moe.fuqiuluo.mamu.databinding.FloatingWindowLayoutBinding
 import moe.fuqiuluo.mamu.driver.ProcessDeathMonitor
 import moe.fuqiuluo.mamu.driver.WuwaDriver
+import moe.fuqiuluo.mamu.floating.FloatingWindowStateManager
 import moe.fuqiuluo.mamu.floating.ext.selectedMemoryRanges
 import moe.fuqiuluo.mamu.floating.ext.tabSwitchAnimation
 import moe.fuqiuluo.mamu.floating.ext.topMostLayer
@@ -80,6 +81,9 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         }
 
         initializeControllers()
+
+        // 通知悬浮窗已启动
+        FloatingWindowStateManager.setActive(true)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -561,6 +565,9 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         savedAddressController.cleanup()
         memoryPreviewController.cleanup()
         breakpointController.cleanup()
+
+        // 通知悬浮窗已关闭
+        FloatingWindowStateManager.setActive(false)
     }
 
     private fun changeCurrentContent(contentId: Int, indicatorId: Int) {

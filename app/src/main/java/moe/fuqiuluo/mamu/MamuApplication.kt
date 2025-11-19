@@ -4,7 +4,9 @@ package moe.fuqiuluo.mamu
 import android.app.Application
 import android.util.Log
 import com.tencent.mmkv.MMKV
-import moe.fuqiuluo.mamu.utils.DeviceUtils
+import moe.fuqiuluo.mamu.driver.SearchEngine
+import moe.fuqiuluo.mamu.floating.ext.chunkSize
+import moe.fuqiuluo.mamu.floating.ext.memoryBufferSize
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -30,6 +32,17 @@ class MamuApplication : Application() {
 
         if (!initMamuCore()) {
             Log.e(TAG, "Failed to initialize Mamu Core")
+            exitProcess(1)
+        }
+
+        // 初始化搜索引擎
+        val mmkv = MMKV.defaultMMKV()
+        val bufferSize = mmkv.memoryBufferSize.toLong() * 1024L * 1024L // MB -> bytes
+        val chunkSizeBytes = mmkv.chunkSize.toLong() * 1024L // KB -> bytes
+        val cacheDir = cacheDir.absolutePath
+
+        if (!SearchEngine.initSearchEngine(bufferSize, cacheDir, chunkSizeBytes)) {
+            Log.e(TAG, "Failed to initialize Search Engine")
             exitProcess(1)
         }
 

@@ -63,6 +63,7 @@
             android:theme="@style/Theme.MX" />
 
         <!-- 悬浮窗服务 -->
+        <!-- 这里需要注意使用Service将会被检测，需要保证目标进程查询service的时候，禁止查询到当前进程 -->
         <service
             android:name=".floating.service.FloatingWindowService"
             android:enabled="true"

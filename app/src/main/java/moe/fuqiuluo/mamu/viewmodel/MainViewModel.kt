@@ -11,6 +11,7 @@ import moe.fuqiuluo.mamu.data.model.SeLinuxStatus
 import moe.fuqiuluo.mamu.data.model.SystemInfo
 import moe.fuqiuluo.mamu.data.local.DriverDataSource
 import moe.fuqiuluo.mamu.data.local.SystemDataSource
+import moe.fuqiuluo.mamu.floating.FloatingWindowStateManager
 
 data class MainUiState(
     val isLoading: Boolean = true,
@@ -18,6 +19,7 @@ data class MainUiState(
     val driverInfo: DriverInfo? = null,
     val seLinuxStatus: SeLinuxStatus? = null,
     val hasRootAccess: Boolean = false,
+    val isFloatingWindowActive: Boolean = false,
     val error: String? = null
 )
 
@@ -31,6 +33,15 @@ class MainViewModel(
 
     init {
         loadData()
+        observeFloatingWindowState()
+    }
+
+    private fun observeFloatingWindowState() {
+        viewModelScope.launch {
+            FloatingWindowStateManager.isActive.collect { isActive ->
+                _uiState.value = _uiState.value.copy(isFloatingWindowActive = isActive)
+            }
+        }
     }
 
     fun loadData() {
@@ -43,7 +54,7 @@ class MainViewModel(
                 val seLinuxStatus = systemDataSource.getSeLinuxStatus()
                 val driverInfo = driverDataSource.getDriverInfo()
 
-                _uiState.value = MainUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     systemInfo = systemInfo,
                     driverInfo = driverInfo,

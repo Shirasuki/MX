@@ -2,6 +2,7 @@ package moe.fuqiuluo.mamu.ui.screen
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,13 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import moe.fuqiuluo.mamu.data.model.DriverStatus
 import moe.fuqiuluo.mamu.data.model.SeLinuxMode
 import moe.fuqiuluo.mamu.data.model.SystemInfo
 import moe.fuqiuluo.mamu.floating.service.FloatingWindowService
+import moe.fuqiuluo.mamu.ui.theme.MXTheme
 import moe.fuqiuluo.mamu.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,9 +49,20 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { startFloatingWindowService(context) }
+                onClick = { toggleFloatingWindow(context, uiState.isFloatingWindowActive) }
             ) {
-                Icon(Icons.Default.Window, contentDescription = "启动悬浮窗")
+                Icon(
+                    imageVector = if (uiState.isFloatingWindowActive) {
+                        Icons.Default.Close
+                    } else {
+                        Icons.Default.Window
+                    },
+                    contentDescription = if (uiState.isFloatingWindowActive) {
+                        "关闭悬浮窗"
+                    } else {
+                        "启动悬浮窗"
+                    }
+                )
             }
         }
     ) { paddingValues ->
@@ -69,7 +84,7 @@ fun HomeScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 状态概览卡片（合并驱动、Root、SELinux）
+                // 状态概览卡片（驱动、Root、SELinux）
                 StatusOverviewCard(
                     driverStatus = uiState.driverInfo?.status,
                     isProcessBound = uiState.driverInfo?.isProcessBound ?: false,
@@ -82,7 +97,7 @@ fun HomeScreen(
                 // README 卡片
                 ReadmeCard()
 
-                // 系统信息卡片（简化版）
+                // 系统信息卡片
                 SystemInfoCard(
                     systemInfo = uiState.systemInfo
                 )
@@ -117,9 +132,16 @@ fun HomeScreen(
     }
 }
 
-private fun startFloatingWindowService(context: Context) {
-    val intent = Intent(context, FloatingWindowService::class.java)
-    context.startService(intent)
+private fun toggleFloatingWindow(context: Context, isActive: Boolean) {
+    if (isActive) {
+        // 关闭悬浮窗
+        val intent = Intent(context, FloatingWindowService::class.java)
+        context.stopService(intent)
+    } else {
+        // 启动悬浮窗
+        val intent = Intent(context, FloatingWindowService::class.java)
+        context.startService(intent)
+    }
 }
 
 @Composable
@@ -211,6 +233,40 @@ fun ReadmeCard() {
                 color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Medium
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 安全警告分隔线
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    text = "安全警告",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "FloatingWindowService 可能被目标应用检测到（通过 Service 查询）" +
+                        "请用户自行实现应用隐藏（修改包名、进程名、使用 Xposed/LSPosed 隐藏等），" +
+                        "否则可能被特定系统检测并导致封号，影响日常进程使用，尽管Mamu只是一个调试工具。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                lineHeight = 18.sp
+            )
         }
     }
 }
@@ -293,6 +349,71 @@ fun StatusItem(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = color
+        )
+    }
+}
+
+// ============ Previews ============
+
+@Preview(
+    name = "Light Mode",
+    showBackground = true
+)
+@Preview(
+    name = "Dark Mode",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun StatusOverviewCardPreview() {
+    MXTheme {
+        StatusOverviewCard(
+            driverStatus = DriverStatus.LOADED,
+            isProcessBound = true,
+            boundPid = 12345,
+            hasRoot = true,
+            seLinuxMode = SeLinuxMode.PERMISSIVE,
+            seLinuxModeString = "宽容模式"
+        )
+    }
+}
+
+@Preview(
+    name = "Light Mode",
+    showBackground = true
+)
+@Preview(
+    name = "Dark Mode",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun ReadmeCardPreview() {
+    MXTheme {
+        ReadmeCard()
+    }
+}
+
+@Preview(
+    name = "Light Mode",
+    showBackground = true
+)
+@Preview(
+    name = "Dark Mode",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun SystemInfoCardPreview() {
+    MXTheme {
+        SystemInfoCard(
+            systemInfo = SystemInfo(
+                deviceBrand = "Google",
+                deviceModel = "Pixel 8 Pro",
+                androidVersion = "15",
+                sdkVersion = 35,
+                cpuAbi = "arm64-v8a"
+            )
         )
     }
 }
