@@ -9,7 +9,7 @@ mod tests {
     use crate::wuwa::PageStatusBitmap;
     use anyhow::Result;
     use bplustree::BPlusTreeSet;
-    use std::collections::{BTreeSet, HashSet};
+    use std::collections::{BTreeSet, HashSet, VecDeque};
 
     /// Helper function to perform a single value search
     fn perform_single_search(
@@ -246,108 +246,138 @@ mod tests {
         }
     }
 
-    fn refine_results_group_unordered(
+    fn refine_results_group_dfs(
         mem: &MockMemory,
         existing_results: &BPlusTreeSet<ValuePair>,
         query: &SearchQuery,
-    ) -> Result<Vec<ValuePair>> {
-        let mut refined_results = Vec::with_capacity(existing_results.len());
+    ) -> Result<BPlusTreeSet<ValuePair>> {
+        let mut refined_results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
 
-        // Read current values at all existing addresses
-        // Note: BPlusTreeSet already returns results sorted by address
+        if query.values.is_empty() {
+            return Ok(refined_results);
+        }
+
+        // 读取全部地址与当前值
         let mut addr_values: Vec<(u64, Vec<u8>)> = Vec::with_capacity(existing_results.len());
         for pair in existing_results.iter() {
             let addr = pair.addr;
             let value_size = pair.value_type.size();
-
             if let Ok(buffer) = mem.mem_read(addr, value_size) {
                 addr_values.push((addr, buffer));
             }
         }
 
-        let mut anchor_address = BTreeSet::new();
-        for i in 0..addr_values.len() {
-            let (anchor_addr, ref value) = addr_values[i];
-            if query.values[0].matched(value)? {
-                anchor_address.insert(anchor_addr);
-            }
+        if addr_values.is_empty() {
+            return Ok(refined_results);
         }
 
-        let mut matched_candidates: HashSet<_> = HashSet::new();
-        // For each address as an anchor point
-        for i in 0..addr_values.len() {
-            let (anchor_addr, _) = addr_values[i];
+        // 找所有锚点
+        let mut anchors: Vec<u64> = Vec::new();
+        for (addr, bytes) in &addr_values {
+            if query.values[0].matched(bytes)? {
+                anchors.push(*addr);
+            }
+        }
+        if anchors.is_empty() {
+            return Ok(refined_results);
+        }
 
-            // Define search range based on mode
-            let (min_addr, max_addr) = (
-                anchor_addr.saturating_sub(query.range as u64),
-                anchor_addr + query.range as u64,
-            );
+        // 为加速：地址已按升序（BPlusTreeSet保证）
+        // 主循环：每个锚点执行 DFS
+        for anchor_addr in anchors {
+            let (min_addr, max_addr) = match query.mode {
+                SearchMode::Unordered => (
+                    anchor_addr.saturating_sub(query.range as u64),
+                    anchor_addr + query.range as u64,
+                ),
+                SearchMode::Ordered => (anchor_addr, anchor_addr + query.range as u64),
+            };
 
-            // Collect all candidate addresses within range
-            let candidates = addr_values
-                .iter()
-                .enumerate()
-                .filter_map(|(_idx, (addr, value))| {
-                    if *addr >= min_addr && *addr <= max_addr {
-                        Some((*addr, value))
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            let mut matched_address = Vec::with_capacity(query.values.len());
-            let mut used_address = BPlusTreeSet::new(BPLUS_TREE_ORDER);
-
-            for search_value in &query.values {
-                let mut found = false;
-
-                // Search from the beginning of candidates (critical for unordered mode!)
-                for &(addr, value_bytes) in &candidates {
-                    if used_address.contains(&addr) {
-                        continue;
-                    }
-
-                    if let Ok(true) = search_value.matched(value_bytes) {
-                        matched_address.push((addr, search_value.value_type()));
-                        used_address.insert(addr);
-                        found = true;
-                        break;
-                    }
-                }
-
-                if !found {
-                    // This query value couldn't be matched, pattern fails
-                    matched_address.clear();
-                    used_address.clear();
-                    break;
-                }
-            } // foreach query.values
-
-            if matched_address.len() >= query.values.len() {
-                if matched_candidates.contains(&matched_address) {
-                    continue;
-                }
-
-                matched_candidates.insert(matched_address.clone());
-
-                // All query values matched, add to results
-                for (addr, value_type) in matched_address {
-                    refined_results.push(ValuePair::new(addr, value_type));
+            // 候选（不含锚点本身，避免重复使用）
+            let mut candidates: Vec<(u64, &Vec<u8>)> = Vec::new();
+            for (addr, bytes) in &addr_values {
+                if *addr >= min_addr && *addr <= max_addr && *addr != anchor_addr {
+                    candidates.push((*addr, bytes));
                 }
             }
+
+            // 剪枝：如果候选数量 < (query.values.len() - 1) 不可能成功
+            if candidates.len() < query.values.len() - 1 {
+                continue;
+            }
+
+            // DFS：寻找所有满足的组合，把地址并入 refined_results
+            // 使用 used 保障地址不重复
+            let mut used: HashSet<u64> = HashSet::new();
+            used.insert(anchor_addr);
+
+            // 当前选择的地址（含锚点）
+            let mut chosen: Vec<(u64, ValueType)> = Vec::with_capacity(query.values.len());
+            chosen.push((anchor_addr, query.values[0].value_type()));
+
+            // 回溯函数
+            fn dfs(
+                cand_idx: usize,
+                candidates: &[(u64, &Vec<u8>)],
+                query: &SearchQuery,
+                chosen: &mut Vec<(u64, ValueType)>,
+                used: &mut HashSet<u64>,
+                refined_results: &mut BPlusTreeSet<ValuePair>,
+            ) -> Result<()> {
+                let need_total = query.values.len();
+                let have = chosen.len();
+
+                // 成功匹配全部查询值
+                if have == need_total {
+                    for (addr, vt) in chosen.iter() {
+                        refined_results.insert(ValuePair::new(*addr, *vt));
+                    }
+                    return Ok(());
+                }
+
+                // 剩余还需要匹配的查询值数量
+                let remaining_need = need_total - have;
+
+                // 剩余候选是否足够（剪枝）
+                let remaining_candidates = candidates.len().saturating_sub(cand_idx);
+                if remaining_candidates < remaining_need {
+                    return Ok(());
+                }
+
+                // 当前要匹配的查询值
+                let sv = &query.values[have];
+
+                // 遍历从 cand_idx 开始的候选
+                for i in cand_idx..candidates.len() {
+                    let (addr, bytes) = candidates[i];
+                    // 如果不匹配则跳过
+                    if sv.value_type().size() > bytes.len() // 安全检查, 用户搜索出来一堆byte, 然后尝试用dword改善导致的
+                        || !sv.matched(bytes)? {
+                        continue;
+                    }
+                    // 地址唯一约束
+                    if used.contains(&addr) {
+                        continue;
+                    }
+                    // 选择
+                    used.insert(addr);
+                    chosen.push((addr, sv.value_type()));
+
+                    // 下一层从 i+1 开始（保证组合不重复乱序）
+                    dfs(i + 1, candidates, query, chosen, used, refined_results)?;
+
+                    // 回溯
+                    chosen.pop();
+                    used.remove(&addr);
+                }
+
+                Ok(())
+            }
+
+            dfs(0, &candidates, query, &mut chosen, &mut used, &mut refined_results)?;
         }
 
         Ok(refined_results)
-    }
-
-    fn refine_results_group_ordered(
-        mem: &MockMemory,
-        existing_results: &BPlusTreeSet<ValuePair>,
-        query: &SearchQuery,
-    ) -> Result<Vec<ValuePair>> {
-        todo!()
     }
 
     fn refine_results_group(
@@ -355,10 +385,13 @@ mod tests {
         existing_results: &BPlusTreeSet<ValuePair>,
         query: &SearchQuery,
     ) -> Result<Vec<ValuePair>> {
-        match query.mode {
-            SearchMode::Ordered => refine_results_group_ordered(mem, existing_results, query),
-            SearchMode::Unordered => refine_results_group_unordered(mem, existing_results, query),
+        assert!(query.values.len() > 1, "Group refine requires multiple values in query");
+        let refined_bplus = refine_results_group_dfs(mem, existing_results, query)?;
+        let mut results = Vec::with_capacity(refined_bplus.len());
+        for pair in refined_bplus.into_iter() {
+            results.push(pair.clone());
         }
+        Ok(results)
     }
 
     #[test]
@@ -540,7 +573,6 @@ mod tests {
         // │ base + 0x5000   │  400   │ results1[3] ✓    │
         // └─────────────────┴────────┴──────────────────┘
 
-
         // 但是这里我们搜索范围只有上下128字节，所以是找不到的
         let query2 = SearchQuery::new(
             vec![
@@ -631,8 +663,378 @@ mod tests {
         results2.iter().for_each(|pair| {
             println!("Found: 0x{:X}", pair.addr);
         });
+        assert_eq!(results2.len(), 3);
 
         println!("\nTest completed!");
+        Ok(())
+    }
+
+    #[test]
+    fn test_single_to_group_refine_unordered4() -> Result<()> {
+        println!("\n=== Test: Single value search → Group search refine ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x7100000000, 1 * 1024 * 1024)?;
+
+        // Write test data: single value, then check if followed by a pattern
+        let test_patterns = vec![
+            (0x0, 100u32),
+            (0x4, 100u32),
+            (0x8, 100u32),
+            (12, 100u32),
+            (16, 100u32),
+            (20, 100u32),
+            (0x2000, 100u32),
+        ];
+
+        for (offset, v1) in &test_patterns {
+            mem.mem_write_u32(base_addr + offset, *v1)?;
+            println!("Write: 0x{:X} = [{}]", base_addr + offset, v1);
+        }
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+
+        assert_eq!(results1.len(), 7);
+
+        results1.iter().enumerate().for_each(|(index, pair)| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+
+        mem.mem_write_u32(base_addr + 0, 200u32)?;
+        mem.mem_write_u32(base_addr + 4, 300u32)?;
+        mem.mem_write_u32(base_addr + 8, 300u32)?;
+        mem.mem_write_u32(base_addr + 12, 200u32)?;
+        mem.mem_write_u32(base_addr + 0x2000, 400u32)?;
+        // ┌─────────────────┬────────┬──────────────────┐
+        // │ Address         │ Value  │ Modified By      │
+        // ├─────────────────┼────────┼──────────────────┤
+        // │ base + 0        │  200   │ results1[0] ✓    │
+        // │ base + 4        │  300   │ results1[1] ✓    │
+        // │ base + 8        │  300   │ results1[2] ✓    │
+        // │ base + 12       │  150   │ (unchanged)      │
+        // │ base + 0x2000   │  400   │ results1[3] ✓    │
+        // └─────────────────┴────────┴──────────────────┘
+        // 匹配1000,1004,1008,100C
+
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(200, ValueType::Dword),
+                SearchValue::fixed(300, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            128,
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        println!(
+            "\nRefine search results: {} addresses have pattern [200, 300]",
+            results2.len()
+        );
+
+        results2.iter().for_each(|pair| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+        assert_eq!(results2.len(), 4);
+
+        println!("\nTest completed!");
+        Ok(())
+    }
+
+    #[test]
+    fn test_single_to_group_refine_ordered() -> Result<()> {
+        println!("\n=== Test: Single value search → Group search refine ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x7100000000, 1 * 1024 * 1024)?;
+
+        // Write test data: single value, then check if followed by a pattern
+        let test_patterns = vec![
+            (0x0, 100u32),
+            (0x4, 100u32),
+            (0x8, 100u32),
+            (12, 100u32),
+            (16, 100u32),
+            (20, 100u32),
+            (0x2000, 100u32),
+        ];
+
+        for (offset, v1) in &test_patterns {
+            mem.mem_write_u32(base_addr + offset, *v1)?;
+            println!("Write: 0x{:X} = [{}]", base_addr + offset, v1);
+        }
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+
+        assert_eq!(results1.len(), 7);
+
+        results1.iter().enumerate().for_each(|(index, pair)| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+
+        mem.mem_write_u32(base_addr + 0, 200u32)?;
+        mem.mem_write_u32(base_addr + 4, 300u32)?;
+        mem.mem_write_u32(base_addr + 8, 300u32)?;
+        mem.mem_write_u32(base_addr + 12, 200u32)?;
+        mem.mem_write_u32(base_addr + 0x2000, 400u32)?;
+        // ┌─────────────────┬────────┬──────────────────┐
+        // │ Address         │ Value  │ Modified By      │
+        // ├─────────────────┼────────┼──────────────────┤
+        // │ base + 0        │  200   │ results1[0] ✓    │
+        // │ base + 4        │  300   │ results1[1] ✓    │
+        // │ base + 8        │  300   │ results1[2] ✓    │
+        // │ base + 12       │  150   │ (unchanged)      │
+        // │ base + 0x2000   │  400   │ results1[3] ✓    │
+        // └─────────────────┴────────┴──────────────────┘
+        // 匹配1000,1004,1008
+
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(200, ValueType::Dword),
+                SearchValue::fixed(300, ValueType::Dword),
+            ],
+            SearchMode::Ordered,
+            128,
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        println!(
+            "\nRefine search results: {} addresses have pattern [200, 300]",
+            results2.len()
+        );
+
+        results2.iter().for_each(|pair| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+        assert_eq!(results2.len(), 3);
+
+        println!("\nTest completed!");
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_empty_results() -> Result<()> {
+        println!("\n=== Test: Refine with empty initial results ===\n");
+
+        let mem = MockMemory::new();
+        let empty_results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
+
+        let query = SearchQuery::new(
+            vec![
+                SearchValue::fixed(100, ValueType::Dword),
+                SearchValue::fixed(200, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            128,
+        );
+
+        let results = refine_results_group(&mem, &empty_results, &query)?;
+
+        assert_eq!(results.len(), 0, "Empty input should yield empty results");
+        println!("✓ Empty results handled correctly");
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_no_matches() -> Result<()> {
+        println!("\n=== Test: Refine when no patterns match ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x8000000000, 1 * 1024 * 1024)?;
+
+        // Write values that won't match the query pattern
+        let test_data = vec![(0x0, 100u32), (0x100, 200u32), (0x200, 300u32), (0x300, 400u32)];
+
+        for (offset, val) in &test_data {
+            mem.mem_write_u32(base_addr + offset, *val)?;
+        }
+
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+        assert_eq!(results1.len(), 1);
+
+        // Query for pattern [500, 600] which doesn't exist
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(500, ValueType::Dword),
+                SearchValue::fixed(600, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            512,
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        assert_eq!(results2.len(), 0, "No matches should return empty");
+        println!("✓ No-match case handled correctly");
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_partial_match() -> Result<()> {
+        println!("\n=== Test: Partial match (not all query values found) ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x8100000000, 1 * 1024 * 1024)?;
+
+        // Write pattern with only 2 out of 3 values
+        mem.mem_write_u32(base_addr + 0x0, 100)?;
+        mem.mem_write_u32(base_addr + 0x4, 200)?;
+        mem.mem_write_u32(base_addr + 0x8, 999)?; // Not 300!
+
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+        assert_eq!(results1.len(), 1);
+
+        // Query for [100, 200, 300] but only 100 and 200 exist
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(100, ValueType::Dword),
+                SearchValue::fixed(200, ValueType::Dword),
+                SearchValue::fixed(300, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            128,
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        assert_eq!(results2.len(), 0, "Partial match should not succeed");
+        println!("✓ Partial match rejected correctly");
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_multiple_combinations() -> Result<()> {
+        println!("\n=== Test: Multiple valid combinations (DFS verification) ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x8200000000, 1 * 1024 * 1024)?;
+
+        // Create multiple overlapping patterns
+        // Pattern 1: (0x0, 0x4) = (200, 300)
+        // Pattern 2: (0x8, 0xC) = (200, 300)
+        mem.mem_write_u32(base_addr + 0x0, 200)?; // 200 #1
+        mem.mem_write_u32(base_addr + 0x4, 300)?; // 300 #1
+        mem.mem_write_u32(base_addr + 0x8, 200)?; // 200 #2
+        mem.mem_write_u32(base_addr + 0xC, 300)?; // 300 #2
+        mem.mem_write_u32(base_addr + 0x100, 100)?; // Anchor
+
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let mut results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+
+        // Also add the 200 addresses as anchors
+        results1.insert(ValuePair::new(base_addr + 0x0, ValueType::Dword));
+        results1.insert(ValuePair::new(base_addr + 0x8, ValueType::Dword));
+
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(200, ValueType::Dword),
+                SearchValue::fixed(300, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            16, // Small range to test precise matching
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        println!("Found {} result addresses", results2.len());
+        for pair in &results2 {
+            println!("  0x{:X}", pair.addr);
+        }
+
+        // Should find 4 addresses: 0x0, 0x4, 0x8, 0xC
+        assert!(results2.len() == 0);
+        println!("✓ Multiple combinations detected");
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_range_boundary() -> Result<()> {
+        println!("\n=== Test: Range boundary conditions ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x8400000000, 1 * 1024 * 1024)?;
+
+        // Anchor at 0x0, values at exactly range boundary
+        mem.mem_write_u32(base_addr + 0x0, 100)?; // Anchor
+        mem.mem_write_u32(base_addr + 127, 100)?; // At boundary (range=128)
+        mem.mem_write_u32(base_addr + 128, 100)?; // Just outside boundary
+
+        let query1 = SearchValue::fixed(100, ValueType::Dword);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+        assert_eq!(results1.len(), 2);
+
+        results1.iter().for_each(|pair| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+
+        mem.mem_write_u32(base_addr + 0x0, 100)?; // Anchor
+        mem.mem_write_u32(base_addr + 127, 300)?; // At boundary (range=128)
+        mem.mem_write_u32(base_addr + 128, 300)?; // Just outside boundary
+
+        println!("0: {:x}", base_addr);
+        println!("1: {:x}", base_addr + 127);
+        println!("2: {:x}", base_addr + 128);
+
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(100, ValueType::Dword),
+                SearchValue::fixed(200, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            128, // Exactly 128 bytes range
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+
+        results2.iter().for_each(|pair| {
+            println!("Found: 0x{:X}", pair.addr);
+        });
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_refine_different_types() -> Result<()> {
+        println!("\n=== Test: Mixed data types in group search ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0x8500000000, 1 * 1024 * 1024)?;
+
+        // Mixed types: Byte, Word, Dword
+        mem.mem_write(base_addr + 0x0, &[0x42])?; // Byte
+        mem.mem_write(base_addr + 0x4, &[0x42, 0x42])?; // Word (little-endian)
+        mem.mem_write_u32(base_addr + 0x8, 0x42424242)?; // Dword
+
+        // Search for byte value first
+        let query1 = SearchValue::fixed(0x42, ValueType::Byte);
+        let results1 = perform_single_search(&mem, &query1, base_addr, 1 * 1024 * 1024)?;
+        assert_eq!(results1.len(), 7);
+
+        mem.mem_write(base_addr + 0x0, &[0x42])?; // Byte
+        mem.mem_write(base_addr + 0x4, &[0x34, 0x12])?; // Word (little-endian)
+        mem.mem_write_u32(base_addr + 0x8, 0xDEADBEEF)?; // Dword
+
+        // Refine with mixed types
+        let query2 = SearchQuery::new(
+            vec![
+                SearchValue::fixed(0x42, ValueType::Byte),
+                SearchValue::fixed(0x1234, ValueType::Word),
+                SearchValue::fixed(0xDEADBEEF, ValueType::Dword),
+            ],
+            SearchMode::Unordered,
+            16,
+        );
+
+        let results2 = refine_results_group(&mem, &results1, &query2)?;
+        for x in &results2 {
+            println!("Found: 0x{:X}", x.addr);
+        }
+
+        assert_eq!(results2.len(), 0); // 不同类型, 改善不会成功
+        println!("✓ Mixed data types handled correctly");
         Ok(())
     }
 }

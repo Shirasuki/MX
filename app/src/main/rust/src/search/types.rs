@@ -176,10 +176,16 @@ impl SearchValue {
         match self {
             SearchValue::FixedInt { value, value_type } => {
                 let size = value_type.size();
+                if other.len() < size {
+                    return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
+                }
                 Ok(&value[..size] == &other[..size])
             }
             SearchValue::FixedFloat { value, value_type } => {
                 let size = value_type.size();
+                if other.len() < size {
+                    return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
+                }
                 let other_value = match size {
                     4 => {
                         let bytes = other[..4].try_into()?;
@@ -195,6 +201,9 @@ impl SearchValue {
             }
             SearchValue::RangeInt { start, end, value_type, exclude } => {
                 let size = value_type.size();
+                if other.len() < size {
+                    return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
+                }
                 let other_value = match size {
                     1 => i128::from(other[0] as i8),
                     2 => {
@@ -223,6 +232,9 @@ impl SearchValue {
             }
             SearchValue::RangeFloat { start, end, value_type, exclude } => {
                 let size = value_type.size();
+                if other.len() < size {
+                    return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
+                }
                 let other_value = match size {
                     4 => {
                         let bytes = other[..4].try_into()?;

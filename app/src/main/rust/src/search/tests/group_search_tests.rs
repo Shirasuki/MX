@@ -2277,4 +2277,56 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_group_search_ordered2() {
+        println!("\n=== Test group search (ordered mode) ===\n");
+
+        let mut mem = MockMemory::new();
+        let base_addr = mem.malloc(0xA000000000, 128 * 1024).unwrap();
+
+        println!("Allocated memory: 0x{:X}, size: 128KB", base_addr);
+
+        mem.mem_write_u32(base_addr + 0x1000, 100).unwrap();
+        mem.mem_write_u32(base_addr + 0x1004, 200).unwrap();
+        mem.mem_write_u32(base_addr + 0x1008, 300).unwrap();
+        mem.mem_write_u32(base_addr + 0x100C, 300).unwrap();
+        println!(
+            "Write sequence 1: [100, 200, 300] @ 0x{:X}",
+            base_addr + 0x1000
+        );
+
+        let values = vec![
+            SearchValue::fixed(100, ValueType::Dword),
+            SearchValue::fixed(200, ValueType::Dword),
+            SearchValue::fixed(300, ValueType::Dword),
+        ];
+        let query = SearchQuery::new(values, SearchMode::Ordered, 16);
+
+        println!("\nStart search: [100, 200, 300] (ordered, range=16)");
+
+        let chunk_size = 64 * 1024;
+        let mem_end = base_addr + 128 * 1024;
+        assert!(mem_end > base_addr, "Memory end address should be greater than start address");
+        assert_eq!(
+            (mem_end - base_addr) as usize,
+            mem.total_allocated(),
+            "Memory range should equal allocated size"
+        );
+        let results =
+            search_region_group_with_mock(&query, &mem, base_addr, mem_end, chunk_size).unwrap();
+
+        println!("\n=== Search results ===");
+        println!("Found {} matches\n", results.len());
+
+        for (i, pair) in results.iter().enumerate() {
+            let offset = pair.addr - base_addr;
+            println!(
+                "  [{}] Address: 0x{:X} (offset: 0x{:X})",
+                i, pair.addr, offset
+            );
+        }
+
+        println!("\nOrdered group search test passed!");
+    }
 }
