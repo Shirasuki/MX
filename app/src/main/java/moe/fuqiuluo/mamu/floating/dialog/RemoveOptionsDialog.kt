@@ -6,7 +6,10 @@ import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import androidx.core.widget.ImageViewCompat
+import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.databinding.DialogRemoveOptionsBinding
+import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import kotlin.math.max
 
 class RemoveOptionsDialog(
     context: Context,
@@ -20,8 +23,14 @@ class RemoveOptionsDialog(
 
     @SuppressLint("SetTextI18n")
     override fun setupDialog() {
-        val binding = DialogRemoveOptionsBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogRemoveOptionsBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
+
+        // 应用透明度设置
+        val mmkv = MMKV.defaultMMKV()
+        val opacity = mmkv.floatingOpacity
+        binding.rootContainer.background?.alpha = (max(opacity, 0.85f) * 255).toInt()
 
         if (showTitleIcon) {
             binding.iconTitle.visibility = View.VISIBLE

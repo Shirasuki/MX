@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_container"
     android:layout_width="match_parent"
@@ -16,7 +17,7 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,7 +28,7 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/subtitle_range"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -44,7 +45,7 @@
             android:orientation="horizontal"
             android:paddingBottom="12dp">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
@@ -78,21 +79,25 @@
                     <requestFocus />
                 </EditText>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#33FFFFFF" />
+                    app:dividerColor="#33FFFFFF" />
             </LinearLayout>
 
-            <ImageView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_convert_base"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:clickable="true"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
                 android:contentDescription="@string/content_desc_convert_hex"
-                android:focusable="true"
-                android:padding="4dp"
-                android:src="@drawable/icon_arrow_drop_down_24px" />
+                app:icon="@drawable/icon_arrow_drop_down_24px"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart" />
         </LinearLayout>
 
         <LinearLayout
@@ -102,7 +107,7 @@
             android:orientation="horizontal"
             android:paddingBottom="12dp">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
@@ -110,7 +115,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="14sp" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/btn_value_type"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -146,13 +151,13 @@
 
     </LinearLayout>
 
-    <View
+    <com.google.android.material.divider.MaterialDivider
         android:id="@+id/divider"
         android:layout_width="1dp"
         android:layout_height="match_parent"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="12dp"
-        android:background="#33FFFFFF" />
+        app:dividerColor="#33FFFFFF" />
 
     <LinearLayout
         android:layout_width="0dp"

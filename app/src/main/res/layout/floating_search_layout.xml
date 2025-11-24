@@ -1,123 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#CC1F1F1F"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
+    <!-- 工具栏 -->
     <moe.fuqiuluo.mamu.widget.OverflowToolbar
         android:id="@+id/search_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/floating_height_tab"
         android:background="@android:color/transparent"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp" />
+        android:paddingStart="@dimen/floating_spacing_sm"
+        android:paddingEnd="@dimen/floating_spacing_sm"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#33FFFFFF" />
+    <!-- 分割线 -->
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/divider_top"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:dividerColor="@color/floating_divider"
+        app:layout_constraintTop_toBottomOf="@id/search_toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- 进程状态栏 -->
     <LinearLayout
         android:id="@+id/process_status_bar"
-        android:layout_width="match_parent"
-        android:layout_height="25dp"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/floating_height_status_bar"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:paddingStart="@dimen/floating_spacing_md"
+        android:paddingEnd="@dimen/floating_spacing_md"
+        app:layout_constraintTop_toBottomOf="@id/divider_top"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/process_status_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/icon_pause_24px"
-            android:tint="#FFFFFF" />
+            style="@style/FloatingButton.MaterialIcon.IconOnly"
+            android:layout_width="@dimen/floating_icon_md"
+            android:layout_height="@dimen/floating_icon_md"
+            app:icon="@drawable/icon_pause_24px"
+            app:iconTint="@android:color/white"
+            app:iconSize="@dimen/floating_icon_sm" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/process_info_text"
+            style="@style/FloatingText.Small"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="@dimen/floating_spacing_sm"
             android:layout_weight="1"
             android:ellipsize="middle"
             android:singleLine="true"
-            android:text="[0] Process Name [0 MB]"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp" />
+            android:textColor="@color/floating_text_primary"
+            android:text="[0] Process Name [0 MB]" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/search_count_text"
+            style="@style/FloatingText.Small"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="@dimen/floating_spacing_xs"
+            android:textColor="@color/floating_text_primary"
             android:text="(0)"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <ImageView
-            android:id="@+id/filter_status_icon"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/icon_filter_list_24px"
-            android:tint="#2196F3"
-            android:visibility="gone" />
-
-        <ImageView
-            android:id="@+id/refresh_button"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
             android:clickable="true"
             android:focusable="true"
-            android:src="@drawable/icon_refresh_24px"
-            android:tint="#FFFFFF" />
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/filter_status_icon"
+            android:layout_width="@dimen/floating_icon_sm"
+            android:layout_height="@dimen/floating_icon_sm"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:src="@drawable/icon_filter_list_24px"
+            android:tint="@color/floating_primary"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/refresh_button"
+            style="@style/FloatingButton.MaterialIcon.IconOnly"
+            android:layout_width="@dimen/floating_icon_md"
+            android:layout_height="@dimen/floating_icon_md"
+            android:contentDescription="@string/content_desc_refresh"
+            app:icon="@drawable/icon_refresh_24px"
+            app:iconTint="@color/floating_text_primary" />
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#33FFFFFF" />
+    <!-- 分割线 -->
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/divider_middle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:dividerColor="@color/floating_divider"
+        app:layout_constraintTop_toBottomOf="@id/process_status_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
+    <!-- 搜索结果列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/results_recycler_view"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/floating_spacing_xs"
+        android:paddingBottom="@dimen/floating_spacing_xs"
+        app:layout_constraintTop_toBottomOf="@id/divider_middle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/results_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fadeScrollbars="false"
-            android:scrollbars="vertical" />
+    <!-- 空状态视图 -->
+    <LinearLayout
+        android:id="@+id/empty_state_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="visible"
+        android:paddingStart="@dimen/floating_spacing_xl"
+        android:paddingEnd="@dimen/floating_spacing_xl"
+        app:layout_constraintTop_toTopOf="@id/results_recycler_view"
+        app:layout_constraintBottom_toBottomOf="@id/results_recycler_view"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:id="@+id/empty_state_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="@dimen/floating_icon_xxl"
+            android:layout_height="@dimen/floating_icon_xxl"
+            android:layout_marginBottom="@dimen/floating_spacing_md"
+            android:src="@drawable/icon_search_24px"
+            android:tint="@android:color/white"
+            android:alpha="0.85" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:textColor="@color/floating_text_primary"
+            android:text="暂无搜索结果" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/floating_text_secondary"
             android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="visible">
+            android:text="点击工具栏的搜索按钮开始内存搜索" />
 
-            <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:layout_marginBottom="16dp"
-                android:src="@drawable/icon_search_24px"
-                android:tint="#666666" />
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="点击搜索按钮开始搜索"
-                android:textColor="#999999"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-    </FrameLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

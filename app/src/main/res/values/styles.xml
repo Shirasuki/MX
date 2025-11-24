@@ -11,13 +11,14 @@
     </style>
 
     <!-- 自定义深色对话框主题 -->
-    <style name="CustomDarkDialogTheme" parent="Theme.AppCompat.Dialog">
+    <style name="CustomDarkDialogTheme" parent="Theme.MaterialComponents.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.6</item>
-        <item name="colorAccent">#1976D2</item>
+        <item name="colorPrimary">@color/floating_primary</item>
+        <item name="colorAccent">@color/floating_primary</item>
     </style>
 
     <style name="KeyboardButton">
@@ -43,5 +44,11 @@
         <item name="android:scaleType">centerInside</item>
         <item name="android:padding">8dp</item>
         <item name="android:tint">#FFFFFF</item>
+    </style>
+
+    <!-- 悬浮窗图标圆角方形样式 -->
+    <style name="FloatingIcon.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/floating_radius_lg</item>
     </style>
 </resources>

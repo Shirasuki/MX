@@ -7,12 +7,15 @@ import android.content.res.Configuration
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
+import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.DialogFilterBinding
+import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
 import moe.fuqiuluo.mamu.floating.model.DisplayValueType
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.multiChoiceDialog
+import kotlin.math.max
 
 class FilterDialog(
     context: Context,
@@ -26,8 +29,14 @@ class FilterDialog(
 
     @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
     override fun setupDialog() {
-        val binding = DialogFilterBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogFilterBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
+
+        // 应用透明度设置
+        val mmkv = MMKV.defaultMMKV()
+        val opacity = mmkv.floatingOpacity
+        binding.rootContainer.background?.alpha = (max(opacity, 0.85f) * 255).toInt()
 
         val isPortrait =
             context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT

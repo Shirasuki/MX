@@ -1,45 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#CC1F1F1F"
-    android:orientation="vertical">
+    android:background="@color/floating_background_overlay">
 
-    <!-- 工具栏容器 (会根据屏幕方向动态调整) -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/toolbar_container"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:background="#DD1F1F1F"
-        android:elevation="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
+        android:layout_width="0dp"
+        android:layout_height="@dimen/floating_height_toolbar"
+        android:background="@color/floating_toolbar"
+        android:elevation="@dimen/floating_elevation_toolbar"
+        android:paddingStart="@dimen/floating_spacing_sm"
+        android:paddingEnd="@dimen/floating_spacing_sm"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <!-- 当前附加应用图标 -->
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/attached_app_icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="8dp"
+            android:layout_width="@dimen/floating_icon_xl"
+            android:layout_height="@dimen/floating_icon_xl"
+            android:layout_marginEnd="@dimen/floating_spacing_md"
+            android:importantForAccessibility="no"
             android:scaleType="centerCrop"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@mipmap/ic_launcher"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
 
-        <!-- TabBar 容器 (动态填充) -->
+        <!-- TabBar 容器 -->
         <FrameLayout
             android:id="@+id/tabbar_container"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_close_fullscreen"
+            app:layout_constraintStart_toEndOf="@id/attached_app_icon"
+            app:layout_constraintTop_toTopOf="parent">
 
             <HorizontalScrollView
                 android:id="@+id/tabbar_scroll"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                tools:ignore="UselessParent">
 
                 <LinearLayout
                     android:id="@+id/tabbar_layout"
@@ -50,26 +59,23 @@
                     <!-- 设置 Tab -->
                     <FrameLayout
                         android:id="@+id/tab_frame_settings"
-                        android:layout_width="40dp"
+                        android:layout_width="@dimen/floating_touch_target"
                         android:layout_height="match_parent">
 
-                        <ImageButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/tab_settings"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="设置"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/icon_settings_24px"
-                            android:tint="#FFFFFF" />
+                            style="@style/FloatingButton.MaterialIcon.Tab"
+                            android:contentDescription="@string/tab_settings"
+                            app:icon="@drawable/icon_settings_24px" />
 
                         <View
                             android:id="@+id/indicator_settings"
                             android:layout_width="match_parent"
-                            android:layout_height="3dp"
+                            android:layout_height="@dimen/floating_spacing_xs"
                             android:layout_gravity="bottom"
-                            android:background="#1976D2"
+                            android:layout_marginStart="@dimen/floating_spacing_sm"
+                            android:layout_marginEnd="@dimen/floating_spacing_sm"
+                            android:background="@drawable/tab_indicator_background"
                             android:visibility="gone" />
 
                     </FrameLayout>
@@ -77,26 +83,23 @@
                     <!-- 搜索 Tab -->
                     <FrameLayout
                         android:id="@+id/tab_frame_search"
-                        android:layout_width="40dp"
+                        android:layout_width="@dimen/floating_touch_target"
                         android:layout_height="match_parent">
 
-                        <ImageButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/tab_search"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="搜索"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/icon_search_24px"
-                            android:tint="#FFFFFF" />
+                            style="@style/FloatingButton.MaterialIcon.Tab"
+                            android:contentDescription="@string/tab_search"
+                            app:icon="@drawable/icon_search_24px" />
 
                         <View
                             android:id="@+id/indicator_search"
                             android:layout_width="match_parent"
-                            android:layout_height="3dp"
+                            android:layout_height="@dimen/floating_spacing_xs"
                             android:layout_gravity="bottom"
-                            android:background="#1976D2"
+                            android:layout_marginStart="@dimen/floating_spacing_sm"
+                            android:layout_marginEnd="@dimen/floating_spacing_sm"
+                            android:background="@drawable/tab_indicator_background"
                             android:visibility="gone" />
 
                     </FrameLayout>
@@ -104,26 +107,23 @@
                     <!-- 保存的地址 Tab -->
                     <FrameLayout
                         android:id="@+id/tab_frame_saved_addresses"
-                        android:layout_width="40dp"
+                        android:layout_width="@dimen/floating_touch_target"
                         android:layout_height="match_parent">
 
-                        <ImageButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/tab_saved_addresses"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="保存的地址"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/icon_save_24px"
-                            android:tint="#FFFFFF" />
+                            style="@style/FloatingButton.MaterialIcon.Tab"
+                            android:contentDescription="@string/tab_saved_addresses"
+                            app:icon="@drawable/icon_save_24px" />
 
                         <View
                             android:id="@+id/indicator_saved_addresses"
                             android:layout_width="match_parent"
-                            android:layout_height="3dp"
+                            android:layout_height="@dimen/floating_spacing_xs"
                             android:layout_gravity="bottom"
-                            android:background="#1976D2"
+                            android:layout_marginStart="@dimen/floating_spacing_sm"
+                            android:layout_marginEnd="@dimen/floating_spacing_sm"
+                            android:background="@drawable/tab_indicator_background"
                             android:visibility="gone" />
 
                     </FrameLayout>
@@ -131,26 +131,23 @@
                     <!-- 内存预览 Tab -->
                     <FrameLayout
                         android:id="@+id/tab_frame_memory_preview"
-                        android:layout_width="40dp"
+                        android:layout_width="@dimen/floating_touch_target"
                         android:layout_height="match_parent">
 
-                        <ImageButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/tab_memory_preview"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="内存预览"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/icon_list_24px"
-                            android:tint="#FFFFFF" />
+                            style="@style/FloatingButton.MaterialIcon.Tab"
+                            android:contentDescription="@string/tab_memory_preview"
+                            app:icon="@drawable/icon_list_24px" />
 
                         <View
                             android:id="@+id/indicator_memory_preview"
                             android:layout_width="match_parent"
-                            android:layout_height="3dp"
+                            android:layout_height="@dimen/floating_spacing_xs"
                             android:layout_gravity="bottom"
-                            android:background="#1976D2"
+                            android:layout_marginStart="@dimen/floating_spacing_sm"
+                            android:layout_marginEnd="@dimen/floating_spacing_sm"
+                            android:background="@drawable/tab_indicator_background"
                             android:visibility="gone" />
 
                     </FrameLayout>
@@ -158,26 +155,24 @@
                     <!-- 断点 Tab -->
                     <FrameLayout
                         android:id="@+id/tab_frame_breakpoints"
-                        android:layout_width="40dp"
+                        android:layout_width="@dimen/floating_touch_target"
                         android:layout_height="match_parent">
 
-                        <ImageButton
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/tab_breakpoints"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="断点"
-                            android:padding="8dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/icon_bug_report_24px"
-                            android:tint="#FFFFFF" />
+                            style="@style/FloatingButton.MaterialIcon.Tab"
+                            android:contentDescription="@string/tab_breakpoints"
+                            app:icon="@drawable/icon_bug_report_24px" />
 
+                        <!-- MD3 Tab Indicator -->
                         <View
                             android:id="@+id/indicator_breakpoints"
                             android:layout_width="match_parent"
-                            android:layout_height="3dp"
+                            android:layout_height="@dimen/floating_spacing_xs"
                             android:layout_gravity="bottom"
-                            android:background="#1976D2"
+                            android:layout_marginStart="@dimen/floating_spacing_sm"
+                            android:layout_marginEnd="@dimen/floating_spacing_sm"
+                            android:background="@drawable/tab_indicator_background"
                             android:visibility="gone" />
 
                     </FrameLayout>
@@ -189,25 +184,26 @@
         </FrameLayout>
 
         <!-- 关闭按钮 -->
-        <ImageButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_close_fullscreen"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="关闭"
-            android:padding="8dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/icon_close_24px"
-            android:tint="#FFFFFF" />
+            style="@style/FloatingButton.MaterialIcon.Close"
+            android:contentDescription="@string/content_desc_close"
+            app:icon="@drawable/icon_close_24px"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 内容区域 -->
     <FrameLayout
         android:id="@+id/content_container"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        app:layout_constraintBottom_toTopOf="@id/bottom_info_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar_container">
 
         <!-- 设置页面 -->
         <include
@@ -241,26 +237,31 @@
 
     </FrameLayout>
 
-    <LinearLayout
+    <!-- 底部信息栏 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_info_bar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#1F1F1F"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:minHeight="@dimen/floating_height_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tv_selected_memory_ranges"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:gravity="center"
-            android:singleLine="true"
+            android:maxLines="1"
+            android:paddingBottom="@dimen/floating_spacing_sm"
             android:text="Jh,Ch,Ca,Cb,Cd,Ps,A,Xs"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+            android:textSize="12sp"
+            android:textColor="@color/floating_text_primary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

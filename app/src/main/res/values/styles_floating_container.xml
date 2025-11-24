@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Card 基础样式 -->
+    <style name="FloatingCard" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/floating_surface</item>
+        <item name="cardCornerRadius">@dimen/floating_radius_lg</item>
+        <item name="cardElevation">@dimen/floating_elevation_card</item>
+        <item name="strokeColor">@color/floating_surface_variant</item>
+        <item name="strokeWidth">@dimen/floating_stroke_normal</item>
+        <item name="contentPadding">@dimen/floating_spacing_md</item>
+    </style>
+
+    <!-- 设置页面卡片 -->
+    <style name="FloatingCard.Settings">
+        <item name="contentPadding">0dp</item>
+        <item name="android:layout_marginBottom">@dimen/floating_spacing_sm</item>
+    </style>
+
+    <!-- 对话框卡片 -->
+    <style name="FloatingCard.Dialog">
+        <item name="cardElevation">@dimen/floating_elevation_dialog</item>
+        <item name="contentPadding">@dimen/floating_spacing_lg</item>
+    </style>
+
+    <!-- 列表项卡片 -->
+    <style name="FloatingCard.ListItem">
+        <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">@dimen/floating_radius_md</item>
+        <item name="strokeWidth">@dimen/floating_stroke_thin</item>
+        <item name="contentPadding">0dp</item>
+        <item name="rippleColor">@color/floating_ripple</item>
+        <item name="android:layout_marginStart">@dimen/floating_spacing_sm</item>
+        <item name="android:layout_marginEnd">@dimen/floating_spacing_sm</item>
+        <item name="android:layout_marginTop">@dimen/floating_spacing_xs</item>
+        <item name="android:layout_marginBottom">@dimen/floating_spacing_xs</item>
+    </style>
+
+    <!-- 基础容器样式 -->
+    <style name="FloatingContainer">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <!-- 列表项容器 -->
+    <style name="FloatingContainer.ListItem">
+        <item name="android:minHeight">@dimen/floating_height_list_item</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:paddingStart">@dimen/floating_spacing_md</item>
+        <item name="android:paddingEnd">@dimen/floating_spacing_md</item>
+        <item name="android:paddingTop">@dimen/floating_spacing_sm</item>
+        <item name="android:paddingBottom">@dimen/floating_spacing_sm</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <!-- 工具栏样式 -->
+    <style name="FloatingToolbar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/floating_height_toolbar</item>
+        <item name="android:background">@color/floating_toolbar</item>
+        <item name="android:elevation">@dimen/floating_elevation_toolbar</item>
+        <item name="android:paddingStart">@dimen/floating_spacing_sm</item>
+        <item name="android:paddingEnd">@dimen/floating_spacing_sm</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- 分割线样式 -->
+    <style name="FloatingDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/floating_stroke_normal</item>
+        <item name="android:background">@color/floating_divider</item>
+    </style>
+
+    <style name="FloatingDivider.Vertical">
+        <item name="android:layout_width">@dimen/floating_stroke_normal</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+</resources>

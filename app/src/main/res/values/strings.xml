@@ -118,6 +118,16 @@
     <string name="button_cancel">取消</string>
     <string name="button_confirm">确定</string>
     <string name="content_desc_menu">菜单项</string>
+    <string name="content_desc_close">关闭</string>
+    <string name="content_desc_delete">删除</string>
+    <string name="content_desc_refresh">刷新</string>
+
+    <!-- Tab标签 -->
+    <string name="tab_settings">设置</string>
+    <string name="tab_search">搜索</string>
+    <string name="tab_saved_addresses">保存的地址</string>
+    <string name="tab_memory_preview">内存预览</string>
+    <string name="tab_breakpoints">断点</string>
     <string name="label_value_encrypted">此值是否被加密</string>
     <string name="label_value_allow_pagefault">深度访问（缺页）</string>
     <string name="label_value_freeze">冻结</string>

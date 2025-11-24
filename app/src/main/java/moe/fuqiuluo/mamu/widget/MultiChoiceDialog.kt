@@ -18,7 +18,8 @@ class MultiChoiceDialog(
     var onMultiChoice: ((BooleanArray) -> Unit)? = null
 
     override fun setupDialog() {
-        val viewBinding = DialogMultiChoiceBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val viewBinding = DialogMultiChoiceBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(viewBinding.root)
 
         // 设置标题

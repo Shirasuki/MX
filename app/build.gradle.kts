@@ -70,6 +70,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.viewpager2)
+    implementation(libs.androidx.constraintlayout)
     implementation(libs.material)
 
     testImplementation(libs.junit)

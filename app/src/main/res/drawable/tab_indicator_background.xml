@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MD3 Tab Indicator - Rounded Rectangle Shape -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Indicator color -->
+    <solid android:color="@color/floating_primary" />
+
+    <!-- MD3 Rounded corners (2dp radius for small indicator) -->
+    <corners
+        android:topLeftRadius="2dp"
+        android:topRightRadius="2dp"
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="0dp" />
+
+</shape>

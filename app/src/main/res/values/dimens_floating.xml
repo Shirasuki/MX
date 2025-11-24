@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 间距系统 (Spacing Scale) -->
+    <!-- 使用8dp网格系统 -->
+    <dimen name="floating_spacing_xxs">2dp</dimen>      <!-- 极小间距 -->
+    <dimen name="floating_spacing_xs">4dp</dimen>       <!-- 超小间距 -->
+    <dimen name="floating_spacing_sm">8dp</dimen>       <!-- 小间距 -->
+    <dimen name="floating_spacing_md">12dp</dimen>      <!-- 中等间距 -->
+    <dimen name="floating_spacing_lg">16dp</dimen>      <!-- 大间距 -->
+    <dimen name="floating_spacing_xl">24dp</dimen>      <!-- 超大间距 -->
+    <dimen name="floating_spacing_xxl">32dp</dimen>     <!-- 极大间距 -->
+
+    <!-- 组件高度 (Component Heights) -->
+    <dimen name="floating_height_toolbar">65dp</dimen>
+    <dimen name="floating_height_tab">48dp</dimen>
+    <dimen name="floating_height_button">48dp</dimen>
+    <dimen name="floating_height_button_sm">40dp</dimen>
+    <dimen name="floating_height_input">48dp</dimen>
+    <dimen name="floating_height_list_item">56dp</dimen>
+    <dimen name="floating_height_list_item_sm">48dp</dimen>
+    <dimen name="floating_height_status_bar">25dp</dimen>
+
+    <!-- 图标尺寸 (Icon Sizes) -->
+    <dimen name="floating_icon_sm">16dp</dimen>
+    <dimen name="floating_icon_md">24dp</dimen>
+    <dimen name="floating_icon_lg">32dp</dimen>
+    <dimen name="floating_icon_xl">40dp</dimen>
+    <dimen name="floating_icon_xxl">64dp</dimen>
+
+    <!-- 圆角 (Corner Radius) -->
+    <dimen name="floating_radius_sm">4dp</dimen>
+    <dimen name="floating_radius_md">8dp</dimen>
+    <dimen name="floating_radius_lg">12dp</dimen>
+    <dimen name="floating_radius_xl">16dp</dimen>
+    <dimen name="floating_radius_round">999dp</dimen>   <!-- 完全圆角 -->
+
+    <!-- 阴影/Elevation -->
+    <dimen name="floating_elevation_card">2dp</dimen>
+    <dimen name="floating_elevation_toolbar">4dp</dimen>
+    <dimen name="floating_elevation_dialog">8dp</dimen>
+    <dimen name="floating_elevation_fab">6dp</dimen>
+
+    <!-- 边框宽度 (Stroke Width) -->
+    <dimen name="floating_stroke_thin">0.5dp</dimen>
+    <dimen name="floating_stroke_normal">1dp</dimen>
+    <dimen name="floating_stroke_thick">2dp</dimen>
+
+    <!-- 最小触摸区域 (Touch Target) -->
+    <dimen name="floating_touch_target">48dp</dimen>
+
+    <!-- 字体大小 (Typography) -->
+    <dimen name="floating_text_h1">20sp</dimen>         <!-- 大标题 -->
+    <dimen name="floating_text_h2">18sp</dimen>         <!-- 标题 -->
+    <dimen name="floating_text_h3">16sp</dimen>         <!-- 副标题 -->
+    <dimen name="floating_text_body">14sp</dimen>       <!-- 正文 -->
+    <dimen name="floating_text_caption">12sp</dimen>    <!-- 说明文字 -->
+    <dimen name="floating_text_small">11sp</dimen>      <!-- 小字 -->
+</resources>

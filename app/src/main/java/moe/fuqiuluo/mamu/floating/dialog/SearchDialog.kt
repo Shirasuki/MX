@@ -18,6 +18,7 @@ import moe.fuqiuluo.mamu.databinding.DialogSearchInputBinding
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchProgressCallback
 import moe.fuqiuluo.mamu.driver.WuwaDriver
+import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
 import moe.fuqiuluo.mamu.floating.ext.memoryAccessMode
 import moe.fuqiuluo.mamu.floating.ext.selectedMemoryRanges
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange
@@ -26,6 +27,7 @@ import moe.fuqiuluo.mamu.floating.model.DisplayValueType
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
+import kotlin.math.max
 
 data class SearchDialogState(
     var lastSelectedValueType: DisplayValueType = DisplayValueType.DWORD,
@@ -94,8 +96,14 @@ class SearchDialog(
 
     @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
     override fun setupDialog() {
-        val binding = DialogSearchInputBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogSearchInputBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
+
+        // 应用透明度设置
+        val mmkv = MMKV.defaultMMKV()
+        val opacity = mmkv.floatingOpacity
+        binding.rootContainer.background?.alpha = (max(opacity, 0.85f) * 255).toInt()
 
         val isPortrait =
             context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
@@ -240,15 +248,15 @@ class SearchDialog(
             // 有结果时：[新搜索] [取消] [改善]
             binding.btnNewSearch?.visibility = View.VISIBLE
             binding.buttonSpacer?.visibility = View.VISIBLE
-            binding.btnConfirm.text = context.getString(R.string.button_refine)
+            binding.btnConfirm.visibility = View.GONE
+            binding.btnRefine?.visibility = View.VISIBLE
         } else {
             // 无结果时：[取消] [搜索]
             binding.btnNewSearch?.visibility = View.GONE
             binding.buttonSpacer?.visibility = View.GONE
-            binding.btnConfirm.text = context.getString(R.string.button_search)
+            binding.btnConfirm.visibility = View.VISIBLE
+            binding.btnRefine?.visibility = View.GONE
         }
-
-        val mmkv = MMKV.defaultMMKV()
 
         // 执行搜索的通用函数
         val preCheck: (String) -> Boolean = preCheck@{ expression ->
@@ -332,13 +340,18 @@ class SearchDialog(
             performSearch()
         }
 
-        // 搜索/改善按钮
+        // 搜索按钮
         binding.btnConfirm.setOnClickListener {
             if (hasResults) {
                 refineSearch()
             } else {
                 performSearch()
             }
+        }
+
+        // 改善按钮
+        binding.btnRefine?.setOnClickListener {
+            refineSearch()
         }
     }
 }

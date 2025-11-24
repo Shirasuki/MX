@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础文字样式 -->
+    <style name="FloatingText" parent="">
+        <item name="android:textColor">@color/floating_text_primary</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- 标题样式 -->
+    <style name="FloatingText.H1">
+        <item name="android:textSize">@dimen/floating_text_h1</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="FloatingText.H2">
+        <item name="android:textSize">@dimen/floating_text_h2</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="FloatingText.H3">
+        <item name="android:textSize">@dimen/floating_text_h3</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- 正文样式 -->
+    <style name="FloatingText.Body">
+        <item name="android:textSize">@dimen/floating_text_body</item>
+    </style>
+
+    <style name="FloatingText.Body.Secondary">
+        <item name="android:textColor">@color/floating_text_secondary</item>
+    </style>
+
+    <!-- 说明文字 -->
+    <style name="FloatingText.Caption">
+        <item name="android:textSize">@dimen/floating_text_caption</item>
+        <item name="android:textColor">@color/floating_text_tertiary</item>
+    </style>
+
+    <style name="FloatingText.Caption.Secondary">
+        <item name="android:textColor">@color/floating_text_secondary</item>
+    </style>
+
+    <style name="FloatingText.Small">
+        <item name="android:textSize">@dimen/floating_text_small</item>
+        <item name="android:textColor">@color/floating_text_tertiary</item>
+    </style>
+
+    <!-- 等宽字体（用于地址、类型等） -->
+    <style name="FloatingText.Monospace">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">@dimen/floating_text_body</item>
+    </style>
+
+    <style name="FloatingText.Address" parent="FloatingText.Monospace">
+        <item name="android:textColor">@color/floating_address</item>
+    </style>
+
+    <style name="FloatingText.Type" parent="FloatingText.Monospace">
+        <item name="android:textColor">@color/floating_type</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="FloatingText.Range" parent="FloatingText.Monospace">
+        <item name="android:textColor">@color/floating_range</item>
+        <item name="android:textSize">@dimen/floating_text_small</item>
+    </style>
+
+    <!-- 标题颜色变体 -->
+    <style name="FloatingText.SectionTitle">
+        <item name="android:textSize">@dimen/floating_text_body</item>
+        <item name="android:textColor">@color/floating_primary_lighter</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

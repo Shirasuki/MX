@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色系 (Primary)-->
+    <color name="floating_primary">#2196F3</color>           <!-- 主要蓝色 -->
+    <color name="floating_primary_dark">#1976D2</color>      <!-- 深蓝（按下状态） -->
+    <color name="floating_primary_darker">#0D47A1</color>    <!-- 更深蓝 -->
+    <color name="floating_primary_light">#64B5F6</color>     <!-- 浅蓝 -->
+    <color name="floating_primary_lighter">#BBDEFB</color>   <!-- 很浅蓝（标题色） -->
+
+    <!-- 背景色系 (Surface)-->
+    <color name="floating_background">#1F1F1F</color>        <!-- 主背景（纯黑灰） -->
+    <color name="floating_background_overlay">#CC1F1F1F</color>  <!-- 半透明背景（80%） -->
+    <color name="floating_surface">#2D2D2D</color>           <!-- 卡片表面 -->
+    <color name="floating_surface_variant">#2F2F2F</color>   <!-- 卡片边框 -->
+    <color name="floating_toolbar">#001F1F1F</color>         <!-- 工具栏背景（87%） -->
+
+    <!-- 文字色系 (Text) -->
+    <color name="floating_text_primary">#FFFFFF</color>      <!-- 主要文字（白色） -->
+    <color name="floating_text_secondary">#AAAAAA</color>    <!-- 次要文字（中灰） -->
+    <color name="floating_text_tertiary">#999999</color>     <!-- 第三级文字（浅灰） -->
+    <color name="floating_text_disabled">#666666</color>     <!-- 禁用文字（深灰） -->
+
+    <!-- 语义色系 (Semantic) -->
+    <color name="floating_success">#4CAF50</color>           <!-- 成功（绿色） -->
+    <color name="floating_warning">#FF9800</color>           <!-- 警告（橙色） -->
+    <color name="floating_error">#F44336</color>             <!-- 错误（红色） -->
+    <color name="floating_info">#2196F3</color>              <!-- 信息（蓝色） -->
+
+    <!-- 功能色系 (Functional) -->
+    <color name="floating_address">#4FBA52</color>           <!-- 地址颜色（绿色） -->
+    <color name="floating_type">#87CEEB</color>              <!-- 类型颜色（天蓝） -->
+    <color name="floating_range">#FF0000</color>             <!-- 范围颜色（红色） -->
+    <color name="floating_memory">#FF9800</color>            <!-- 内存颜色（橙色） -->
+
+    <!-- 分割线/边框 (Divider) -->
+    <color name="floating_divider">#33FFFFFF</color>         <!-- 分割线（20%白） -->
+    <color name="floating_divider_dark">#1AFFFFFF</color>    <!-- 深色分割线（10%白） -->
+    <color name="floating_border">#4D4D4D</color>            <!-- 边框（深灰） -->
+    <color name="floating_icon_border">#4D2196F3</color>    <!-- 悬浮窗图标边框（30%透明蓝） -->
+
+    <!-- Switch状态色 -->
+    <color name="floating_switch_thumb_on">#64B5F6</color>
+    <color name="floating_switch_track_on">#42A5F5</color>
+    <color name="floating_switch_thumb_off">#757575</color>
+    <color name="floating_switch_track_off">#424242</color>
+
+    <!-- 覆盖层 (Overlay) -->
+    <color name="floating_ripple">#33FFFFFF</color>          <!-- Ripple效果（20%白） -->
+    <color name="floating_selected">#2196F3</color>          <!-- 选中状态覆盖 -->
+    <color name="floating_pressed">#1AFFFFFF</color>         <!-- 按下状态覆盖（10%白） -->
+    <color name="floating_hover">#0DFFFFFF</color>           <!-- 悬停状态覆盖（5%白） -->
+</resources>

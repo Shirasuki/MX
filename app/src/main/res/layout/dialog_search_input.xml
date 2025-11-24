@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/dialog_background"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="@dimen/floating_spacing_lg"
     app:maxHeightPercent="0.9"
     app:maxWidthPercent="0.9">
 
@@ -17,42 +17,39 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
+        <!-- 标题 -->
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.H2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start"
-            android:paddingBottom="4dp"
-            android:text="@string/search_dialog_title"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="@string/search_dialog_title" />
 
-        <TextView
+        <!-- 副标题 -->
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/subtitle_range"
+            style="@style/FloatingText.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="start"
-            android:paddingBottom="12dp"
-            android:text="@string/search_dialog_subtitle"
-            android:textColor="#AAAAAA"
-            android:textSize="12sp" />
+            android:layout_marginBottom="@dimen/floating_spacing_md"
+            android:text="@string/search_dialog_subtitle" />
 
+        <!-- 值输入区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingBottom="12dp">
+            android:layout_marginBottom="@dimen/floating_spacing_md">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="@string/label_value"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
+                android:padding="@dimen/floating_spacing_sm"
+                android:text="@string/label_value" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/btn_operator"
                 android:layout_width="40dp"
                 android:layout_height="36dp"
@@ -61,14 +58,14 @@
                 android:focusable="true"
                 android:gravity="center"
                 android:text="@string/symbol_equals"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp" />
+                android:textColor="@color/floating_text_primary"
+                android:textSize="@dimen/floating_text_h3" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
+                android:layout_marginStart="@dimen/floating_spacing_sm"
+                android:layout_marginEnd="@dimen/floating_spacing_sm"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -81,48 +78,53 @@
                     android:focusable="true"
                     android:focusableInTouchMode="true"
                     android:inputType="none"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="4dp"
-                    android:textColor="#FFFFFF"
+                    android:paddingStart="@dimen/floating_spacing_xs"
+                    android:paddingEnd="@dimen/floating_spacing_xs"
+                    android:textColor="@color/floating_text_primary"
                     android:textCursorDrawable="@null"
-                    android:textSize="14sp">
+                    android:textSize="@dimen/floating_text_body">
 
                     <requestFocus />
                 </EditText>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#33FFFFFF" />
+                    android:layout_height="wrap_content"
+                    app:dividerColor="@color/floating_divider" />
             </LinearLayout>
 
-            <ImageView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_convert_base"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:clickable="true"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="@dimen/floating_icon_lg"
+                android:layout_height="@dimen/floating_icon_lg"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
                 android:contentDescription="@string/content_desc_convert_hex"
-                android:focusable="true"
-                android:padding="4dp"
-                android:src="@drawable/icon_arrow_drop_down_24px" />
+                app:icon="@drawable/icon_arrow_drop_down_24px"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                app:iconTint="@color/floating_text_primary" />
         </LinearLayout>
 
+        <!-- 类型选择 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingBottom="12dp">
+            android:layout_marginBottom="@dimen/floating_spacing_md">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="@string/label_type"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
+                android:padding="@dimen/floating_spacing_sm"
+                android:text="@string/label_type" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/btn_value_type"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
@@ -131,88 +133,85 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="@dimen/floating_spacing_md"
+                android:paddingEnd="@dimen/floating_spacing_md"
                 android:text="@string/description_auto_type"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textColor="@color/floating_text_primary"
+                android:textSize="@dimen/floating_text_caption" />
         </LinearLayout>
 
+        <!-- CheckBox区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:padding="@dimen/floating_spacing_sm">
 
-            <CheckBox
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cb_is_encrypted"
+                style="@style/FloatingCheckBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:buttonTint="#FFFFFF"
-                android:gravity="center_vertical"
                 android:text="@string/label_value_encrypted"
-                android:textColor="#FFFFFF"
                 android:visibility="gone"
                 tools:ignore="RtlHardcoded" />
 
-            <CheckBox
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cb_is_deeply_access"
+                style="@style/FloatingCheckBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:buttonTint="#FFFFFF"
-                android:gravity="center_vertical"
                 android:text="@string/label_value_allow_pagefault"
-                android:textColor="#FFFFFF"
                 tools:ignore="RtlHardcoded"
                 tools:visibility="gone" />
         </LinearLayout>
 
-        <Button
+        <!-- 搜索全部内存按钮 -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_search_all_memory"
+            style="@style/FloatingButton.Primary"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginBottom="12dp"
-            android:background="@drawable/bg_settings_card"
-            android:text="@string/label_search_all_memory"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_md"
+            android:text="@string/label_search_all_memory" />
 
     </LinearLayout>
 
-    <View
+    <!-- 分割线 -->
+    <com.google.android.material.divider.MaterialDivider
         android:id="@+id/divider"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="12dp"
-        android:background="#33FFFFFF" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_xs"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        app:dividerColor="@color/floating_divider" />
 
+    <!-- 内置键盘 -->
     <moe.fuqiuluo.mamu.widget.BuiltinKeyboard
         android:id="@+id/builtin_keyboard"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md" />
 
+    <!-- 底部按钮 -->
     <LinearLayout
         android:id="@+id/button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
         android:gravity="end"
         android:orientation="horizontal">
 
-        <!-- 新搜索按钮：仅在有搜索结果时显示，清除旧结果并进行全新搜索 -->
-        <Button
+        <!-- 新搜索按钮 -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_new_search"
+            style="@style/FloatingButton.Text.Warning"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
             android:text="@string/button_new_search"
-            android:textColor="#FF9800"
             android:visibility="gone" />
 
-        <!-- 占位View，使取消和改善按钮靠右 -->
+        <!-- 占位View -->
         <View
             android:id="@+id/button_spacer"
             android:layout_width="0dp"
@@ -220,26 +219,33 @@
             android:layout_weight="1"
             android:visibility="gone" />
 
-        <Button
+        <!-- 取消按钮 -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_cancel"
+            style="@style/FloatingButton.Text.White"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="@string/button_cancel"
-            android:textColor="#FFFFFF" />
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_cancel" />
 
-        <!-- 搜索/改善按钮：无结果时显示"搜索"，有结果时显示"改善" -->
-        <Button
+        <!-- 确认按钮 -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_confirm"
+            style="@style/FloatingButton.Text"
+            android:visibility="visible"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="@string/button_search"
-            android:textColor="#2196F3" />
+            android:layout_height="wrap_content"
+            android:text="@string/button_search" />
+
+        <!-- 改善按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_refine"
+            style="@style/FloatingButton.Text"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_refine" />
+
     </LinearLayout>
 
 </moe.fuqiuluo.mamu.widget.FixedLinearLayout>

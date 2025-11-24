@@ -3,10 +3,13 @@ package moe.fuqiuluo.mamu.floating.dialog
 import android.content.Context
 import android.view.LayoutInflater
 import android.widget.ListView
+import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.databinding.DialogMultiChoiceBinding
 import moe.fuqiuluo.mamu.floating.adapter.MemoryRangeAdapter
+import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
 import moe.fuqiuluo.mamu.floating.model.MemoryRange
 import moe.fuqiuluo.mamu.floating.dialog.BaseDialog
+import kotlin.math.max
 
 class MemoryRangeDialog(
     context: Context,
@@ -19,8 +22,14 @@ class MemoryRangeDialog(
     private var adapter: MemoryRangeAdapter? = null
 
     override fun setupDialog() {
-        val binding = DialogMultiChoiceBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogMultiChoiceBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
+
+        // 应用透明度设置
+        val mmkv = MMKV.defaultMMKV()
+        val opacity = mmkv.floatingOpacity
+        binding.rootContainer.background?.alpha = (max(opacity, 0.85f) * 255).toInt()
 
         // 设置标题
         binding.dialogTitle.text = "选择内存范围"

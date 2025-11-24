@@ -20,7 +20,7 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start"
@@ -50,7 +50,7 @@
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp">
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -74,12 +74,12 @@
                         tools:ignore="Autofill,LabelFor,TextFields" />
                 </LinearLayout>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"
-                    android:background="#22FFFFFF" />
+                    app:dividerColor="#22FFFFFF" />
 
                 <!-- 地址范围过滤 -->
                 <CheckBox
@@ -110,7 +110,7 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
+                        <com.google.android.material.textview.MaterialTextView
                             android:layout_width="60dp"
                             android:layout_height="wrap_content"
                             android:text="@string/label_address_start"
@@ -137,10 +137,10 @@
                                 android:textSize="12sp"
                                 tools:ignore="Autofill,LabelFor" />
 
-                            <View
+                            <com.google.android.material.divider.MaterialDivider
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#33FFFFFF" />
+                                app:dividerColor="#33FFFFFF" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -151,7 +151,7 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
+                        <com.google.android.material.textview.MaterialTextView
                             android:layout_width="60dp"
                             android:layout_height="wrap_content"
                             android:text="@string/label_address_end"
@@ -178,20 +178,20 @@
                                 android:textSize="12sp"
                                 tools:ignore="Autofill,LabelFor" />
 
-                            <View
+                            <com.google.android.material.divider.MaterialDivider
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#33FFFFFF" />
+                                app:dividerColor="#33FFFFFF" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"
-                    android:background="#22FFFFFF" />
+                    app:dividerColor="#22FFFFFF" />
 
                 <!-- 数据类型过滤 -->
                 <CheckBox
@@ -205,7 +205,7 @@
                     android:textColor="#FFFFFF"
                     android:textSize="14sp" />
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/btn_select_data_types"
                     android:layout_width="match_parent"
                     android:layout_height="36dp"
@@ -220,12 +220,12 @@
                     android:textSize="12sp"
                     android:visibility="gone" />
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"
-                    android:background="#22FFFFFF" />
+                    app:dividerColor="#22FFFFFF" />
 
             </LinearLayout>
         </ScrollView>
@@ -233,13 +233,13 @@
     </LinearLayout>
 
     <!-- 中间分隔线 -->
-    <View
+    <com.google.android.material.divider.MaterialDivider
         android:id="@+id/divider"
         android:layout_width="1dp"
         android:layout_height="match_parent"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="12dp"
-        android:background="#33FFFFFF" />
+        app:dividerColor="#33FFFFFF" />
 
     <!-- 右侧键盘和按钮区域 -->
     <LinearLayout

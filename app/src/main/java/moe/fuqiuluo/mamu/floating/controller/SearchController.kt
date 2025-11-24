@@ -221,10 +221,10 @@ class SearchController(
             val memoryB = (it.rss * 4096)
             binding.processInfoText.text =
                 "[${it.pid}] ${it.name} [${formatBytes(memoryB, 0)}]"
-            binding.processStatusIcon.setImageResource(R.drawable.icon_pause_24px)
+            binding.processStatusIcon.setIconResource(R.drawable.icon_pause_24px)
         } ?: run {
             binding.processInfoText.text = "未选择进程"
-            binding.processStatusIcon.setImageResource(R.drawable.icon_play_arrow_24px)
+            binding.processStatusIcon.setIconResource(R.drawable.icon_play_arrow_24px)
         }
     }
 

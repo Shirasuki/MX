@@ -13,6 +13,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.*
+import androidx.appcompat.view.ContextThemeWrapper
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -73,8 +74,11 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        floatingIconBinding = FloatingWindowLayoutBinding.inflate(LayoutInflater.from(this))
-        fullscreenBinding = FloatingFullscreenLayoutBinding.inflate(LayoutInflater.from(this))
+        // 创建带有 Material Components 主题的 Context
+        val themedContext = ContextThemeWrapper(this, R.style.Theme_MX)
+
+        floatingIconBinding = FloatingWindowLayoutBinding.inflate(LayoutInflater.from(themedContext))
+        fullscreenBinding = FloatingFullscreenLayoutBinding.inflate(LayoutInflater.from(themedContext))
 
         setupFloatingIcon()
         setupFullscreenView()
@@ -325,234 +329,6 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
     }
 
     private fun adjustLayoutForOrientation(orientation: Int) {
-        val rootLayout = fullscreenBinding.rootLayout
-        val toolbarContainer = fullscreenBinding.toolbarContainer
-        val tabbarContainer = fullscreenBinding.tabbarContainer
-        val contentContainer = fullscreenBinding.contentContainer
-        val bottomInfoBar = fullscreenBinding.bottomInfoBar
-        val attachedAppIcon = fullscreenBinding.attachedAppIcon
-        val closeButton = fullscreenBinding.btnCloseFullscreen
-
-        val tabFrames = listOf(
-            R.id.tab_frame_settings,
-            R.id.tab_frame_search,
-            R.id.tab_frame_saved_addresses,
-            R.id.tab_frame_memory_preview,
-            R.id.tab_frame_breakpoints
-        )
-
-        when (orientation) {
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                // 横屏：左侧垂直TabBar
-                rootLayout.orientation = LinearLayout.HORIZONTAL
-
-                toolbarContainer.orientation = LinearLayout.VERTICAL
-                toolbarContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = dp(80)
-                    height = ViewGroup.LayoutParams.MATCH_PARENT
-                }
-                toolbarContainer.gravity = Gravity.CENTER_HORIZONTAL
-
-                // 调整图标
-                attachedAppIcon.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = dp(48)
-                    height = dp(48)
-                    marginEnd = 0
-                    setMargins(0, 0, 0, dp(16))
-                }
-
-                // 调整 tabbarContainer 的 layoutParams（在垂直的 toolbarContainer 中）
-                tabbarContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = ViewGroup.LayoutParams.MATCH_PARENT
-                    height = 0
-                    weight = 1f
-                }
-
-                // 获取现有的 scroll 和 tabbarLayout
-                val oldScroll = tabbarContainer.findViewById<ViewGroup>(R.id.tabbar_scroll)
-                val tabbarLayout = tabbarContainer.findViewById<LinearLayout>(R.id.tabbar_layout)
-
-                if (oldScroll != null && tabbarLayout != null) {
-                    // 从旧的 scroll 中移除 tabbarLayout
-                    oldScroll.removeView(tabbarLayout)
-                    // 移除旧的 scroll
-                    tabbarContainer.removeView(oldScroll)
-
-                    // 创建新的纵向ScrollView
-                    val newScroll = ScrollView(this).apply {
-                        id = R.id.tabbar_scroll
-                        layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        isVerticalScrollBarEnabled = false
-                    }
-
-                    // 设置 tabbarLayout 的方向和参数
-                    tabbarLayout.orientation = LinearLayout.VERTICAL
-                    tabbarLayout.gravity = Gravity.CENTER_HORIZONTAL
-
-                    // 调整每个 tab frame
-                    tabFrames.forEach { frameId ->
-                        fullscreenView.findViewById<FrameLayout>(frameId)?.apply {
-                            layoutParams = LinearLayout.LayoutParams(
-                                dp(48),
-                                dp(60)
-                            )
-                        }
-                        // 调整indicator为右侧显示
-                        val indicator = when (frameId) {
-                            R.id.tab_frame_settings -> fullscreenBinding.indicatorSettings
-                            R.id.tab_frame_search -> fullscreenBinding.indicatorSearch
-                            R.id.tab_frame_saved_addresses -> fullscreenBinding.indicatorSavedAddresses
-                            R.id.tab_frame_memory_preview -> fullscreenBinding.indicatorMemoryPreview
-                            R.id.tab_frame_breakpoints -> fullscreenBinding.indicatorBreakpoints
-                            else -> null
-                        }
-                        indicator?.apply {
-                            layoutParams = FrameLayout.LayoutParams(
-                                dp(3),
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                Gravity.END or Gravity.CENTER_VERTICAL
-                            )
-                        }
-                    }
-
-                    // 添加到新的 scroll
-                    newScroll.addView(
-                        tabbarLayout, ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    )
-                    tabbarContainer.addView(newScroll)
-                }
-
-                // 调整关闭按钮
-                closeButton.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = dp(48)
-                    height = dp(48)
-                    setMargins(0, dp(8), 0, 0)
-                }
-
-                // 调整内容区域（在横向 rootLayout 中，占据剩余空间）
-                contentContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = 0
-                    height = ViewGroup.LayoutParams.MATCH_PARENT
-                    weight = 1f
-                }
-
-                // 横屏时隐藏底部信息栏（屏幕高度有限）
-                bottomInfoBar.visibility = View.GONE
-            }
-
-            else -> {
-                // 竖屏：顶部横向TabBar
-                rootLayout.orientation = LinearLayout.VERTICAL
-
-                toolbarContainer.orientation = LinearLayout.HORIZONTAL
-                toolbarContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = ViewGroup.LayoutParams.MATCH_PARENT
-                    height = dp(65)
-                }
-                toolbarContainer.gravity = Gravity.CENTER_VERTICAL
-
-                // 调整图标
-                attachedAppIcon.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = dp(40)
-                    height = dp(40)
-                    marginEnd = dp(8)
-                    setMargins(0, 0, dp(8), 0)
-                }
-
-                // 调整 tabbarContainer 的 layoutParams（在横向的 toolbarContainer 中）
-                tabbarContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = 0
-                    height = ViewGroup.LayoutParams.MATCH_PARENT
-                    weight = 1f
-                }
-
-                // 获取现有的 scroll 和 tabbarLayout
-                val oldScroll = tabbarContainer.findViewById<ViewGroup>(R.id.tabbar_scroll)
-                val tabbarLayout = tabbarContainer.findViewById<LinearLayout>(R.id.tabbar_layout)
-
-                if (oldScroll != null && tabbarLayout != null) {
-                    // 从旧的 scroll 中移除 tabbarLayout
-                    oldScroll.removeView(tabbarLayout)
-                    // 移除旧的 scroll
-                    tabbarContainer.removeView(oldScroll)
-
-                    // 创建新的横向ScrollView
-                    val newScroll = HorizontalScrollView(this).apply {
-                        id = R.id.tabbar_scroll
-                        layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        isHorizontalScrollBarEnabled = false
-                    }
-
-                    // 设置 tabbarLayout 的方向
-                    tabbarLayout.orientation = LinearLayout.HORIZONTAL
-
-                    // 调整每个 tab frame
-                    tabFrames.forEach { frameId ->
-                        fullscreenView.findViewById<FrameLayout>(frameId)?.apply {
-                            layoutParams = LinearLayout.LayoutParams(
-                                dp(40),
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-                        }
-                        // 调整indicator为底部显示
-                        val indicator = when (frameId) {
-                            R.id.tab_frame_settings -> fullscreenBinding.indicatorSettings
-                            R.id.tab_frame_search -> fullscreenBinding.indicatorSearch
-                            R.id.tab_frame_saved_addresses -> fullscreenBinding.indicatorSavedAddresses
-                            R.id.tab_frame_memory_preview -> fullscreenBinding.indicatorMemoryPreview
-                            R.id.tab_frame_breakpoints -> fullscreenBinding.indicatorBreakpoints
-                            else -> null
-                        }
-                        indicator?.apply {
-                            layoutParams = FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                dp(3),
-                                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                            )
-                        }
-                    }
-
-                    // 添加到新的 scroll
-                    newScroll.addView(
-                        tabbarLayout, ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                    )
-                    tabbarContainer.addView(newScroll)
-                }
-
-                // 调整关闭按钮
-                closeButton.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = dp(40)
-                    height = dp(40)
-                    setMargins(0, 0, 0, 0)
-                }
-
-                // 调整内容区域（在垂直 rootLayout 中，占据剩余空间）
-                contentContainer.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = ViewGroup.LayoutParams.MATCH_PARENT
-                    height = 0
-                    weight = 1f
-                }
-
-                // 竖屏时显示底部信息栏
-                bottomInfoBar.visibility = View.VISIBLE
-                bottomInfoBar.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = ViewGroup.LayoutParams.MATCH_PARENT
-                    height = ViewGroup.LayoutParams.WRAP_CONTENT
-                }
-            }
-        }
     }
 
     override fun onDestroy() {
@@ -684,9 +460,12 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
     }
 
     private fun updateTopIcon(process: DisplayProcessInfo?) {
-        val iconView = fullscreenBinding.attachedAppIcon
+        val fullscreenIconView = fullscreenBinding.attachedAppIcon
+        val floatingIconView = floatingIconBinding.appIcon
+
         if (process == null) {
-            iconView.setImageResource(R.mipmap.ic_launcher)
+            fullscreenIconView.setImageResource(R.mipmap.ic_launcher)
+            floatingIconView.setImageResource(R.mipmap.ic_launcher)
             return
         }
         runCatching {
@@ -695,12 +474,15 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
                 packageManager.getApplicationIcon(it)
             }
             if (appIcon != null) {
-                iconView.setImageDrawable(appIcon)
+                fullscreenIconView.setImageDrawable(appIcon)
+                floatingIconView.setImageDrawable(appIcon)
             } else {
-                iconView.setImageResource(R.drawable.icon_android_24px)
+                fullscreenIconView.setImageResource(R.drawable.icon_android_24px)
+                floatingIconView.setImageResource(R.drawable.icon_android_24px)
             }
         }.onFailure {
-            iconView.setImageResource(R.drawable.icon_android_24px)
+            fullscreenIconView.setImageResource(R.drawable.icon_android_24px)
+            floatingIconView.setImageResource(R.drawable.icon_android_24px)
         }
     }
 

@@ -10,819 +10,798 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="@dimen/floating_spacing_sm">
 
-        <!-- ========== 快速操作 ========== -->
-        <LinearLayout
+        <!-- 快速操作 -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/FloatingCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_settings_card"
-            android:orientation="vertical"
-            android:padding="10dp">
+            android:layout_marginBottom="@dimen/floating_spacing_sm">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/settings_quick_actions"
-                android:textColor="#BBDEFB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- 选择调试进程 -->
-            <LinearLayout
-                android:id="@+id/setting_select_process"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/settings_select_process"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/current_process_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/settings_no_process_selected"
-                        android:textColor="#999999"
-                        android:textSize="11sp" />
-
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/icon_list_24px"
-                    android:tint="#BBDEFB" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 快速操作按钮组 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_terminate_proc"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_secondary"
-                    android:text="@string/settings_terminate_proc"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btn_exit_overlay"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_primary"
-                    android:text="@string/settings_exit"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- ========== 进程设置 ========== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_settings_card"
-            android:orientation="vertical"
-            android:padding="10dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/settings_process_settings"
-                android:textColor="#BBDEFB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- 选择内存范围 -->
-            <LinearLayout
-                android:id="@+id/setting_memory_range"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="@dimen/floating_spacing_md">
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.H3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/settings_memory_range"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:text="@string/settings_quick_actions"
+                    android:textColor="@color/floating_primary" />
 
-                <TextView
-                    android:id="@+id/memory_range_summary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_memory_range_summary"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 对进程隐藏Mamu -->
-            <LinearLayout
-                android:id="@+id/setting_hide_mamu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
+                <!-- 选择调试进程 -->
                 <LinearLayout
+                    android:id="@+id/setting_select_process"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/settings_hide_mamu"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
+                        android:orientation="vertical">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_select_process" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/current_process_name"
+                            style="@style/FloatingText.Caption.Secondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/floating_spacing_xxs"
+                            android:text="@string/settings_no_process_selected" />
+
+                    </LinearLayout>
 
                     <ImageView
-                        android:id="@+id/hide_mamu_expand_icon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/icon_arrow_drop_down_24px"
-                        android:tint="#999999" />
+                        android:layout_width="@dimen/floating_icon_md"
+                        android:layout_height="@dimen/floating_icon_md"
+                        android:src="@drawable/icon_list_24px"
+                        android:tint="@color/floating_primary" />
 
                 </LinearLayout>
 
-                <!-- 隐藏模式 CheckBox 组（默认隐藏） -->
-                <LinearLayout
-                    android:id="@+id/hide_mamu_options"
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 快速操作按钮组 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_terminate_proc"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_sm"
+                        android:layout_weight="1"
+                        android:text="@string/settings_terminate_proc" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_exit_overlay"
+                        style="@style/FloatingButton.Primary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_exit" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 进程设置 -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/FloatingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_sm">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/floating_spacing_md">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.H3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:text="@string/settings_process_settings"
+                    android:textColor="@color/floating_primary" />
+
+                <!-- 选择内存范围 -->
+                <LinearLayout
+                    android:id="@+id/setting_memory_range"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_memory_range" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/memory_range_summary"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/settings_memory_range_summary" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 对进程隐藏Mamu -->
+                <LinearLayout
+                    android:id="@+id/setting_hide_mamu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_hide_mamu" />
+
+                        <ImageView
+                            android:id="@+id/hide_mamu_expand_icon"
+                            android:layout_width="@dimen/floating_icon_md"
+                            android:layout_height="@dimen/floating_icon_md"
+                            android:src="@drawable/icon_arrow_drop_down_24px"
+                            android:tint="@color/floating_text_secondary" />
+
+                    </LinearLayout>
+
+                    <!-- 隐藏模式 CheckBox 组（默认隐藏） -->
+                    <LinearLayout
+                        android:id="@+id/hide_mamu_options"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xs"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.google.android.material.checkbox.MaterialCheckBox
+                            android:id="@+id/cb_hide_mode_1"
+                            style="@style/FloatingCheckBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_hide_mode_1" />
+
+                        <com.google.android.material.checkbox.MaterialCheckBox
+                            android:id="@+id/cb_hide_mode_2"
+                            style="@style/FloatingCheckBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_hide_mode_2" />
+
+                        <com.google.android.material.checkbox.MaterialCheckBox
+                            android:id="@+id/cb_hide_mode_3"
+                            style="@style/FloatingCheckBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_hide_mode_3" />
+
+                        <com.google.android.material.checkbox.MaterialCheckBox
+                            android:id="@+id/cb_hide_mode_4"
+                            style="@style/FloatingCheckBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_hide_mode_4" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 跳过内存区域 -->
+                <LinearLayout
+                    android:id="@+id/setting_skip_memory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_skip_memory" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/skip_memory_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/settings_skip_memory_none" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 自动暂停进程 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_auto_pause" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_auto_pause"
+                        style="@style/FloatingSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="false" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 冻结间隔 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/floating_spacing_xs"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_freeze_interval" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/freeze_interval_value"
+                            style="@style/FloatingText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            android:minWidth="80dp"
+                            android:text="33000 μs" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/seekbar_freeze_interval"
+                        style="@style/FloatingSlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0"
+                        android:valueTo="100000"
+                        android:value="33000"
+                        android:stepSize="1000" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 搜索设置 -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/FloatingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_sm">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/floating_spacing_md">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.H3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:text="@string/settings_search_settings"
+                    android:textColor="@color/floating_primary" />
+
+                <!-- 内存缓冲区大小 -->
+                <LinearLayout
+                    android:id="@+id/setting_memory_buffer_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_memory_buffer_size" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/memory_buffer_size_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/memory_buffer_size_512_mb" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 搜索分块大小 -->
+                <LinearLayout
+                    android:id="@+id/setting_chunk_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_chunk_size" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/chunk_size_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/chunk_size_512_kb" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 通用设置 -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/FloatingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_sm">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/floating_spacing_md">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.H3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:text="@string/settings_general_settings"
+                    android:textColor="@color/floating_primary" />
+
+                <!-- 过滤系统进程 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_filter_system_process" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_filter_system_process"
+                        style="@style/FloatingSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 过滤Linux进程 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_filter_linux_process" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_filter_linux_process"
+                        style="@style/FloatingSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 保存列表更新间隔 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/floating_spacing_xs"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_list_update_interval" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/list_update_interval_value"
+                            style="@style/FloatingText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            android:minWidth="80dp"
+                            android:text="1000 ms" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/seekbar_list_update_interval"
+                        style="@style/FloatingSlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0"
+                        android:valueTo="5000"
+                        android:value="1000"
+                        android:stepSize="100" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 内存读写模式 -->
+                <LinearLayout
+                    android:id="@+id/setting_memory_rw_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_memory_rw_mode" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/memory_rw_mode_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/settings_memory_rw_mode_normal" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 透明度 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/floating_spacing_xs"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_opacity" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/opacity_value"
+                            style="@style/FloatingText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            android:minWidth="48dp"
+                            android:text="55%" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/opacity_seekbar"
+                        style="@style/FloatingSlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0"
+                        android:valueTo="100"
+                        android:value="55"
+                        android:stepSize="1" />
+
+                </LinearLayout>
+
+                <!-- 最高层级绘制 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm"
                     android:visibility="gone">
 
-                    <CheckBox
-                        android:id="@+id/cb_hide_mode_1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:buttonTint="#FFFFFF"
-                        android:text="@string/settings_hide_mode_1"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13sp" />
-
-                    <CheckBox
-                        android:id="@+id/cb_hide_mode_2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:buttonTint="#FFFFFF"
-                        android:text="@string/settings_hide_mode_2"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13sp" />
-
-                    <CheckBox
-                        android:id="@+id/cb_hide_mode_3"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:buttonTint="#FFFFFF"
-                        android:text="@string/settings_hide_mode_3"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13sp" />
-
-                    <CheckBox
-                        android:id="@+id/cb_hide_mode_4"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:buttonTint="#FFFFFF"
-                        android:text="@string/settings_hide_mode_4"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13sp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 跳过内存区域 -->
-            <LinearLayout
-                android:id="@+id/setting_skip_memory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_skip_memory"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/skip_memory_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_skip_memory_none"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 自动暂停进程 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/settings_auto_pause"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <Switch
-                    android:id="@+id/switch_auto_pause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:thumbTint="@color/switch_thumb_color"
-                    android:trackTint="@color/switch_track_color" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 冻结间隔 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/settings_freeze_interval"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/freeze_interval_value"
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Body"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_top_most_layer" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/FloatingText.Caption.Secondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/floating_spacing_xxs"
+                            android:text="@string/settings_top_most_layer_summary" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_top_most_layer"
+                        style="@style/FloatingSwitch"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:minWidth="80dp"
-                        android:text="33000 μs"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
+                        android:layout_height="wrap_content" />
 
                 </LinearLayout>
 
-                <SeekBar
-                    android:id="@+id/seekbar_freeze_interval"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:max="100000"
-                    android:progress="33000"
-                    android:progressBackgroundTint="#4D4D4D"
-                    android:progressTint="#BBDEFB"
-                    android:thumbTint="#BBDEFB" />
-
             </LinearLayout>
 
-        </LinearLayout>
-
-        <!-- ========== 搜索设置 ========== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_settings_card"
-            android:orientation="vertical"
-            android:padding="10dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/settings_search_settings"
-                android:textColor="#BBDEFB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- 内存缓冲区大小 -->
-            <LinearLayout
-                android:id="@+id/setting_memory_buffer_size"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_memory_buffer_size"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/memory_buffer_size_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/memory_buffer_size_512_mb"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 搜索分块大小 -->
-            <LinearLayout
-                android:id="@+id/setting_chunk_size"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_chunk_size"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/chunk_size_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/chunk_size_512_kb"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- ========== 通用设置 ========== -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_settings_card"
-            android:orientation="vertical"
-            android:padding="10dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/settings_general_settings"
-                android:textColor="#BBDEFB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- 过滤系统进程 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/settings_filter_system_process"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <Switch
-                    android:id="@+id/switch_filter_system_process"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:thumbTint="@color/switch_thumb_color"
-                    android:trackTint="@color/switch_track_color" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 过滤Linux进程 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/settings_filter_linux_process"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <Switch
-                    android:id="@+id/switch_filter_linux_process"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:thumbTint="@color/switch_thumb_color"
-                    android:trackTint="@color/switch_track_color" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 保存列表更新间隔 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/settings_list_update_interval"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/list_update_interval_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:minWidth="80dp"
-                        android:text="1000 ms"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                </LinearLayout>
-
-                <SeekBar
-                    android:id="@+id/seekbar_list_update_interval"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:max="5000"
-                    android:progress="1000"
-                    android:progressBackgroundTint="#4D4D4D"
-                    android:progressTint="#BBDEFB"
-                    android:thumbTint="#BBDEFB" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 内存读写模式 -->
-            <LinearLayout
-                android:id="@+id/setting_memory_rw_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_memory_rw_mode"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/memory_rw_mode_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_memory_rw_mode_normal"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 透明度 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/settings_opacity"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/opacity_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:minWidth="48dp"
-                        android:text="55%"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                </LinearLayout>
-
-                <SeekBar
-                    android:id="@+id/opacity_seekbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:max="100"
-                    android:progress="55"
-                    android:progressBackgroundTint="#4D4D4D"
-                    android:progressTint="#BBDEFB"
-                    android:thumbTint="#BBDEFB" />
-
-            </LinearLayout>
-
-            <!-- 最高层级绘制 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/settings_top_most_layer"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/settings_top_most_layer_summary"
-                        android:textColor="#999999"
-                        android:textSize="11sp" />
-
-                </LinearLayout>
-
-                <Switch
-                    android:id="@+id/switch_top_most_layer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:thumbTint="@color/switch_thumb_color"
-                    android:trackTint="@color/switch_track_color" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- 界面设置 -->
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            style="@style/FloatingCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_settings_card"
-            android:orientation="vertical"
-            android:padding="10dp">
+            android:layout_marginBottom="@dimen/floating_spacing_sm">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/settings_ui_settings"
-                android:textColor="#BBDEFB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- Tab切换动画 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/settings_tab_switch_animation"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <Switch
-                    android:id="@+id/switch_tab_animation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:thumbTint="@color/switch_thumb_color"
-                    android:trackTint="@color/switch_track_color" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 键盘 -->
-            <LinearLayout
-                android:id="@+id/setting_keyboard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="@dimen/floating_spacing_md">
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.H3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/settings_keyboard"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:text="@string/settings_ui_settings"
+                    android:textColor="@color/floating_primary" />
 
-                <TextView
-                    android:id="@+id/keyboard_value"
-                    android:layout_width="wrap_content"
+                <!-- Tab切换动画 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_keyboard_builtin"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/settings_tab_switch_animation" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_tab_animation"
+                        style="@style/FloatingSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 键盘 -->
+                <LinearLayout
+                    android:id="@+id/setting_keyboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_keyboard" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/keyboard_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/settings_keyboard_builtin" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 语言 -->
+                <LinearLayout
+                    android:id="@+id/setting_language"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_item_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="@dimen/floating_spacing_sm">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/FloatingText.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_language" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/language_value"
+                        style="@style/FloatingText.Caption.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/floating_spacing_xxs"
+                        android:text="@string/settings_language_zh_cn" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="4dp"
-                android:background="@drawable/bg_divider" />
-
-            <!-- 语言 -->
-            <LinearLayout
-                android:id="@+id/setting_language"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_settings_item_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_language"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/language_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_language_zh_cn"
-                    android:textColor="#999999"
-                    android:textSize="11sp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

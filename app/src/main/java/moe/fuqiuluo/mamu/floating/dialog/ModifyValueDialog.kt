@@ -6,15 +6,19 @@ import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
 import android.view.LayoutInflater
+import com.google.android.material.textview.MaterialTextView
+import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.DialogModifyValueBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.SearchResultItem
+import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
 import moe.fuqiuluo.mamu.floating.model.DisplayValueType
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
+import kotlin.math.max
 
 private const val TAG = "ModifyValueDialog"
 
@@ -28,8 +32,14 @@ class ModifyValueDialog(
 
     @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
     override fun setupDialog() {
-        val binding = DialogModifyValueBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogModifyValueBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
+
+        // 应用透明度设置
+        val mmkv = MMKV.defaultMMKV()
+        val opacity = mmkv.floatingOpacity
+        binding.rootContainer.background?.alpha = (max(opacity, 0.85f) * 255).toInt()
 
         val isPortrait =
             context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT

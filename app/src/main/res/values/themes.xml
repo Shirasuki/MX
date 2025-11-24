@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MX" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MX" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- 使用 Material Components 主题以支持 Material3 组件 -->
+        <item name="colorPrimary">@color/floating_primary</item>
+        <item name="colorPrimaryVariant">@color/floating_primary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/floating_primary</item>
+        <item name="colorSecondaryVariant">@color/floating_primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 </resources>

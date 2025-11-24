@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/dialog_background"
-    android:elevation="8dp"
+    android:elevation="@dimen/floating_elevation_dialog"
     android:orientation="vertical"
     app:maxHeightPercent="0.8"
     app:maxWidth="480dp">
@@ -15,50 +16,46 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="20dp"
-        android:paddingBottom="12dp">
+        android:padding="@dimen/floating_spacing_lg"
+        android:paddingBottom="@dimen/floating_spacing_md">
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/dialog_title"
+            style="@style/FloatingText.H1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:letterSpacing="0.01"
-            android:text="@string/settings_select_process"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:text="@string/settings_select_process" />
 
     </LinearLayout>
 
     <!-- 分隔线 -->
-    <View
+    <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginHorizontal="16dp"
-        android:background="#30FFFFFF" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/floating_spacing_lg"
+        app:dividerColor="@color/floating_divider" />
 
     <!-- 进程列表 -->
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/process_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp"
         android:fadeScrollbars="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingTop="@dimen/floating_spacing_sm"
+        android:paddingBottom="@dimen/floating_spacing_sm"
         android:scrollbarStyle="outsideOverlay"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
     <!-- 分隔线 -->
-    <View
+    <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginHorizontal="16dp"
-        android:background="#30FFFFFF" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/floating_spacing_lg"
+        app:dividerColor="@color/floating_divider" />
 
     <!-- 按钮区域 -->
     <LinearLayout
@@ -66,21 +63,15 @@
         android:layout_height="wrap_content"
         android:gravity="end"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:padding="@dimen/floating_spacing_md">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_cancel"
-            style="?android:attr/buttonBarButtonStyle"
+            style="@style/FloatingButton.Text.White"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:letterSpacing="0.05"
             android:minWidth="80dp"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="10dp"
-            android:text="@string/button_cancel"
-            android:textColor="#CCCCCC"
-            android:textSize="15sp" />
+            android:text="@string/button_cancel" />
 
     </LinearLayout>
 

@@ -2,27 +2,33 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/floating_icon_container"
-    android:layout_width="40dp"
-    android:layout_height="40dp">
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:padding="4dp">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/floating_icon_card"
+    <!-- 外层光晕/阴影效果 -->
+    <View
+        android:id="@+id/floating_icon_glow"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clickable="false"
-        android:focusable="false"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="10dp"
-        app:cardElevation="0dp">
+        android:layout_gravity="center"
+        android:alpha="0.3"
+        android:background="@drawable/floating_icon_glow_bg" />
 
-        <ImageView
-            android:id="@+id/app_icon"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:importantForAccessibility="no"
-            android:scaleType="fitCenter"
-            android:src="@mipmap/ic_launcher" />
-
-    </androidx.cardview.widget.CardView>
+    <!-- 主图标 -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/app_icon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="@color/floating_surface"
+        android:elevation="4dp"
+        android:importantForAccessibility="no"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@mipmap/ic_launcher"
+        app:shapeAppearanceOverlay="@style/FloatingIcon.Circle"
+        app:strokeColor="@color/floating_icon_border"
+        app:strokeWidth="3dp" />
 
 </FrameLayout>

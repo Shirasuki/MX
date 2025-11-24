@@ -8,8 +8,8 @@
     android:background="@drawable/dialog_background"
     android:orientation="vertical"
     android:padding="16dp"
-    app:maxWidthPercent="0.85"
-    app:maxHeightPercent="0.9">
+    app:maxHeightPercent="0.9"
+    app:maxWidthPercent="0.85">
 
     <TextView
         android:layout_width="match_parent"
@@ -196,7 +196,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="14sp" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/btn_select_data_types"
                 android:layout_width="match_parent"
                 android:layout_height="36dp"
@@ -210,6 +210,7 @@
                 android:textColor="#AAAAAA"
                 android:textSize="12sp"
                 android:visibility="gone" />
+
 
         </LinearLayout>
     </ScrollView>

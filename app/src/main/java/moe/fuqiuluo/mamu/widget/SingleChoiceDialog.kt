@@ -46,7 +46,8 @@ class SimpleSingleChoiceDialog(
     var onSingleChoice: ((Int) -> Unit)? = null
 
     override fun setupDialog() {
-        val binding = DialogSingleChoiceBinding.inflate(LayoutInflater.from(context))
+        // 使用 dialog.context 确保使用正确的主题
+        val binding = DialogSingleChoiceBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
 
         if (showTitle) {

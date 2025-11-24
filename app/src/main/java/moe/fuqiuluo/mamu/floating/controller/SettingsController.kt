@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import android.view.View
-import android.widget.SeekBar
+import com.google.android.material.slider.Slider
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.*
 import moe.fuqiuluo.mamu.R
@@ -165,25 +165,16 @@ class SettingsController(
     private fun setupFreezeInterval(mmkv: MMKV) {
         with(binding) {
             val currentValue = mmkv.freezeInterval
-            seekbarFreezeInterval.progress = currentValue
+            seekbarFreezeInterval.value = currentValue.toFloat()
             freezeIntervalValue.text = "$currentValue μs"
 
-            seekbarFreezeInterval.setOnSeekBarChangeListener(object :
-                SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    freezeIntervalValue.text = "$progress μs"
-                    if (fromUser) {
-                        mmkv.freezeInterval = progress
-                    }
+            seekbarFreezeInterval.addOnChangeListener { _, value, fromUser ->
+                val intValue = value.toInt()
+                freezeIntervalValue.text = "$intValue μs"
+                if (fromUser) {
+                    mmkv.freezeInterval = intValue
                 }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-            })
+            }
         }
     }
 
@@ -206,21 +197,16 @@ class SettingsController(
     @SuppressLint("SetTextI18n")
     private fun setupListUpdateInterval(mmkv: MMKV) {
         val currentValue = mmkv.saveListUpdateInterval
-        binding.seekbarListUpdateInterval.progress = currentValue
+        binding.seekbarListUpdateInterval.value = currentValue.toFloat()
         binding.listUpdateIntervalValue.text = "$currentValue ms"
 
-        binding.seekbarListUpdateInterval.setOnSeekBarChangeListener(object :
-            SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                binding.listUpdateIntervalValue.text = "$progress ms"
-                if (fromUser) {
-                    mmkv.saveListUpdateInterval = progress
-                }
+        binding.seekbarListUpdateInterval.addOnChangeListener { _, value, fromUser ->
+            val intValue = value.toInt()
+            binding.listUpdateIntervalValue.text = "$intValue ms"
+            if (fromUser) {
+                mmkv.saveListUpdateInterval = intValue
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        }
     }
 
     private fun setupMemoryRwMode() {
@@ -234,24 +220,19 @@ class SettingsController(
     private fun setupOpacityControl(mmkv: MMKV) {
         val currentOpacity = mmkv.floatingOpacity
         val progress = (currentOpacity * 100).toInt()
-        binding.opacitySeekbar.progress = progress
+        binding.opacitySeekbar.value = progress.toFloat()
         binding.opacityValue.text = "$progress%"
 
-        binding.opacitySeekbar.setOnSeekBarChangeListener(object :
-            SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                binding.opacityValue.text = "$progress%"
+        binding.opacitySeekbar.addOnChangeListener { _, value, fromUser ->
+            val intValue = value.toInt()
+            binding.opacityValue.text = "$intValue%"
 
-                if (fromUser) {
-                    val opacity = progress / 100f
-                    mmkv.floatingOpacity = opacity
-                    onApplyOpacity()
-                }
+            if (fromUser) {
+                val opacity = intValue / 100f
+                mmkv.floatingOpacity = opacity
+                onApplyOpacity()
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        }
     }
 
     private fun setupMemoryBufferSizeControl() {

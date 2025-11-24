@@ -2,25 +2,21 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#CC1F1F1F"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="32dp">
+    android:padding="@dimen/floating_spacing_xxl">
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
+        style="@style/FloatingText.H1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="内存预览"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:text="内存预览" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
+        style="@style/FloatingText.Body.Secondary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="待实现"
-        android:textColor="#999999"
-        android:textSize="16sp" />
+        android:text="待实现" />
 
 </LinearLayout>

@@ -1,93 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/FloatingCard.ListItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/item_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:paddingEnd="12dp">
+        android:minHeight="@dimen/floating_height_list_item_sm"
+        android:paddingStart="@dimen/floating_spacing_sm"
+        android:paddingTop="@dimen/floating_spacing_xs"
+        android:paddingEnd="@dimen/floating_spacing_sm"
+        android:paddingBottom="@dimen/floating_spacing_xs">
 
-        <CheckBox
+        <!-- CheckBox -->
+
+        <!-- 地址 -->
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/checkbox"
+            style="@style/FloatingCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:buttonTint="#FFFFFF"
-            android:minWidth="48dp"
-            android:minHeight="48dp" />
+            android:layout_marginStart="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/address_text"
+            style="@style/FloatingText.Address"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="monospace"
+            android:layout_marginStart="@dimen/floating_spacing_xs"
             android:text="7FFFFFFF"
-            android:textColor="#4FBA52"
-            android:textSize="14sp" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/checkbox"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
+        <!-- 值 -->
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/value_text"
+            style="@style/FloatingText.Body"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
+            android:layout_marginStart="@dimen/floating_spacing_md"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="0"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/info_container"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@id/address_text"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- 类型+范围信息 -->
         <LinearLayout
+            android:id="@+id/info_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="@dimen/floating_spacing_xs"
             android:gravity="end"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/delete_button"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/type_text"
+                style="@style/FloatingText.Type"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="D"
-                android:textColor="#87CEEB"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:text="D" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/range_text"
+                style="@style/FloatingText.Range"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:fontFamily="monospace"
-                android:text="B"
-                android:textColor="#FF0000"
-                android:textSize="11sp" />
+                android:text="B" />
 
         </LinearLayout>
 
-        <ImageView
+        <!-- 删除按钮 -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/delete_button"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:contentDescription="删除"
-            android:focusable="true"
-            android:src="@drawable/baseline_delete_24"
-            android:tint="#FFFFFF" />
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="@dimen/floating_touch_target"
+            android:layout_height="@dimen/floating_touch_target"
+            android:contentDescription="@string/content_desc_delete"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:icon="@drawable/baseline_delete_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconTint="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#333333" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
