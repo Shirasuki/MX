@@ -19,6 +19,7 @@ import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchProgressCallback
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.floating.ext.keyboardType
 import moe.fuqiuluo.mamu.floating.ext.memoryAccessMode
 import moe.fuqiuluo.mamu.floating.ext.selectedMemoryRanges
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange
@@ -109,6 +110,20 @@ class SearchDialog(
             context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         binding.builtinKeyboard.setScreenOrientation(isPortrait)
 
+        // 根据配置决定是否禁用系统输入法
+        val useBuiltinKeyboard = mmkv.keyboardType == 0
+        if (useBuiltinKeyboard) {
+            // 使用内置键盘时，禁用系统输入法弹出
+            binding.inputValue.showSoftInputOnFocus = false
+            binding.builtinKeyboard.visibility = View.VISIBLE
+            binding.divider.visibility = View.VISIBLE
+        } else {
+            // 使用系统键盘时，允许系统输入法弹出
+            binding.inputValue.showSoftInputOnFocus = true
+            binding.builtinKeyboard.visibility = View.GONE
+            binding.divider.visibility = View.GONE
+        }
+
         val operators = arrayOf("=", "≠", "<", ">", "≤", "≥")
         var currentOperator = "="
 
@@ -169,39 +184,28 @@ class SearchDialog(
 
         binding.builtinKeyboard.listener = object : BuiltinKeyboard.KeyboardListener {
             override fun onKeyInput(key: String) {
-                val currentText = binding.inputValue.text.toString()
+                // 直接操作 Editable，避免 setText 带来的竞争条件
+                val editable = binding.inputValue.text ?: return
                 val selectionStart = binding.inputValue.selectionStart
                 val selectionEnd = binding.inputValue.selectionEnd
 
-                val newText = if (selectionStart != selectionEnd) {
-                    // 有选中文本，替换选中部分
-                    currentText.take(selectionStart) + key + currentText.substring(selectionEnd)
-                } else {
-                    // 无选中文本，在光标处插入
-                    currentText.take(selectionStart) + key + currentText.substring(selectionStart)
-                }
-
-                binding.inputValue.setText(newText)
-                binding.inputValue.setSelection(selectionStart + key.length)
+                // 使用 Editable.replace() 直接替换选中的文本
+                // 如果没有选中文本，selectionStart == selectionEnd，相当于插入
+                editable.replace(selectionStart, selectionEnd, key)
+                // 光标会自动移动到插入文本之后
             }
 
             override fun onDelete() {
-                val currentText = binding.inputValue.text.toString()
+                val editable = binding.inputValue.text ?: return
                 val selectionStart = binding.inputValue.selectionStart
                 val selectionEnd = binding.inputValue.selectionEnd
 
                 if (selectionStart != selectionEnd) {
                     // 有选中文本，删除选中部分
-                    val newText =
-                        currentText.take(selectionStart) + currentText.substring(selectionEnd)
-                    binding.inputValue.setText(newText)
-                    binding.inputValue.setSelection(selectionStart)
+                    editable.delete(selectionStart, selectionEnd)
                 } else if (selectionStart > 0) {
                     // 无选中文本，删除光标前一个字符
-                    val newText =
-                        currentText.take(selectionStart - 1) + currentText.substring(selectionStart)
-                    binding.inputValue.setText(newText)
-                    binding.inputValue.setSelection(selectionStart - 1)
+                    editable.delete(selectionStart - 1, selectionStart)
                 }
             }
 
@@ -231,12 +235,12 @@ class SearchDialog(
                 val clip = clipboardManager.primaryClip
                 if (clip != null && clip.itemCount > 0) {
                     val text = clip.getItemAt(0).text?.toString() ?: ""
-                    val currentText = binding.inputValue.text.toString()
-                    val cursorPos = binding.inputValue.selectionStart
-                    val newText =
-                        currentText.take(cursorPos) + text + currentText.substring(cursorPos)
-                    binding.inputValue.setText(newText)
-                    binding.inputValue.setSelection(cursorPos + text.length)
+                    val editable = binding.inputValue.text ?: return
+                    val selectionStart = binding.inputValue.selectionStart
+                    val selectionEnd = binding.inputValue.selectionEnd
+
+                    // 使用 Editable.replace() 在光标位置粘贴文本
+                    editable.replace(selectionStart, selectionEnd, text)
                 }
             }
         }

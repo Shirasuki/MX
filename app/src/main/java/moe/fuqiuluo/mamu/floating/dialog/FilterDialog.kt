@@ -11,6 +11,7 @@ import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.DialogFilterBinding
 import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.floating.ext.keyboardType
 import moe.fuqiuluo.mamu.floating.model.DisplayValueType
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
@@ -41,6 +42,24 @@ class FilterDialog(
         val isPortrait =
             context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         binding.builtinKeyboard.setScreenOrientation(isPortrait)
+
+        // 根据配置决定是否禁用系统输入法
+        val useBuiltinKeyboard = mmkv.keyboardType == 0
+        if (useBuiltinKeyboard) {
+            // 使用内置键盘时，禁用系统输入法弹出
+            binding.inputMaxDisplayCount.showSoftInputOnFocus = false
+            binding.inputAddressStart.showSoftInputOnFocus = false
+            binding.inputAddressEnd.showSoftInputOnFocus = false
+            binding.builtinKeyboard.visibility = View.VISIBLE
+            binding.divider?.visibility = View.VISIBLE
+        } else {
+            // 使用系统键盘时，允许系统输入法弹出
+            binding.inputMaxDisplayCount.showSoftInputOnFocus = true
+            binding.inputAddressStart.showSoftInputOnFocus = true
+            binding.inputAddressEnd.showSoftInputOnFocus = true
+            binding.builtinKeyboard.visibility = View.GONE
+            binding.divider?.visibility = View.GONE
+        }
 
         // 恢复状态
         binding.inputMaxDisplayCount.setText(filterDialogState.maxDisplayCount.toString())
@@ -121,36 +140,27 @@ class FilterDialog(
         binding.builtinKeyboard.listener = object : BuiltinKeyboard.KeyboardListener {
             override fun onKeyInput(key: String) {
                 val input = currentFocusedInput ?: return
-                val currentText = input.text.toString()
+                // 直接操作 Editable，避免 setText 带来的竞争条件
+                val editable = input.text ?: return
                 val selectionStart = input.selectionStart
                 val selectionEnd = input.selectionEnd
 
-                val newText = if (selectionStart != selectionEnd) {
-                    currentText.take(selectionStart) + key + currentText.substring(selectionEnd)
-                } else {
-                    currentText.take(selectionStart) + key + currentText.substring(selectionStart)
-                }
-
-                input.setText(newText)
-                input.setSelection(selectionStart + key.length)
+                // 使用 Editable.replace() 直接替换选中的文本
+                editable.replace(selectionStart, selectionEnd, key)
             }
 
             override fun onDelete() {
                 val input = currentFocusedInput ?: return
-                val currentText = input.text.toString()
+                val editable = input.text ?: return
                 val selectionStart = input.selectionStart
                 val selectionEnd = input.selectionEnd
 
                 if (selectionStart != selectionEnd) {
-                    val newText =
-                        currentText.take(selectionStart) + currentText.substring(selectionEnd)
-                    input.setText(newText)
-                    input.setSelection(selectionStart)
+                    // 有选中文本，删除选中部分
+                    editable.delete(selectionStart, selectionEnd)
                 } else if (selectionStart > 0) {
-                    val newText =
-                        currentText.take(selectionStart - 1) + currentText.substring(selectionStart)
-                    input.setText(newText)
-                    input.setSelection(selectionStart - 1)
+                    // 无选中文本，删除光标前一个字符
+                    editable.delete(selectionStart - 1, selectionStart)
                 }
             }
 
@@ -183,12 +193,12 @@ class FilterDialog(
                 if (clip != null && clip.itemCount > 0) {
                     val text = clip.getItemAt(0).text?.toString() ?: ""
                     val input = currentFocusedInput ?: return
-                    val currentText = input.text.toString()
-                    val cursorPos = input.selectionStart
-                    val newText =
-                        currentText.take(cursorPos) + text + currentText.substring(cursorPos)
-                    input.setText(newText)
-                    input.setSelection(cursorPos + text.length)
+                    val editable = input.text ?: return
+                    val selectionStart = input.selectionStart
+                    val selectionEnd = input.selectionEnd
+
+                    // 使用 Editable.replace() 在光标位置粘贴文本
+                    editable.replace(selectionStart, selectionEnd, text)
                 }
             }
         }

@@ -1,8 +1,12 @@
 package moe.fuqiuluo.mamu.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -34,6 +38,15 @@ class BuiltinKeyboard @JvmOverloads constructor(
     var listener: KeyboardListener? = null
     private var currentState = KeyboardState.EXPANDED
     private var isPortrait = true
+
+    // 长按重复功能
+    private val handler = Handler(Looper.getMainLooper())
+    private var repeatRunnable: Runnable? = null
+
+    companion object {
+        private const val INITIAL_REPEAT_DELAY = 500L // 首次重复前的延迟 (ms)
+        private const val REPEAT_INTERVAL = 50L // 重复间隔 (ms)
+    }
 
     init {
         attrs?.let {
@@ -85,6 +98,40 @@ class BuiltinKeyboard @JvmOverloads constructor(
         }
     }
 
+    /**
+     * 设置支持长按重复执行的按钮
+     * @param view 要设置的按钮
+     * @param action 要重复执行的操作
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupRepeatableKey(view: View?, action: () -> Unit) {
+        view?.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // 立即执行一次
+                    action()
+                    // 延迟后开始重复执行
+                    repeatRunnable = object : Runnable {
+                        override fun run() {
+                            action()
+                            handler.postDelayed(this, REPEAT_INTERVAL)
+                        }
+                    }
+                    handler.postDelayed(repeatRunnable!!, INITIAL_REPEAT_DELAY)
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // 停止重复
+                    repeatRunnable?.let { handler.removeCallbacks(it) }
+                    repeatRunnable = null
+                    v.performClick()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
     private fun setupKeyListeners(view: View) {
         val keyMap = mapOf(
             R.id.key_1 to "1", R.id.key_2 to "2", R.id.key_3 to "3", R.id.key_4 to "4",
@@ -111,20 +158,22 @@ class BuiltinKeyboard @JvmOverloads constructor(
             }
         }
 
-        view.findViewById<View>(R.id.key_delete)?.setOnClickListener {
+        // 支持长按重复的按键
+        setupRepeatableKey(view.findViewById(R.id.key_delete)) {
             listener?.onDelete()
         }
 
-        view.findViewById<View>(R.id.key_select_all)?.setOnClickListener {
-            listener?.onSelectAll()
-        }
-
-        view.findViewById<View>(R.id.key_move_left)?.setOnClickListener {
+        setupRepeatableKey(view.findViewById(R.id.key_move_left)) {
             listener?.onMoveLeft()
         }
 
-        view.findViewById<View>(R.id.key_move_right)?.setOnClickListener {
+        setupRepeatableKey(view.findViewById(R.id.key_move_right)) {
             listener?.onMoveRight()
+        }
+
+        // 不支持长按重复的功能按键
+        view.findViewById<View>(R.id.key_select_all)?.setOnClickListener {
+            listener?.onSelectAll()
         }
 
         view.findViewById<View>(R.id.key_history)?.setOnClickListener {
@@ -150,5 +199,12 @@ class BuiltinKeyboard @JvmOverloads constructor(
         view.findViewById<View>(R.id.key_number_panel)?.setOnClickListener {
             setState(KeyboardState.EXPANDED)
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        // 清理 Handler 回调，防止内存泄漏
+        repeatRunnable?.let { handler.removeCallbacks(it) }
+        repeatRunnable = null
     }
 }
