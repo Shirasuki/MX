@@ -27,6 +27,11 @@ class SearchResultAdapter(
     // 内存范围列表 (保存主要是为了显示内存范围简称和颜色)
     private var ranges: List<DisplayMemRegionEntry>? = null
 
+    init {
+        // 启用稳定ID，提升RecyclerView刷新性能
+        setHasStableIds(true)
+    }
+
     /**
      * 设置搜索结果列表
      * @param newResults 新的搜索结果列表
@@ -113,40 +118,57 @@ class SearchResultAdapter(
     }
 
     /**
-     * 全选
+     * 全选 - 使用notifyDataSetChanged避免遍历大量item
      */
     fun selectAll() {
+        if (selectedPositions.size == results.size) {
+            // 已经全选，无需操作
+            return
+        }
+
         selectedPositions.clear()
         selectedPositions.addAll(results.indices)
-        // 使用payload高效刷新，避免重新bind整个item
-        notifyItemRangeChanged(0, results.size, PAYLOAD_SELECTION_CHANGED)
+
+        // 大数据量时，notifyDataSetChanged只刷新可见区域，反而比notifyItemRangeChanged更快
+        notifyDataSetChanged()
         onSelectionChanged(selectedPositions.size)
     }
 
     /**
-     * 全不选
+     * 全不选 - 使用notifyDataSetChanged避免遍历大量item
      */
     fun deselectAll() {
+        if (selectedPositions.isEmpty()) {
+            // 已经是全不选状态，直接返回
+            return
+        }
+
         selectedPositions.clear()
-        // 使用payload高效刷新所有item
-        notifyItemRangeChanged(0, results.size, PAYLOAD_SELECTION_CHANGED)
+        // 大数据量时，notifyDataSetChanged只刷新可见区域，反而比notifyItemRangeChanged更快
+        notifyDataSetChanged()
         onSelectionChanged(0)
     }
 
     /**
-     * 反选
+     * 反选 - 优化版本，避免创建大型临时集合
      */
     fun invertSelection() {
-        val newSelection = mutableSetOf<Int>()
-        for (i in results.indices) {
+        val totalSize = results.size
+
+        // 避免创建 (0 until totalSize).toSet() 这样的大集合
+        // 遍历所有索引，在集合中的删除，不在的添加
+        val newSelection = hashSetOf<Int>()
+        for (i in 0 until totalSize) {
             if (i !in selectedPositions) {
                 newSelection.add(i)
             }
         }
+
         selectedPositions.clear()
         selectedPositions.addAll(newSelection)
-        // 使用payload高效刷新，避免notifyDataSetChanged()
-        notifyItemRangeChanged(0, results.size, PAYLOAD_SELECTION_CHANGED)
+
+        // 大数据量时，notifyDataSetChanged只刷新可见区域，反而比notifyItemRangeChanged更快
+        notifyDataSetChanged()
         onSelectionChanged(selectedPositions.size)
     }
 
@@ -180,6 +202,11 @@ class SearchResultAdapter(
     }
 
     override fun getItemCount(): Int = results.size
+
+    override fun getItemId(position: Int): Long {
+        // 使用nativePosition作为稳定ID，帮助RecyclerView优化刷新性能
+        return results[position].nativePosition
+    }
 
     inner class ViewHolder(
         private val binding: ItemSearchResultBinding

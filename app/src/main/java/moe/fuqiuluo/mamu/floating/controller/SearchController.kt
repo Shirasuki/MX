@@ -208,6 +208,12 @@ class SearchController(
         binding.resultsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = searchResultAdapter
+
+            // 性能优化：增加ViewHolder缓存池大小
+            setItemViewCacheSize(20) // 默认是2，提高到20可以减少rebind
+
+            // 性能优化：设置固定大小，避免每次数据变化都重新测量
+            setHasFixedSize(true)
         }
     }
 
