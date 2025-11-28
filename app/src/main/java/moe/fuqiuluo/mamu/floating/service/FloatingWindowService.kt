@@ -402,6 +402,9 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
     }
 
     private fun adjustLayoutForOrientation(orientation: Int) {
+        if (::searchController.isInitialized) {
+            searchController.adjustLayoutForOrientation(orientation)
+        }
     }
 
     private fun createNotificationChannel() {

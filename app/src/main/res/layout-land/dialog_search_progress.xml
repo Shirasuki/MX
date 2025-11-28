@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    app:maxWidthPercent="0.5"
+    app:maxHeightPercent="0.6">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="12dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@string/searching"
+            android:importantForAccessibility="no"
+            android:src="@drawable/icon_search_24px"
+            android:tint="@android:color/white"
+            tools:ignore="UseAppTint" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/progress_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/searching"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textColor="?attr/colorOnSurface" />
+
+    </LinearLayout>
+
+
+    <!-- 进度内容 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="24dp">
+
+        <!-- 进度条区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- MD3 线性进度条 -->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progress_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="0"
+                app:indicatorColor="?attr/colorPrimary"
+                app:trackColor="?attr/colorSurfaceVariant"
+                app:trackCornerRadius="4dp"
+                app:trackThickness="8dp" />
+
+            <!-- 进度百分比 -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:minWidth="48dp"
+                android:text="@string/progress_zero"
+                android:textAlignment="textEnd"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface"
+                tools:ignore="RtlCompat" />
+
+        </LinearLayout>
+
+        <!-- 详细信息区域 - 横屏横向排列 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+
+            <!-- 已搜索区域 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tv_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/regions_searched"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@android:color/white" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tv_regions"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/count_zero"
+                    android:textAlignment="textEnd"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@android:color/white"
+                    tools:ignore="RtlCompat" />
+
+            </LinearLayout>
+
+            <!-- 找到结果 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/results_found"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@android:color/white" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tv_results"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/count_zero"
+                    android:textAlignment="textEnd"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@android:color/white"
+                    tools:ignore="RtlCompat" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="12dp"
+        android:gravity="end">
+
+        <!-- 隐藏按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_hide"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/hide"
+            android:textColor="?attr/colorOnSurface" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

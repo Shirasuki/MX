@@ -58,11 +58,12 @@ class SearchDialog(
     private var progressBuffer: ByteBuffer? = null
 
     // 搜索状态标志
-    private var isSearching = false
+    var isSearching = false
     private var currentIsRefineSearch = false
 
     // 退出全屏回调（用于隐藏按钮点击）
     var onExitFullscreen: (() -> Unit)? = null
+
 
     /**
      * 读取进度buffer中的数据

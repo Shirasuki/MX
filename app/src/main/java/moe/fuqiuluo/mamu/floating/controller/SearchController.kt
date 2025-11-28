@@ -9,12 +9,15 @@ import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.*
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.FloatingSearchLayoutBinding
+import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
+import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchResultItem
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.ext.searchPageSize
 import moe.fuqiuluo.mamu.floating.adapter.SearchResultAdapter
 import moe.fuqiuluo.mamu.floating.data.local.MemoryBackupManager
+import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.FilterDialog
 import moe.fuqiuluo.mamu.floating.dialog.FilterDialogState
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
@@ -23,6 +26,7 @@ import moe.fuqiuluo.mamu.floating.dialog.SearchDialog
 import moe.fuqiuluo.mamu.floating.dialog.SearchDialogState
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
+import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.floating.data.model.MemoryBackupRecord
 import moe.fuqiuluo.mamu.floating.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.utils.ByteFormatUtils.formatBytes
@@ -104,6 +108,7 @@ class SearchController(
                 icon = R.drawable.icon_edit_24px,
                 label = "编辑所选"
             ) {
+                showBatchModifyValueDialog()
             },
             ToolbarAction(
                 id = 6,
@@ -587,6 +592,106 @@ class SearchController(
         )
 
         dialog.show()
+    }
+
+    private fun showBatchModifyValueDialog() {
+        val selectedItems = searchResultAdapter.getSelectedItems()
+        if (selectedItems.isEmpty()) {
+            notification.showWarning("未选择任何项目")
+            return
+        }
+
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未选中任何进程")
+            return
+        }
+
+        val clipboardManager =
+            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        fun batchModifyValues(
+            items: List<SearchResultItem>,
+            newValue: String,
+            valueType: DisplayValueType
+        ) {
+            coroutineScope.launch {
+                var successCount = 0
+                var failureCount = 0
+
+                try {
+                    val dataBytes = ValueTypeUtils.parseExprToBytes(newValue, valueType)
+
+                    // 异步批量写入
+                    withContext(Dispatchers.IO) {
+                        items.forEach { item ->
+                            val address = when (item) {
+                                is ExactSearchResultItem -> item.address
+                                is FuzzySearchResultItem -> item.address
+                                else -> return@forEach
+                            }
+
+                            val oldValue = when (item) {
+                                is ExactSearchResultItem -> item.value
+                                is FuzzySearchResultItem -> item.value
+                                else -> ""
+                            }
+
+                            try {
+                                // 保存备份
+                                MemoryBackupManager.saveBackup(address, oldValue, valueType)
+
+                                // 写入内存
+                                val success = WuwaDriver.writeMemory(address, dataBytes)
+                                if (success) {
+                                    // 更新UI (需要在主线程)
+                                    withContext(Dispatchers.Main) {
+                                        searchResultAdapter.updateItemValueByAddress(address, newValue)
+                                    }
+                                    successCount++
+                                } else {
+                                    failureCount++
+                                }
+                            } catch (e: Exception) {
+                                failureCount++
+                            }
+                        }
+                    }
+
+                    // 显示结果统计
+                    if (failureCount == 0) {
+                        notification.showSuccess("成功修改 $successCount 个地址")
+                    } else {
+                        notification.showWarning("成功: $successCount, 失败: $failureCount")
+                    }
+                } catch (e: IllegalArgumentException) {
+                    notification.showError(
+                        context.getString(R.string.error_invalid_value_format, e.message ?: "Unknown error")
+                    )
+                } catch (e: Exception) {
+                    notification.showError(
+                        "批量修改失败: ${e.message ?: "Unknown error"}"
+                    )
+                }
+            }
+        }
+
+        val dialog = BatchModifyValueDialog(
+            context = context,
+            notification = notification,
+            clipboardManager = clipboardManager,
+            searchResultItems = selectedItems,
+            onConfirm = { items, newValue, valueType ->
+                batchModifyValues(items, newValue, valueType)
+            }
+        )
+
+        dialog.show()
+    }
+
+    fun adjustLayoutForOrientation(orientation: Int) {
+        if (searchDialog == null || searchDialog?.isSearching == false) {
+            searchDialog = null
+        }
     }
 
     override fun cleanup() {
