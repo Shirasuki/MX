@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tencent.mmkv.MMKV
+import moe.fuqiuluo.mamu.config.autoStartFloatingWindow
 import moe.fuqiuluo.mamu.ui.theme.AppTheme
 import moe.fuqiuluo.mamu.ui.theme.DarkMode
 import moe.fuqiuluo.mamu.ui.theme.ThemeManager
@@ -36,6 +39,10 @@ fun SettingsScreen(
     val darkMode by ThemeManager.darkMode.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showDarkModeDialog by remember { mutableStateOf(false) }
+
+    // 自动启动悬浮窗配置
+    val mmkv = remember { MMKV.defaultMMKV() }
+    var autoStartFloating by remember { mutableStateOf(mmkv.autoStartFloatingWindow) }
 
     if (showThemeDialog) {
         ThemeSelectionDialog(
@@ -80,6 +87,20 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
+            // 通用设置分组
+            SettingsGroup(title = "通用") {
+                SettingsSwitchItem(
+                    icon = Icons.Default.Window,
+                    title = "自动显示悬浮窗",
+                    description = "应用启动时自动显示悬浮窗",
+                    checked = autoStartFloating,
+                    onCheckedChange = { enabled ->
+                        autoStartFloating = enabled
+                        mmkv.autoStartFloatingWindow = enabled
+                    }
+                )
+            }
+
             // 外观设置分组
             SettingsGroup(title = "外观") {
                 SettingsClickableItem(
