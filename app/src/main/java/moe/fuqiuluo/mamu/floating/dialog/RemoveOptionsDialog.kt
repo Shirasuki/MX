@@ -8,7 +8,7 @@ import android.view.View
 import androidx.core.widget.ImageViewCompat
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.databinding.DialogRemoveOptionsBinding
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
 import kotlin.math.max
 
 class RemoveOptionsDialog(

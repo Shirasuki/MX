@@ -29,7 +29,7 @@ import moe.fuqiuluo.mamu.floating.service.FloatingWindowService
 import moe.fuqiuluo.mamu.ui.tutorial.components.TutorialDialog
 import moe.fuqiuluo.mamu.ui.theme.MXTheme
 import moe.fuqiuluo.mamu.ui.tutorial.TutorialManager
-import moe.fuqiuluo.mamu.viewmodel.MainViewModel
+import moe.fuqiuluo.mamu.ui.viewmodel.MainViewModel
 
 @Composable
 fun HomeScreen(

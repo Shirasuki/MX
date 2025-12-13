@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.DialogSearchProgressBinding
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
 import kotlin.math.max
 import kotlin.random.Random
 

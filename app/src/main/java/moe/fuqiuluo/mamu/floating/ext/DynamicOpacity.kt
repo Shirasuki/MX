@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.google.android.material.card.MaterialCardView
 import com.tencent.mmkv.MMKV
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
 import moe.fuqiuluo.mamu.databinding.FloatingFullscreenLayoutBinding
 
 /**

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.databinding.DialogProcessSelectionBinding
 import moe.fuqiuluo.mamu.floating.adapter.ProcessListAdapter
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
 import kotlin.math.max
 
 class CustomDialog(

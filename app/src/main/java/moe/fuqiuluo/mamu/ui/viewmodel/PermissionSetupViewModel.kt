@@ -1,11 +1,10 @@
-package moe.fuqiuluo.mamu.viewmodel
+package moe.fuqiuluo.mamu.ui.viewmodel
 
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +14,6 @@ import moe.fuqiuluo.mamu.utils.AntiKillProtectionManager
 import moe.fuqiuluo.mamu.utils.DriverInstaller
 import moe.fuqiuluo.mamu.utils.PermissionConfig
 import moe.fuqiuluo.mamu.utils.PermissionManager
-import moe.fuqiuluo.mamu.utils.RootConfigManager
 import moe.fuqiuluo.mamu.utils.RootPermissionUtils
 
 /**

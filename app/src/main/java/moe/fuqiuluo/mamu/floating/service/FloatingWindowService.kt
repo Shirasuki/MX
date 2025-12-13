@@ -33,9 +33,9 @@ import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.ProcessDeathMonitor
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.FloatingWindowStateManager
-import moe.fuqiuluo.mamu.floating.ext.selectedMemoryRanges
-import moe.fuqiuluo.mamu.floating.ext.tabSwitchAnimation
-import moe.fuqiuluo.mamu.floating.ext.topMostLayer
+import moe.fuqiuluo.mamu.data.settings.selectedMemoryRanges
+import moe.fuqiuluo.mamu.data.settings.tabSwitchAnimation
+import moe.fuqiuluo.mamu.data.settings.topMostLayer
 import moe.fuqiuluo.mamu.floating.controller.*
 import moe.fuqiuluo.mamu.floating.ext.applyOpacity
 import moe.fuqiuluo.mamu.floating.listener.DraggableFloatingIconTouchListener

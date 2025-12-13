@@ -23,9 +23,9 @@ import moe.fuqiuluo.mamu.databinding.DialogSearchInputBinding
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchProgressCallback
 import moe.fuqiuluo.mamu.driver.WuwaDriver
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
-import moe.fuqiuluo.mamu.floating.ext.keyboardType
-import moe.fuqiuluo.mamu.floating.ext.selectedMemoryRanges
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.keyboardType
+import moe.fuqiuluo.mamu.data.settings.selectedMemoryRanges
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange
 import moe.fuqiuluo.mamu.floating.ext.formatElapsedTime
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry

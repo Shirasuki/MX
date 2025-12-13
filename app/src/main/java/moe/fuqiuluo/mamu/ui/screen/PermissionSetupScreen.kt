@@ -11,7 +11,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,7 +44,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -69,8 +67,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import moe.fuqiuluo.mamu.MainActivity
 import moe.fuqiuluo.mamu.ui.theme.MXTheme
 import moe.fuqiuluo.mamu.utils.RootConfigManager
-import moe.fuqiuluo.mamu.viewmodel.PermissionSetupState
-import moe.fuqiuluo.mamu.viewmodel.PermissionSetupViewModel
+import moe.fuqiuluo.mamu.ui.viewmodel.PermissionSetupState
+import moe.fuqiuluo.mamu.ui.viewmodel.PermissionSetupViewModel
 
 
 private enum class SetupStep(

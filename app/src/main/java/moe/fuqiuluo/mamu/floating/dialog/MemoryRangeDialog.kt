@@ -6,7 +6,7 @@ import android.widget.ListView
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.databinding.DialogMultiChoiceBinding
 import moe.fuqiuluo.mamu.floating.adapter.MemoryRangeAdapter
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import kotlin.math.max
 

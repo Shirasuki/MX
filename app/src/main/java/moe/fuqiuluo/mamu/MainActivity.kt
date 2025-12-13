@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.tencent.mmkv.MMKV
-import moe.fuqiuluo.mamu.config.autoStartFloatingWindow
+import moe.fuqiuluo.mamu.data.settings.autoStartFloatingWindow
 import moe.fuqiuluo.mamu.floating.service.FloatingWindowService
 import moe.fuqiuluo.mamu.ui.screen.MainScreen
 import moe.fuqiuluo.mamu.ui.theme.MXTheme

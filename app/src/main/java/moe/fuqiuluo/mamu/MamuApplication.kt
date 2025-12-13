@@ -4,11 +4,11 @@ package moe.fuqiuluo.mamu
 import android.app.Application
 import android.util.Log
 import com.tencent.mmkv.MMKV
+import moe.fuqiuluo.mamu.data.settings.chunkSize
+import moe.fuqiuluo.mamu.data.settings.memoryAccessMode
+import moe.fuqiuluo.mamu.data.settings.memoryBufferSize
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
-import moe.fuqiuluo.mamu.floating.ext.chunkSize
-import moe.fuqiuluo.mamu.floating.ext.memoryAccessMode
-import moe.fuqiuluo.mamu.floating.ext.memoryBufferSize
 import java.io.File
 import kotlin.system.exitProcess
 

@@ -1,8 +1,12 @@
-package moe.fuqiuluo.mamu.floating.ext
+package moe.fuqiuluo.mamu.data.settings
 
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
+
+/**
+ * 悬浮窗配置 - 基于 MMKV 的扩展属性
+ */
 
 private const val KEY_OPACITY = "opacity"
 private const val KEY_MEMORY_RANGES = "memory_ranges"
@@ -50,7 +54,7 @@ private const val DEFAULT_FAILED_PAGE_THRESHOLD = 4 // 默认连续失败页阈�
  */
 var MMKV.floatingOpacity: Float
     get() = decodeFloat(KEY_OPACITY, DEFAULT_OPACITY)
-    set(value) = run {
+    set(value) {
         encode(KEY_OPACITY, value)
     }
 
@@ -59,7 +63,7 @@ var MMKV.floatingOpacity: Float
  */
 var MMKV.saveListUpdateInterval: Int
     get() = decodeInt(KEY_LIST_UPDATE_INTERVAL, DEFAULT_LIST_UPDATE_INTERVAL)
-    set(value) = run {
+    set(value) {
         encode(KEY_LIST_UPDATE_INTERVAL, value)
     }
 
@@ -68,7 +72,7 @@ var MMKV.saveListUpdateInterval: Int
  */
 var MMKV.memoryBufferSize: Int
     get() = decodeInt(KEY_MEMORY_BUFFER_SIZE, DEFAULT_MEMORY_BUFFER_SIZE)
-    set(value) = run {
+    set(value) {
         encode(KEY_MEMORY_BUFFER_SIZE, value)
     }
 
@@ -77,7 +81,7 @@ var MMKV.memoryBufferSize: Int
  */
 var MMKV.searchPageSize: Int
     get() = decodeInt(KEY_SEARCH_PAGE_SIZE, DEFAULT_SEARCH_PAGE_SIZE)
-    set(value) = run {
+    set(value) {
         encode(KEY_SEARCH_PAGE_SIZE, value)
     }
 
@@ -89,7 +93,7 @@ var MMKV.searchPageSize: Int
  */
 var MMKV.skipMemoryOption: Int
     get() = decodeInt(KEY_SKIP_MEMORY, DEFAULT_SKIP_MEMORY)
-    set(value) = run {
+    set(value) {
         encode(KEY_SKIP_MEMORY, value)
     }
 
@@ -98,7 +102,7 @@ var MMKV.skipMemoryOption: Int
  */
 var MMKV.autoPause: Boolean
     get() = decodeBool(KEY_AUTO_PAUSE, DEFAULT_AUTO_PAUSE)
-    set(value) = run {
+    set(value) {
         encode(KEY_AUTO_PAUSE, value)
     }
 
@@ -107,7 +111,7 @@ var MMKV.autoPause: Boolean
  */
 var MMKV.freezeInterval: Int
     get() = decodeInt(KEY_FREEZE_INTERVAL, DEFAULT_FREEZE_INTERVAL)
-    set(value) = run {
+    set(value) {
         encode(KEY_FREEZE_INTERVAL, value)
     }
 
@@ -121,7 +125,7 @@ var MMKV.freezeInterval: Int
  */
 var MMKV.memoryAccessMode: Int
     get() = decodeInt(KEY_MEMORY_ACCESS_MODE, DEFAULT_MEMORY_ACCESS_MODE)
-    set(value) = run {
+    set(value) {
         WuwaDriver.setMemoryAccessMode(value) // 每次改变都同步到底层驱动
         encode(KEY_MEMORY_ACCESS_MODE, value)
     }
@@ -133,7 +137,7 @@ var MMKV.memoryAccessMode: Int
  */
 var MMKV.keyboardType: Int
     get() = decodeInt(KEY_KEYBOARD, DEFAULT_KEYBOARD)
-    set(value) = run {
+    set(value) {
         encode(KEY_KEYBOARD, value)
     }
 
@@ -144,16 +148,17 @@ var MMKV.keyboardType: Int
  */
 var MMKV.languageSelection: Int
     get() = decodeInt(KEY_LANGUAGE, DEFAULT_LANGUAGE)
-    set(value) = run {
+    set(value) {
         encode(KEY_LANGUAGE, value)
     }
+
 
 /**
  * 过滤系统进程
  */
 var MMKV.filterSystemProcess: Boolean
     get() = decodeBool(KEY_FILTER_SYSTEM_PROCESS, DEFAULT_FILTER_SYSTEM_PROCESS)
-    set(value) = run {
+    set(value) {
         encode(KEY_FILTER_SYSTEM_PROCESS, value)
     }
 
@@ -162,7 +167,7 @@ var MMKV.filterSystemProcess: Boolean
  */
 var MMKV.filterLinuxProcess: Boolean
     get() = decodeBool(KEY_FILTER_LINUX_PROCESS, DEFAULT_FILTER_LINUX_PROCESS)
-    set(value) = run {
+    set(value) {
         encode(KEY_FILTER_LINUX_PROCESS, value)
     }
 
@@ -171,7 +176,7 @@ var MMKV.filterLinuxProcess: Boolean
  */
 var MMKV.topMostLayer: Boolean
     get() = decodeBool(KEY_TOP_MOST_LAYER, DEFAULT_TOP_MOST_LAYER)
-    set(value) = run {
+    set(value) {
         encode(KEY_TOP_MOST_LAYER, value)
     }
 
@@ -180,7 +185,7 @@ var MMKV.topMostLayer: Boolean
  */
 var MMKV.hideMode1: Boolean
     get() = decodeBool(KEY_HIDE_MODE_1, false)
-    set(value) = run {
+    set(value) {
         encode(KEY_HIDE_MODE_1, value)
     }
 
@@ -189,7 +194,7 @@ var MMKV.hideMode1: Boolean
  */
 var MMKV.hideMode2: Boolean
     get() = decodeBool(KEY_HIDE_MODE_2, false)
-    set(value) = run {
+    set(value) {
         encode(KEY_HIDE_MODE_2, value)
     }
 
@@ -198,7 +203,7 @@ var MMKV.hideMode2: Boolean
  */
 var MMKV.hideMode3: Boolean
     get() = decodeBool(KEY_HIDE_MODE_3, false)
-    set(value) = run {
+    set(value) {
         encode(KEY_HIDE_MODE_3, value)
     }
 
@@ -207,7 +212,7 @@ var MMKV.hideMode3: Boolean
  */
 var MMKV.hideMode4: Boolean
     get() = decodeBool(KEY_HIDE_MODE_4, false)
-    set(value) = run {
+    set(value) {
         encode(KEY_HIDE_MODE_4, value)
     }
 
@@ -229,7 +234,7 @@ var MMKV.selectedMemoryRanges: Set<MemoryRange>
     ) ?: emptySet()).map {
         MemoryRange.fromCode(it)!!
     }.toSet()
-    set(value) = run {
+    set(value) {
         encode(KEY_MEMORY_RANGES, value.map { it.code }.toSet())
     }
 
@@ -238,7 +243,7 @@ var MMKV.selectedMemoryRanges: Set<MemoryRange>
  */
 var MMKV.tabSwitchAnimation: Boolean
     get() = decodeBool(KEY_TAB_SWITCH_ANIMATION, DEFAULT_TAB_SWITCH_ANIMATION)
-    set(value) = run {
+    set(value) {
         encode(KEY_TAB_SWITCH_ANIMATION, value)
     }
 
@@ -251,6 +256,6 @@ var MMKV.tabSwitchAnimation: Boolean
  */
 var MMKV.chunkSize: Int
     get() = decodeInt(KEY_CHUNK_SIZE, DEFAULT_CHUNK_SIZE)
-    set(value) = run {
+    set(value) {
         encode(KEY_CHUNK_SIZE, value)
     }

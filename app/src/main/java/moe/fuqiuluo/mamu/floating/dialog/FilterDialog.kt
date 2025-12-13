@@ -10,8 +10,8 @@ import android.widget.EditText
 import com.tencent.mmkv.MMKV
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.databinding.DialogFilterBinding
-import moe.fuqiuluo.mamu.floating.ext.floatingOpacity
-import moe.fuqiuluo.mamu.floating.ext.keyboardType
+import moe.fuqiuluo.mamu.data.settings.floatingOpacity
+import moe.fuqiuluo.mamu.data.settings.keyboardType
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 import moe.fuqiuluo.mamu.widget.NotificationOverlay

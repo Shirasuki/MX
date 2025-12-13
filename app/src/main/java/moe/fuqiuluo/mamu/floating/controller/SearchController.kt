@@ -15,7 +15,7 @@ import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchResultItem
 import moe.fuqiuluo.mamu.driver.WuwaDriver
-import moe.fuqiuluo.mamu.floating.ext.searchPageSize
+import moe.fuqiuluo.mamu.data.settings.searchPageSize
 import moe.fuqiuluo.mamu.floating.adapter.SearchResultAdapter
 import moe.fuqiuluo.mamu.floating.data.local.MemoryBackupManager
 import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog

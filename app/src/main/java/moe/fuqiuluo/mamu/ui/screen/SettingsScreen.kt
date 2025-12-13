@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tencent.mmkv.MMKV
-import moe.fuqiuluo.mamu.config.autoStartFloatingWindow
+import moe.fuqiuluo.mamu.data.settings.autoStartFloatingWindow
 import moe.fuqiuluo.mamu.ui.theme.AppTheme
 import moe.fuqiuluo.mamu.ui.theme.DarkMode
 import moe.fuqiuluo.mamu.ui.theme.ThemeManager

@@ -1,4 +1,4 @@
-package moe.fuqiuluo.mamu.viewmodel
+package moe.fuqiuluo.mamu.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
