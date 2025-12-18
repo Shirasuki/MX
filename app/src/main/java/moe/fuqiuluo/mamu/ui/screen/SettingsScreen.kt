@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import moe.fuqiuluo.mamu.data.settings.autoStartFloatingWindow
 import moe.fuqiuluo.mamu.ui.theme.AppTheme
 import moe.fuqiuluo.mamu.ui.theme.DarkMode
 import moe.fuqiuluo.mamu.ui.theme.ThemeManager
+import moe.fuqiuluo.mamu.ui.tutorial.TutorialManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +41,7 @@ fun SettingsScreen(
     val darkMode by ThemeManager.darkMode.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showDarkModeDialog by remember { mutableStateOf(false) }
+    var showTutorialResetDialog by remember { mutableStateOf(false) }
 
     // 自动启动悬浮窗配置
     val mmkv = remember { MMKV.defaultMMKV() }
@@ -63,6 +66,36 @@ fun SettingsScreen(
                 showDarkModeDialog = false
             },
             onDismiss = { showDarkModeDialog = false }
+        )
+    }
+
+    if (showTutorialResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showTutorialResetDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.School,
+                    contentDescription = null
+                )
+            },
+            title = { Text("重新开始教程") },
+            text = { Text("教程已重置，返回首页后将再次显示新手教程。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        TutorialManager.resetTutorial()
+                        showTutorialResetDialog = false
+                        onNavigateBack()
+                    }
+                ) {
+                    Text("返回首页")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTutorialResetDialog = false }) {
+                    Text("取消")
+                }
+            }
         )
     }
 
@@ -98,6 +131,13 @@ fun SettingsScreen(
                         autoStartFloating = enabled
                         mmkv.autoStartFloatingWindow = enabled
                     }
+                )
+
+                SettingsClickableItem(
+                    icon = Icons.Default.School,
+                    title = "重新进入教程",
+                    description = "重新显示新手教程",
+                    onClick = { showTutorialResetDialog = true }
                 )
             }
 

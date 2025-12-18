@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
+import moe.fuqiuluo.mamu.ui.tutorial.screen.TutorialPracticeScreen
 import moe.fuqiuluo.mamu.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,10 +20,15 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
+    var showTutorialPractice by remember { mutableStateOf(false) }
 
     if (showSettings) {
         SettingsScreen(
             onNavigateBack = { showSettings = false }
+        )
+    } else if (showTutorialPractice) {
+        TutorialPracticeScreen(
+            onBack = { showTutorialPractice = false }
         )
     } else {
         Scaffold(
@@ -66,7 +72,10 @@ fun MainScreen(
                     label = "tab_crossfade"
                 ) { tab ->
                     when (tab) {
-                        0 -> HomeScreen(viewModel = viewModel)
+                        0 -> HomeScreen(
+                            viewModel = viewModel,
+                            onStartPractice = { showTutorialPractice = true }
+                        )
                         1 -> ModulesScreen()
                         2 -> ToolsScreen()
                         3 -> LogsScreen()

@@ -129,6 +129,7 @@ class SearchController(
                 icon = R.drawable.history_24px,
                 label = "恢复已选项"
             ) {
+                restoreSelectedItems()
             },
             ToolbarAction(
                 id = 11,
@@ -492,6 +493,94 @@ class SearchController(
         }
 
         notification.showWarning("恢复并移除功能开发中")
+    }
+
+    private fun restoreSelectedItems() {
+        val selectedItems = searchResultAdapter.getSelectedItems()
+        if (selectedItems.isEmpty()) {
+            notification.showWarning("未选择任何项目")
+            return
+        }
+
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未选中任何进程")
+            return
+        }
+
+        coroutineScope.launch {
+            var successCount = 0
+            var failureCount = 0
+            var noBackupCount = 0
+
+            withContext(Dispatchers.IO) {
+                selectedItems.forEach { item ->
+                    val address = when (item) {
+                        is ExactSearchResultItem -> item.address
+                        is FuzzySearchResultItem -> item.address
+                        else -> return@forEach
+                    }
+
+                    // 获取备份记录
+                    val backup = MemoryBackupManager.getBackup(address)
+                    if (backup == null) {
+                        noBackupCount++
+                        return@forEach
+                    }
+
+                    try {
+                        // 将备份值转换为字节
+                        val dataBytes = ValueTypeUtils.parseExprToBytes(
+                            backup.originalValue,
+                            backup.originalType
+                        )
+
+                        // 写回内存
+                        val success = WuwaDriver.writeMemory(address, dataBytes)
+                        if (success) {
+                            // 更新UI（需要在主线程）
+                            withContext(Dispatchers.Main) {
+                                searchResultAdapter.updateItemValueByAddress(
+                                    address,
+                                    backup.originalValue
+                                )
+                            }
+
+                            // 恢复成功后删除备份记录
+                            MemoryBackupManager.removeBackup(address)
+                            successCount++
+                        } else {
+                            failureCount++
+                        }
+                    } catch (e: Exception) {
+                        failureCount++
+                    }
+                }
+            }
+
+            // 显示结果统计
+            when {
+                selectedItems.size == noBackupCount -> {
+                    notification.showWarning("所选项目均无备份记录")
+                }
+                failureCount == 0 && noBackupCount == 0 -> {
+                    notification.showSuccess("成功恢复 $successCount 个地址")
+                }
+                else -> {
+                    val message = buildString {
+                        if (successCount > 0) append("成功: $successCount")
+                        if (failureCount > 0) {
+                            if (isNotEmpty()) append(", ")
+                            append("失败: $failureCount")
+                        }
+                        if (noBackupCount > 0) {
+                            if (isNotEmpty()) append(", ")
+                            append("无备份: $noBackupCount")
+                        }
+                    }
+                    notification.showWarning(message)
+                }
+            }
+        }
     }
 
     private fun removeSelected() {
