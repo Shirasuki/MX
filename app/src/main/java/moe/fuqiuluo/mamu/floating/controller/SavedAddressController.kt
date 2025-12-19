@@ -774,18 +774,71 @@ class SavedAddressController(
     }
 
     /**
-     * 更改选中地址的类型
+     * 更改选中地址的类型并刷新内存值
      */
     private fun changeSelectedAddressTypes(items: List<SavedAddress>, newType: DisplayValueType) {
-        items.forEach { item ->
-            val index = savedAddresses.indexOfFirst { it.address == item.address }
-            if (index >= 0) {
-                savedAddresses[index] = item.copy(valueType = newType.nativeId)
-                adapter.updateAddress(savedAddresses[index])
+        if (!WuwaDriver.isProcessBound) {
+            // 未绑定进程时，只更改类型不刷新值
+            items.forEach { item ->
+                val index = savedAddresses.indexOfFirst { it.address == item.address }
+                if (index >= 0) {
+                    savedAddresses[index] = item.copy(valueType = newType.nativeId)
+                    adapter.updateAddress(savedAddresses[index])
+                }
             }
+            notification.showWarning("已更改类型，但未绑定进程无法刷新值")
+            return
         }
 
-        notification.showSuccess("已更改 ${items.size} 个地址的类型为 ${newType.code}")
+        coroutineScope.launch {
+            // 准备批量读取参数
+            val addrs = items.map { it.address }.toLongArray()
+            val sizes = IntArray(items.size) { newType.memorySize.toInt() }
+
+            // 批量读取内存
+            val results = withContext(Dispatchers.IO) {
+                WuwaDriver.batchReadMemory(addrs, sizes)
+            }
+
+            // 更新类型和值
+            var successCount = 0
+            var failCount = 0
+
+            results.forEachIndexed { index, bytes ->
+                val item = items[index]
+                val addrIndex = savedAddresses.indexOfFirst { it.address == item.address }
+
+                if (addrIndex >= 0) {
+                    if (bytes != null) {
+                        try {
+                            val newValue = ValueTypeUtils.bytesToDisplayValue(bytes, newType)
+                            savedAddresses[addrIndex] = item.copy(
+                                valueType = newType.nativeId,
+                                value = newValue
+                            )
+                            adapter.updateAddress(savedAddresses[addrIndex])
+                            successCount++
+                        } catch (e: Exception) {
+                            // 转换失败，只更新类型
+                            savedAddresses[addrIndex] = item.copy(valueType = newType.nativeId)
+                            adapter.updateAddress(savedAddresses[addrIndex])
+                            failCount++
+                        }
+                    } else {
+                        // 读取失败，只更新类型
+                        savedAddresses[addrIndex] = item.copy(valueType = newType.nativeId)
+                        adapter.updateAddress(savedAddresses[addrIndex])
+                        failCount++
+                    }
+                }
+            }
+
+            if (failCount == 0) {
+                notification.showSuccess("已更改 $successCount 个地址的类型为 ${newType.code}")
+            } else {
+                notification.showWarning("成功: $successCount, 读取失败: $failCount")
+            }
+        }
     }
 
     /**
