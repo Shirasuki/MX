@@ -1,7 +1,5 @@
 package moe.fuqiuluo.mamu.floating.data.model
 
-import android.graphics.Color
-
 /**
  * 内存预览支持的显示格式
  * 按优先级排序：h > r > S > J > A > T > A8 > PC > D > F > E > W > B > Q
@@ -12,20 +10,23 @@ enum class MemoryDisplayFormat(
     val textColor: Int,
     val byteSize: Int, // 每个值占用的字节数
     val priority: Int, // 显示优先级（数字越小优先级越高）
+    val appendCode: Boolean = false, // 附加code到结尾
 ) {
     HEX_BIG_ENDIAN(
         code = "h",
         displayName = "反向十六进制 (大端序)",
         textColor = 0xFF00CED1.toInt(),
         byteSize = Int.MAX_VALUE, // 不参与计数
-        priority = 1
+        priority = 1,
+        appendCode = true
     ),
     HEX_LITTLE_ENDIAN(
         code = "r",
         displayName = "十六进制 (小端序)",
         textColor = 0xFFD4CAD6.toInt(),
         byteSize = Int.MAX_VALUE, // 不参与计数
-        priority = 2
+        priority = 2,
+        appendCode = true
     ),
     STRING_EXPR(
         code = "S",
@@ -74,42 +75,48 @@ enum class MemoryDisplayFormat(
         displayName = "Dword",
         textColor = DisplayValueType.DWORD.textColor,
         byteSize = 4,
-        priority = 9
+        priority = 9,
+        appendCode = true
     ),
     FLOAT(
         code = "F",
         displayName = "Float",
         textColor = DisplayValueType.FLOAT.textColor,
         byteSize = 4,
-        priority = 10
+        priority = 10,
+        appendCode = true
     ),
     DOUBLE(
         code = "E",
         displayName = "Double",
         textColor = DisplayValueType.DOUBLE.textColor,
         byteSize = 8,
-        priority = 11
+        priority = 11,
+        appendCode = true
     ),
     WORD(
         code = "W",
         displayName = "Word",
         textColor = DisplayValueType.WORD.textColor,
         byteSize = 2,
-        priority = 12
+        priority = 12,
+        appendCode = true
     ),
     BYTE(
         code = "B",
         displayName = "Byte",
         textColor = DisplayValueType.BYTE.textColor,
         byteSize = 1,
-        priority = 13
+        priority = 13,
+        appendCode = true
     ),
     QWORD(
         code = "Q",
         displayName = "Qword",
         textColor = DisplayValueType.QWORD.textColor,
         byteSize = 8,
-        priority = 14
+        priority = 14,
+        appendCode = true
     );
 
     companion object {

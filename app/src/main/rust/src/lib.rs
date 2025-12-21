@@ -3,6 +3,7 @@ pub mod core;
 pub mod wuwa;
 pub mod ext;
 pub mod search;
+pub mod disasm;
 pub mod jni_interface;
 
 use android_logger::Config;

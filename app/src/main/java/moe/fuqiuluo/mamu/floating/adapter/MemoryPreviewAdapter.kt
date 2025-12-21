@@ -8,16 +8,21 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import moe.fuqiuluo.mamu.databinding.ItemMemoryPreviewBinding
 import moe.fuqiuluo.mamu.databinding.ItemMemoryPreviewNavigationBinding
 import moe.fuqiuluo.mamu.floating.data.model.MemoryPreviewItem
 
 class MemoryPreviewAdapter(
     private val onRowClick: (Long) -> Unit = {},
-    private val onNavigationClick: (Long, Boolean) -> Unit = { _, _ -> }
+    private val onNavigationClick: (Long, Boolean) -> Unit = { _, _ -> },
+    private val onSelectionChanged: (Int) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items = mutableListOf<MemoryPreviewItem>()
+
+    // 选中的地址集合（多选）- 使用 fastutil 优化内存
+    private val selectedAddresses = LongOpenHashSet()
 
     companion object {
         const val VIEW_TYPE_MEMORY_ROW = 0
@@ -26,11 +31,54 @@ class MemoryPreviewAdapter(
         // 结构性变化阈值
         private const val STRUCTURAL_CHANGE_RATIO = 0.1 // 20%
         private const val STRUCTURAL_CHANGE_MIN_DIFF = 200
+
+        private const val PAYLOAD_SELECTION_CHANGED = "selection_changed"
     }
 
     init {
         setHasStableIds(true)
     }
+
+    /**
+     * 切换某个地址的选中状态
+     */
+    private fun toggleSelection(address: Long) {
+        if (selectedAddresses.contains(address)) {
+            selectedAddresses.remove(address)
+        } else {
+            selectedAddresses.add(address)
+        }
+        onSelectionChanged(selectedAddresses.size)
+    }
+
+    /**
+     * 检查某个地址是否被选中
+     */
+    private fun isAddressSelected(address: Long): Boolean {
+        return selectedAddresses.contains(address)
+    }
+
+    /**
+     * 清空选中状态
+     */
+    fun clearSelection() {
+        if (selectedAddresses.isEmpty()) return
+        selectedAddresses.clear()
+        notifyItemRangeChanged(0, items.size, PAYLOAD_SELECTION_CHANGED)
+        onSelectionChanged(0)
+    }
+
+    /**
+     * 获取选中的地址列表
+     */
+    fun getSelectedAddresses(): LongArray {
+        return selectedAddresses.toLongArray()
+    }
+
+    /**
+     * 获取选中数量
+     */
+    fun getSelectedCount(): Int = selectedAddresses.size
 
     fun setItems(newItems: List<MemoryPreviewItem>) {
         val oldSize = items.size
@@ -46,7 +94,10 @@ class MemoryPreviewAdapter(
         if (isStructuralChange) {
             items.clear()
             items.addAll(newItems)
+            // 清空选中状态（因为地址可能已经变了）
+            selectedAddresses.clear()
             notifyDataSetChanged()
+            onSelectionChanged(0)
             return
         }
 
@@ -72,10 +123,12 @@ class MemoryPreviewAdapter(
                 val binding = ItemMemoryPreviewBinding.inflate(inflater, parent, false)
                 MemoryRowViewHolder(binding)
             }
+
             VIEW_TYPE_NAVIGATION -> {
                 val binding = ItemMemoryPreviewNavigationBinding.inflate(inflater, parent, false)
                 NavigationViewHolder(binding)
             }
+
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -85,8 +138,28 @@ class MemoryPreviewAdapter(
             is MemoryPreviewItem.MemoryRow -> {
                 (holder as MemoryRowViewHolder).bind(item)
             }
+
             is MemoryPreviewItem.PageNavigation -> {
                 (holder as NavigationViewHolder).bind(item)
+            }
+        }
+    }
+
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+        } else {
+            for (payload in payloads) {
+                if (payload == PAYLOAD_SELECTION_CHANGED) {
+                    if (holder is MemoryRowViewHolder) {
+                        val item = items[position] as? MemoryPreviewItem.MemoryRow
+                        item?.let { holder.updateSelection(it.address) }
+                    }
+                }
             }
         }
     }
@@ -114,7 +187,9 @@ class MemoryPreviewAdapter(
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val item = items[position] as? MemoryPreviewItem.MemoryRow
-                    item?.let { onRowClick(it.address) }
+                    item?.let {
+                        onRowClick(it.address)
+                    }
                 }
             }
         }
@@ -147,7 +222,9 @@ class MemoryPreviewAdapter(
 
                 val start = spanBuilder.length
                 spanBuilder.append(formattedValue.value)
-                spanBuilder.append(formattedValue.format.code)
+                if (formattedValue.format.appendCode) {
+                    spanBuilder.append(formattedValue.format.code)
+                }
                 val end = spanBuilder.length
 
                 val color = formattedValue.color ?: formattedValue.format.textColor
@@ -169,8 +246,56 @@ class MemoryPreviewAdapter(
                 binding.rangeText.text = ""
             }
 
-            // 设置高亮背景
-            if (item.isHighlighted) {
+            // Checkbox 选中状态
+            val isSelected = isAddressSelected(item.address)
+            binding.checkbox.apply {
+                setOnCheckedChangeListener(null) // 先移除监听器避免触发
+                isChecked = isSelected
+                setOnCheckedChangeListener { _, isChecked ->
+                    bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION }?.let { pos ->
+                        val currentItem = items.getOrNull(pos) as? MemoryPreviewItem.MemoryRow
+                        currentItem?.let {
+                            toggleSelection(it.address)
+                            updateItemBackground(isChecked)
+                        }
+                    }
+                }
+            }
+
+            // 设置高亮背景（选中优先级高于跳转高亮）
+            if (isSelected) {
+                binding.itemContainer.setBackgroundColor(0x33448AFF)
+            } else if (item.isHighlighted) {
+                binding.itemContainer.setBackgroundColor(0x50b1d3b0)
+            } else {
+                binding.itemContainer.background = null
+            }
+        }
+
+        fun updateSelection(address: Long) {
+            val isSelected = isAddressSelected(address)
+            binding.checkbox.apply {
+                setOnCheckedChangeListener(null)
+                isChecked = isSelected
+                setOnCheckedChangeListener { _, isChecked ->
+                    bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION }?.let { pos ->
+                        val currentItem = items.getOrNull(pos) as? MemoryPreviewItem.MemoryRow
+                        currentItem?.let {
+                            toggleSelection(it.address)
+                            updateItemBackground(isChecked)
+                        }
+                    }
+                }
+            }
+            updateItemBackground(isSelected)
+        }
+
+        private fun updateItemBackground(isSelected: Boolean) {
+            val item = items.getOrNull(bindingAdapterPosition) as? MemoryPreviewItem.MemoryRow
+            // 选中优先级高于跳转高亮
+            if (isSelected) {
+                binding.itemContainer.setBackgroundColor(0x33448AFF)
+            } else if (item?.isHighlighted == true) {
                 binding.itemContainer.setBackgroundColor(0x50b1d3b0)
             } else {
                 binding.itemContainer.background = null
@@ -217,8 +342,10 @@ class MemoryPreviewAdapter(
             return when {
                 oldItem is MemoryPreviewItem.MemoryRow && newItem is MemoryPreviewItem.MemoryRow ->
                     oldItem.address == newItem.address
+
                 oldItem is MemoryPreviewItem.PageNavigation && newItem is MemoryPreviewItem.PageNavigation ->
                     oldItem.isNext == newItem.isNext
+
                 else -> false
             }
         }
@@ -229,11 +356,13 @@ class MemoryPreviewAdapter(
             return when {
                 oldItem is MemoryPreviewItem.MemoryRow && newItem is MemoryPreviewItem.MemoryRow ->
                     oldItem.address == newItem.address &&
-                    oldItem.isHighlighted == newItem.isHighlighted &&
-                    oldItem.memoryRange == newItem.memoryRange &&
-                    oldItem.formattedValues == newItem.formattedValues
+                            oldItem.isHighlighted == newItem.isHighlighted &&
+                            oldItem.memoryRange == newItem.memoryRange &&
+                            oldItem.formattedValues == newItem.formattedValues
+
                 oldItem is MemoryPreviewItem.PageNavigation && newItem is MemoryPreviewItem.PageNavigation ->
                     oldItem.targetAddress == newItem.targetAddress
+
                 else -> false
             }
         }

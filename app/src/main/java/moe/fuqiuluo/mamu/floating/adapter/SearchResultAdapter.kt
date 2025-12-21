@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import moe.fuqiuluo.mamu.databinding.ItemSearchResultBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
@@ -30,8 +31,8 @@ class SearchResultAdapter(
     // isAllSelected=true 时: 所有位置默认选中，deselectedPositions 存储取消选择的位置
     // isAllSelected=false 时: 所有位置默认不选中，selectedPositions 存储选中的位置
     private var isAllSelected = false
-    private val selectedPositions = mutableSetOf<Int>()    // isAllSelected=false 时使用
-    private val deselectedPositions = mutableSetOf<Int>()  // isAllSelected=true 时使用
+    private val selectedPositions = IntOpenHashSet()    // isAllSelected=false 时使用
+    private val deselectedPositions = IntOpenHashSet()  // isAllSelected=true 时使用
 
     // 内存范围列表 (保存主要是为了显示内存范围简称和颜色)
     private var ranges: List<DisplayMemRegionEntry>? = null
@@ -308,7 +309,7 @@ class SearchResultAdapter(
         isAllSelected = !isAllSelected
 
         // 交换 selectedPositions 和 deselectedPositions
-        val temp = selectedPositions.toMutableSet()
+        val temp = IntOpenHashSet(selectedPositions)
         selectedPositions.clear()
         selectedPositions.addAll(deselectedPositions)
         deselectedPositions.clear()

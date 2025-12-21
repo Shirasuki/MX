@@ -25,6 +25,7 @@ bplustree = { path = "bplustree" }
 memchr = "2.7.6"
 bytemuck = "1.24.0"
 rand = { version = "0.10.0-rc.5", features = ["default"] }
+capstone = { version = "0.13.0" }
 
 [dev-dependencies]
 memchr = "2.7"

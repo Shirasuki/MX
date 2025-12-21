@@ -17,6 +17,7 @@ import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.data.settings.memoryDisplayFormats
 import moe.fuqiuluo.mamu.data.settings.memoryRegionCacheInterval
 import moe.fuqiuluo.mamu.databinding.FloatingMemoryPreviewLayoutBinding
+import moe.fuqiuluo.mamu.driver.Disassembler
 import moe.fuqiuluo.mamu.driver.LocalMemoryOps
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.adapter.MemoryPreviewAdapter
@@ -38,11 +39,8 @@ class MemoryPreviewController(
 ) : FloatingController<FloatingMemoryPreviewLayoutBinding>(context, binding, notification) {
 
     companion object {
-        // 每页固定大小：4KB
         private val PAGE_SIZE = LocalMemoryOps.getPageSize()
         private const val TAG = "MemoryPreviewCtrl"
-
-        // 十六进制查找表，避免 String.format 开销
         private val HEX_CHARS = "0123456789ABCDEF".toCharArray()
 
         // ViewHolder 预创建数量
@@ -69,13 +67,16 @@ class MemoryPreviewController(
     // 列表适配器
     private val adapter = MemoryPreviewAdapter(
         onRowClick = { address ->
-            // TODO: 显示编辑对话框
-            notification.showWarning("点击地址: ${String.format("%X", address)}")
+            // 点击时已经在 adapter 中切换了选中状态，这里可以做额外操作
+            // TODO: 可以显示编辑对话框或其他操作
         },
         onNavigationClick = { targetAddress, isNext ->
             // 翻页时清除高亮，直接跳转到页头
             this.targetAddress = null
             jumpToPage(targetAddress)
+        },
+        onSelectionChanged = { selectedCount ->
+            // 选中状态变化时的回调
         }
     )
 
@@ -381,13 +382,13 @@ class MemoryPreviewController(
      * @param highlightAddress 要高亮的地址（可选）
      */
     private fun loadPage(pageStartAddress: Long, highlightAddress: Long? = null) {
-        val startTime = System.currentTimeMillis()
-        Log.d(TAG, "━━━━━ loadPage 开始 ━━━━━")
-        Log.d(
-            TAG,
-            "地址: 0x${
-                pageStartAddress.toString(16).uppercase()
-            }, 高亮: ${highlightAddress?.let { "0x${it.toString(16).uppercase()}" } ?: "无"}")
+//        val startTime = System.currentTimeMillis()
+//        Log.d(TAG, "━━━━━ loadPage 开始 ━━━━━")
+//        Log.d(
+//            TAG,
+//            "地址: 0x${
+//                pageStartAddress.toString(16).uppercase()
+//            }, 高亮: ${highlightAddress?.let { "0x${it.toString(16).uppercase()}" } ?: "无"}")
 
         // 检查页头地址是否对齐
         if (pageStartAddress % PAGE_SIZE != 0L) {
@@ -403,16 +404,16 @@ class MemoryPreviewController(
         val alignment = MemoryDisplayFormat.calculateAlignment(currentFormats)
         val hexByteSize = MemoryDisplayFormat.calculateHexByteSize(currentFormats)
         val formats = currentFormats
-        val t1 = System.currentTimeMillis()
-        Log.d(
-            TAG,
-            "[1] 计算对齐: alignment=$alignment, hexByteSize=$hexByteSize, 耗时=${t1 - startTime}ms"
-        )
+//        val t1 = System.currentTimeMillis()
+//        Log.d(
+//            TAG,
+//            "[1] 计算对齐: alignment=$alignment, hexByteSize=$hexByteSize, 耗时=${t1 - startTime}ms"
+//        )
 
         // 整个流程在 Default 线程执行，减少调度开销
         coroutineScope.launch(Dispatchers.Default) {
-            val t2 = System.currentTimeMillis()
-            Log.d(TAG, "[2] 协程启动, 耗时=${t2 - t1}ms")
+//            val t2 = System.currentTimeMillis()
+//            Log.d(TAG, "[2] 协程启动, 耗时=${t2 - t1}ms")
 
             // 检查内存区域缓存是否有效
             val cacheInterval = mmkv.memoryRegionCacheInterval.toLong()
@@ -441,15 +442,15 @@ class MemoryPreviewController(
             } else {
                 memoryRegions
             }
-            val t3 = System.currentTimeMillis()
-            Log.d(
-                TAG,
-                "[3] 查询内存区域: 区域数=${sortedRegions.size}, 缓存=${cacheValid}, 耗时=${t3 - t2}ms"
-            )
+//            val t3 = System.currentTimeMillis()
+//            Log.d(
+//                TAG,
+//                "[3] 查询内存区域: 区域数=${sortedRegions.size}, 缓存=${cacheValid}, 耗时=${t3 - t2}ms"
+//            )
 
             val memoryData = memoryDeferred.await()
-            val t4 = System.currentTimeMillis()
-            Log.d(TAG, "[4] 读取内存: 大小=${memoryData?.size ?: 0}bytes, 耗时=${t4 - t3}ms")
+//            val t4 = System.currentTimeMillis()
+//            Log.d(TAG, "[4] 读取内存: 大小=${memoryData?.size ?: 0}bytes, 耗时=${t4 - t3}ms")
 
             // 构建最终列表
             val items = mutableListOf<MemoryPreviewItem>()
@@ -504,8 +505,8 @@ class MemoryPreviewController(
                 }
                 items.addAll(parseResult.rows)
             }
-            val t5 = System.currentTimeMillis()
-            Log.d(TAG, "[5] 解析内存完成: 解析${items.size}行, 耗时=${t5 - t4}ms")
+//            val t5 = System.currentTimeMillis()
+//            Log.d(TAG, "[5] 解析内存完成: 解析${items.size}行, 耗时=${t5 - t4}ms")
 
             // 添加下一页导航
             val nextAddress = pageStartAddress + PAGE_SIZE
@@ -515,8 +516,8 @@ class MemoryPreviewController(
             withContext(Dispatchers.Main) {
                 adapter.setItems(items)
                 updateEmptyState()
-                val t6 = System.currentTimeMillis()
-                Log.d(TAG, "[6] 更新UI完成: 耗时=${t6 - t5}ms")
+//                val t6 = System.currentTimeMillis()
+//                Log.d(TAG, "[6] 更新UI完成: 耗时=${t6 - t5}ms")
 
                 // 滚动到高亮的行，放在视觉中间位置
                 if (highlightedRowIndex >= 0) {
@@ -530,8 +531,8 @@ class MemoryPreviewController(
                     }
                 }
 
-                val totalTime = System.currentTimeMillis() - startTime
-                Log.d(TAG, "━━━━━ loadPage 完成: 总耗时=${totalTime}ms ━━━━━\n")
+//                val totalTime = System.currentTimeMillis() - startTime
+//                Log.d(TAG, "━━━━━ loadPage 完成: 总耗时=${totalTime}ms ━━━━━\n")
             }
         }
     }
@@ -714,6 +715,81 @@ class MemoryPreviewController(
                         }
                     }
                     FormattedValue(format, "'$displayString'")
+                }
+
+                MemoryDisplayFormat.ARM32 -> {
+                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
+                    val bytes = ByteArray(4)
+                    buffer.get(bytes)
+                    try {
+                        val results = Disassembler.disassembleARM32(bytes, address, count = 1)
+                        if (results.isNotEmpty()) {
+                            val insn = results[0]
+                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
+                        } else {
+                            FormattedValue(format, "???")
+                        }
+                    } catch (e: Exception) {
+                        FormattedValue(format, "err")
+                    }
+                }
+
+                MemoryDisplayFormat.THUMB -> {
+                    if (buffer.remaining() < 2) return FormattedValue(format, "---")
+                    val bytes = ByteArray(2)
+                    buffer.get(bytes)
+                    try {
+                        val results = Disassembler.disassembleThumb(bytes, address, count = 1)
+                        if (results.isNotEmpty()) {
+                            val insn = results[0]
+                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
+                        } else {
+                            FormattedValue(format, "???")
+                        }
+                    } catch (e: Exception) {
+                        FormattedValue(format, "err")
+                    }
+                }
+
+                MemoryDisplayFormat.ARM64 -> {
+                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
+                    val bytes = ByteArray(4)
+                    buffer.get(bytes)
+                    try {
+                        val results = Disassembler.disassembleARM64(bytes, address, count = 1)
+                        if (results.isNotEmpty()) {
+                            val insn = results[0]
+                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
+                        } else {
+                            FormattedValue(format, "???")
+                        }
+                    } catch (e: Exception) {
+                        FormattedValue(format, "err")
+                    }
+                }
+
+                MemoryDisplayFormat.ARM64_PSEUDO -> {
+                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
+                    val bytes = ByteArray(4)
+                    buffer.get(bytes)
+                    try {
+                        val results = Disassembler.generatePseudoCode(
+                            Disassembler.Architecture.ARM64,
+                            bytes,
+                            address,
+                            count = 1
+                        )
+                        if (results.isNotEmpty()) {
+                            val insn = results[0]
+                            // 优先显示伪代码，如果没有则显示汇编
+                            val displayText = insn.pseudoCode ?: "${insn.mnemonic} ${insn.operands}"
+                            FormattedValue(format, displayText)
+                        } else {
+                            FormattedValue(format, "???")
+                        }
+                    } catch (e: Exception) {
+                        FormattedValue(format, "err")
+                    }
                 }
 
                 else -> FormattedValue(format, "TODO(${format.code})")
