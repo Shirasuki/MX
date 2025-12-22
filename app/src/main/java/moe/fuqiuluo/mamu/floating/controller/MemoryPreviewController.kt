@@ -27,6 +27,7 @@ import moe.fuqiuluo.mamu.floating.data.model.*
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
 import moe.fuqiuluo.mamu.floating.event.AddressValueChangedEvent
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
+import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRangeParallel
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
@@ -172,6 +173,13 @@ class MemoryPreviewController(
             ) {
                 // TODO: 显示选择内存范围对话框
                 notification.showWarning("选择内存范围功能待实现")
+            },
+            ToolbarAction(
+                id = 3,
+                icon = R.drawable.calculate_24px,
+                label = "偏移量计算器"
+            ) {
+                showOffsetCalculator()
             }
         )
 
@@ -999,6 +1007,22 @@ class MemoryPreviewController(
             )
 
             dialog.show()
+        }
+    }
+
+    /**
+     * 显示偏移量计算器
+     */
+    private fun showOffsetCalculator() {
+        // 使用当前显示的页面起始地址作为初始基址
+        var initialBaseAddress: Long? = if (currentStartAddress > 0) currentStartAddress else null
+
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.ShowOffsetCalculatorDialog(
+                    initialBaseAddress = initialBaseAddress
+                )
+            )
         }
     }
 

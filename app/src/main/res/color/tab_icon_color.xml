@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 选中状态 - 使用主题色 -->
-    <item android:color="?attr/colorPrimary" android:state_selected="true" />
+    <item android:color="@color/white" android:state_selected="true" />
     <!-- 默认状态 - 白色 -->
     <item android:color="@android:color/white" />
 </selector>

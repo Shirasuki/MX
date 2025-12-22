@@ -182,6 +182,7 @@
     <string name="button_goto">转到</string>
     <string name="button_no">否</string>
     <string name="button_yes">是</string>
+    <string name="button_copy">复制</string>
     <string name="modify_success_message">地址 %s 修改成功</string>
     <string name="modify_failed_message">地址 %s 修改失败</string>
     <string name="error_invalid_value_format">输入值格式错误: %s</string>

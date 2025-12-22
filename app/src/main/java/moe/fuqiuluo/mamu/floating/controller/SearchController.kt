@@ -36,6 +36,7 @@ import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.floating.data.model.MemoryBackupRecord
+import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.utils.ByteFormatUtils.formatBytes
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
@@ -230,6 +231,7 @@ class SearchController(
                 icon = R.drawable.calculate_24px,
                 label = "偏移量计算器"
             ) {
+                showOffsetCalculator()
             },
             ToolbarAction(
                 id = 14,
@@ -984,6 +986,30 @@ class SearchController(
         )
 
         dialog.show()
+    }
+
+    /**
+     * 显示偏移量计算器
+     */
+    private fun showOffsetCalculator() {
+        val selectedItems = searchResultAdapter.getSelectedItems()
+        var initialBaseAddress: Long? = null
+        if (selectedItems.isNotEmpty()) {
+            // 获取第一个选中项的地址作为初始基址
+            initialBaseAddress = when (val item = selectedItems.firstOrNull()) {
+                is ExactSearchResultItem -> item.address
+                is FuzzySearchResultItem -> item.address
+                else -> null
+            }
+        }
+
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.ShowOffsetCalculatorDialog(
+                    initialBaseAddress = initialBaseAddress
+                )
+            )
+        }
     }
 
     fun adjustLayoutForOrientation(orientation: Int) {

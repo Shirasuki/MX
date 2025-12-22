@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_lg"
+    app:maxHeightPercent="0.9"
+    app:maxWidthPercent="0.9">
+
+    <!-- 内容区域（可滚动） -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:id="@+id/content_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 标题 -->
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.H2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_xs"
+                android:text="偏移量计算器" />
+
+            <!-- 副标题 -->
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:text="输入地址和偏移实时显示偏移量" />
+
+            <!-- 基址输入 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/floating_spacing_sm"
+                    android:text="地址" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/floating_spacing_sm"
+                    android:layout_marginEnd="@dimen/floating_spacing_sm"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/input_base_address"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/floating_height_button_sm"
+                        android:background="@android:color/transparent"
+                        android:cursorVisible="true"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:hint="十六进制地址"
+                        android:inputType="none"
+                        android:paddingStart="@dimen/floating_spacing_xs"
+                        android:paddingEnd="@dimen/floating_spacing_xs"
+                        android:textColor="@color/floating_text_primary"
+                        android:textColorHint="@color/floating_text_secondary"
+                        android:textCursorDrawable="@null"
+                        android:textSize="@dimen/floating_text_body">
+
+                        <requestFocus />
+                    </EditText>
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:dividerColor="@color/floating_divider" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 表达式输入 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/floating_spacing_sm"
+                    android:text="偏移量" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/floating_spacing_sm"
+                    android:layout_marginEnd="@dimen/floating_spacing_sm"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/input_expression"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/floating_height_button_sm"
+                        android:background="@android:color/transparent"
+                        android:cursorVisible="true"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:hint="偏移量表达式"
+                        android:inputType="none"
+                        android:paddingStart="@dimen/floating_spacing_xs"
+                        android:paddingEnd="@dimen/floating_spacing_xs"
+                        android:textColor="@color/floating_text_primary"
+                        android:textColorHint="@color/floating_text_secondary"
+                        android:textCursorDrawable="@null"
+                        android:textSize="@dimen/floating_text_body" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:dividerColor="@color/floating_divider" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 十六进制模式 CheckBox -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:orientation="horizontal">
+
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/cb_hex_mode"
+                    style="@style/FloatingCheckBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="十六进制" />
+            </LinearLayout>
+
+            <!-- 地址文本 -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/result_address"
+                style="@style/FloatingText.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_xs"
+                android:text="列表 0xFFFFFFFFF"
+                android:textIsSelectable="true"
+                android:visibility="visible" />
+
+            <!-- 结果文本 -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/result_text"
+                style="@style/FloatingText.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="none"
+                android:gravity="top"
+                android:maxLines="999"
+                android:padding="@dimen/floating_spacing_xs"
+                android:textIsSelectable="true"
+                android:visibility="visible" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- 分割线 -->
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/floating_spacing_lg"
+        app:dividerColor="@color/floating_divider" />
+
+    <!-- 内置键盘 -->
+    <moe.fuqiuluo.mamu.widget.BuiltinKeyboard
+        android:id="@+id/builtin_keyboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- 底部按钮 -->
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_copy"
+            style="@style/FloatingButton.Text.White"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_copy" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            style="@style/FloatingButton.Text.White"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_goto"
+            style="@style/FloatingButton.Text.White"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_goto" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

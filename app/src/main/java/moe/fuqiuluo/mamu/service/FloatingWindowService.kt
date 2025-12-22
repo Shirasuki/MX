@@ -47,6 +47,7 @@ import moe.fuqiuluo.mamu.floating.controller.*
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import moe.fuqiuluo.mamu.floating.dialog.MemoryRangeDialog
+import moe.fuqiuluo.mamu.floating.dialog.OffsetCalculatorDialog
 import moe.fuqiuluo.mamu.floating.dialog.customDialog
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.ProcessStateEvent
@@ -157,33 +158,21 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         coroutineScope.launch {
             FloatingEventBus.uiActionEvents.collect { event ->
                 when (event) {
-                    is UIActionEvent.ShowProcessSelectionDialog -> {
-                        showProcessSelectionDialog()
-                    }
+                    is UIActionEvent.ShowProcessSelectionDialog -> showProcessSelectionDialog()
 
-                    is UIActionEvent.BindProcessRequest -> {
-                        handleBindProcess(event.process)
-                    }
+                    is UIActionEvent.ShowMemoryRangeDialog -> showMemoryRangeDialog()
 
-                    is UIActionEvent.UnbindProcessRequest -> {
-                        handleUnbindProcess(isUserInitiated = true)
-                    }
+                    is UIActionEvent.ShowOffsetCalculatorDialog -> showOffsetCalculatorDialog(event.initialBaseAddress)
 
-                    is UIActionEvent.ExitOverlayRequest -> {
-                        stopSelf()
-                    }
+                    is UIActionEvent.BindProcessRequest -> handleBindProcess(event.process)
 
-                    is UIActionEvent.ShowMemoryRangeDialog -> {
-                        showMemoryRangeDialog()
-                    }
+                    is UIActionEvent.UnbindProcessRequest -> handleUnbindProcess(isUserInitiated = true)
 
-                    is UIActionEvent.ApplyOpacityRequest -> {
-                        fullscreenBinding.applyOpacity()
-                    }
+                    is UIActionEvent.ExitOverlayRequest -> stopSelf()
 
-                    is UIActionEvent.HideFloatingWindow -> {
-                        hideFullscreen()
-                    }
+                    is UIActionEvent.ApplyOpacityRequest -> fullscreenBinding.applyOpacity()
+
+                    is UIActionEvent.HideFloatingWindow -> hideFullscreen()
 
                     is UIActionEvent.SwitchToSettingsTab -> {
                         isProgrammaticTabSwitch = true
@@ -504,6 +493,20 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         dialog.show()
     }
 
+    /**
+     * 显示偏移量计算器对话框
+     */
+    private fun showOffsetCalculatorDialog(initialBaseAddress: Long?) {
+        val dialog = OffsetCalculatorDialog(
+            context = this,
+            notification = notification,
+            clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager,
+            initialBaseAddress = initialBaseAddress
+        )
+
+        dialog.show()
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setupFloatingIcon() {
         val preferTopMost = MMKV.defaultMMKV().topMostLayer
@@ -666,6 +669,7 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
                         if (fullscreenBinding.sidebarNavigationRail.selectedItemId != itemId) {
                             isProgrammaticTabSwitch = true
                             fullscreenBinding.sidebarNavigationRail.selectedItemId = itemId
+                            updateNavigationRailIndicator(fullscreenBinding.sidebarNavigationRail, itemId)
                             isProgrammaticTabSwitch = false
                         }
                     }

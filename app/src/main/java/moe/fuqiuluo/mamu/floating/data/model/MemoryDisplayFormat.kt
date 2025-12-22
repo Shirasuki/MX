@@ -136,7 +136,7 @@ enum class MemoryDisplayFormat(
         /**
          * 根据选中的格式计算十六进制显示的字节数（使用最大的字节数，排除Int.MAX_VALUE）
          */
-        fun calculateHexByteSize(formats: List<MemoryDisplayFormat>): Int {
+        fun calculateHexByteSize(formats: Collection<MemoryDisplayFormat>): Int {
             val validSizes = formats.mapNotNull {
                 if (it.byteSize == Int.MAX_VALUE) null else it.byteSize
             }

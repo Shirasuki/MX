@@ -37,7 +37,7 @@ abstract class BaseDialog(
         dialog.show()
     }
 
-    fun dismiss() {
+    open fun dismiss() {
         dialog.dismiss()
     }
 }

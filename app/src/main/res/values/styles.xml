@@ -55,9 +55,4 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">@dimen/floating_radius_lg</item>
     </style>
-
-    <!-- NavigationRail 指示器形状 - 左侧竖条 -->
-    <style name="NavigationRailIndicatorShape" parent="ShapeAppearance.Material3.Corner.None">
-        <item name="cornerSize">0dp</item>
-    </style>
 </resources>

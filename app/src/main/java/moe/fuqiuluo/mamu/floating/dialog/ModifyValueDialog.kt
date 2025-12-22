@@ -32,9 +32,9 @@ import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
 private const val TAG = "ModifyValueDialog"
 
 class ModifyValueDialog : BaseDialog {
-    private lateinit var notification: NotificationOverlay
-    private lateinit var clipboardManager: ClipboardManager
-    private lateinit var modifyTarget: ModifyTarget
+    private var notification: NotificationOverlay
+    private var clipboardManager: ClipboardManager
+    private var modifyTarget: ModifyTarget
     private var onConfirm: ((address: Long, oldValue: String, newValue: String, valueType: DisplayValueType) -> Unit)? = null
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

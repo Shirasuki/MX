@@ -7,16 +7,19 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.SimpleItemAnimator
-import kotlinx.coroutines.*
+import com.tencent.mmkv.MMKV
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moe.fuqiuluo.mamu.R
-import moe.fuqiuluo.mamu.floating.event.AddressValueChangedEvent
-import moe.fuqiuluo.mamu.floating.event.BatchAddressValueChangedEvent
-import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
-import moe.fuqiuluo.mamu.floating.event.ProcessStateEvent
-import moe.fuqiuluo.mamu.floating.event.SaveSearchResultsEvent
-import moe.fuqiuluo.mamu.floating.event.SearchResultsUpdatedEvent
-import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
+import moe.fuqiuluo.mamu.data.settings.saveListUpdateInterval
 import moe.fuqiuluo.mamu.databinding.FloatingSavedAddressesLayoutBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
@@ -28,20 +31,22 @@ import moe.fuqiuluo.mamu.floating.data.local.SavedAddressRepository
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
+import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.OffsetXorDialog
 import moe.fuqiuluo.mamu.floating.dialog.RemoveOptionsDialog
-import moe.fuqiuluo.mamu.utils.ValueTypeUtils
+import moe.fuqiuluo.mamu.floating.event.AddressValueChangedEvent
+import moe.fuqiuluo.mamu.floating.event.BatchAddressValueChangedEvent
+import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
+import moe.fuqiuluo.mamu.floating.event.ProcessStateEvent
+import moe.fuqiuluo.mamu.floating.event.SearchResultsUpdatedEvent
+import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.utils.ByteFormatUtils.formatBytes
+import moe.fuqiuluo.mamu.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.ToolbarAction
 import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
-import com.tencent.mmkv.MMKV
-import moe.fuqiuluo.mamu.data.settings.saveListUpdateInterval
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
 class SavedAddressController(
     context: Context,
@@ -84,7 +89,7 @@ class SavedAddressController(
         updateProcessDisplay(null)
         updateEmptyState()
         updateAddressCountBadge()
-        
+
         subscribeToAddressEvents()
         subscribeToProcessStateEvents()
         subscribeToSaveSearchResultsEvents()
@@ -130,6 +135,7 @@ class SavedAddressController(
                         updateProcessDisplay(event.process)
                         startAutoUpdate()
                     }
+
                     ProcessStateEvent.Type.UNBOUND,
                     ProcessStateEvent.Type.DIED -> {
                         // 进程解绑或死亡时，立即停止更新并清空
@@ -1115,16 +1121,19 @@ class SavedAddressController(
      * 显示偏移量计算器
      */
     private fun showOffsetCalculator() {
-        // todo 显示偏移量计算器
-//        val clipboardManager =
-//            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-//
-//        val dialog = OffsetCalculatorDialog(
-//            context = context,
-//            notification = notification,
-//            clipboardManager = clipboardManager
-//        )
-//        dialog.show()
+        val selectedItems = adapter.getSelectedItems()
+        var initialBaseAddress: Long? = null
+        if (selectedItems.isNotEmpty()) {
+            initialBaseAddress = selectedItems.firstOrNull()?.address
+        }
+
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.ShowOffsetCalculatorDialog(
+                    initialBaseAddress = initialBaseAddress
+                )
+            )
+        }
     }
 
     private fun updateEmptyState() {
@@ -1219,7 +1228,8 @@ class SavedAddressController(
         results.forEachIndexed { index, bytes ->
             try {
                 val snapshotItem = snapshot[index]
-                val currentIndex = savedAddresses.indexOfFirst { it.address == snapshotItem.address }
+                val currentIndex =
+                    savedAddresses.indexOfFirst { it.address == snapshotItem.address }
 
                 if (currentIndex >= 0 && bytes != null) {
                     val valueType = savedAddresses[currentIndex].displayValueType
@@ -1228,7 +1238,8 @@ class SavedAddressController(
 
                     // 只在值变化时更新，避免无意义的刷新
                     if (savedAddresses[currentIndex].value != newValue) {
-                        savedAddresses[currentIndex] = savedAddresses[currentIndex].copy(value = newValue)
+                        savedAddresses[currentIndex] =
+                            savedAddresses[currentIndex].copy(value = newValue)
                         adapter.updateAddress(savedAddresses[currentIndex])
                     }
                 }
