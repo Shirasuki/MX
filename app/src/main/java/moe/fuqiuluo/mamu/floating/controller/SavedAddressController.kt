@@ -31,6 +31,7 @@ import moe.fuqiuluo.mamu.floating.data.local.SavedAddressRepository
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
+import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
@@ -93,6 +94,7 @@ class SavedAddressController(
         subscribeToAddressEvents()
         subscribeToProcessStateEvents()
         subscribeToSaveSearchResultsEvents()
+        subscribeToSaveMemoryPreviewEvents()
     }
 
     /**
@@ -195,6 +197,61 @@ class SavedAddressController(
                 saveAddresses(savedAddresses)
             }
         }
+    }
+
+    /**
+     * 订阅保存内存预览事件
+     */
+    private fun subscribeToSaveMemoryPreviewEvents() {
+        coroutineScope.launch {
+            FloatingEventBus.saveMemoryPreviewEvents.collect { event ->
+                // 对ranges进行排序（如果存在），以便使用二分查找
+                val sortedRanges = event.ranges?.sortedBy { it.start }
+
+                // 转换MemoryRow为SavedAddress
+                val addresses = event.selectedItems.map { row ->
+                    // 使用二分查找从ranges中找到匹配的range
+                    val range = findRangeForAddress(row.address, sortedRanges)
+                        ?: row.memoryRange
+                        ?: MemoryRange.O
+
+                    SavedAddress(
+                        address = row.address,
+                        name = "Var #${String.format("%X", row.address)}",
+                        valueType = DisplayValueType.DWORD.nativeId,
+                        value = "",
+                        isFrozen = false,
+                        range = range
+                    )
+                }
+
+                saveAddresses(addresses)
+            }
+        }
+    }
+
+    /**
+     * 使用二分查找在排序的ranges中找到包含指定address的range
+     * @param address 要查找的内存地址
+     * @param sortedRanges 已按start排序的内存范围列表
+     * @return 找到的MemoryRange，如果未找到返回null
+     */
+    private fun findRangeForAddress(
+        address: Long,
+        sortedRanges: List<DisplayMemRegionEntry>?
+    ): MemoryRange? {
+        if (sortedRanges.isNullOrEmpty()) return null
+
+        // 使用二分查找
+        val index = sortedRanges.binarySearch { range ->
+            when {
+                address < range.start -> 1  // address在range之前，继续向左查找
+                address >= range.end -> -1  // address在range之后，继续向右查找
+                else -> 0  // address在range内，找到了
+            }
+        }
+
+        return if (index >= 0) sortedRanges[index].range else null
     }
 
     /**
@@ -1001,7 +1058,7 @@ class SavedAddressController(
     }
 
     /**
-     * 计算选中地址的偏移异或
+     * 计算选中地址的偏移异或（通过Service显示对话框）
      */
     private fun calculateOffsetXor() {
         val selectedItems = adapter.getSelectedItems()
@@ -1010,17 +1067,11 @@ class SavedAddressController(
             return
         }
 
-        val clipboardManager =
-            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
-        val dialog = OffsetXorDialog(
-            context = context,
-            notification = notification,
-            clipboardManager = clipboardManager,
-            selectedAddresses = selectedItems
-        )
-
-        dialog.show()
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.ShowOffsetXorDialog(selectedItems)
+            )
+        }
     }
 
     /**

@@ -48,6 +48,7 @@ import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import moe.fuqiuluo.mamu.floating.dialog.MemoryRangeDialog
 import moe.fuqiuluo.mamu.floating.dialog.OffsetCalculatorDialog
+import moe.fuqiuluo.mamu.floating.dialog.OffsetXorDialog
 import moe.fuqiuluo.mamu.floating.dialog.customDialog
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.ProcessStateEvent
@@ -163,6 +164,10 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
                     is UIActionEvent.ShowMemoryRangeDialog -> showMemoryRangeDialog()
 
                     is UIActionEvent.ShowOffsetCalculatorDialog -> showOffsetCalculatorDialog(event.initialBaseAddress)
+
+                    is UIActionEvent.ShowOffsetXorDialog -> {
+                        showOffsetXorDialog(event.selectedAddresses)
+                    }
 
                     is UIActionEvent.BindProcessRequest -> handleBindProcess(event.process)
 
@@ -504,6 +509,19 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
             initialBaseAddress = initialBaseAddress
         )
 
+        dialog.show()
+    }
+
+    /**
+     * 显示偏移异或计算对话框
+     */
+    private fun showOffsetXorDialog(selectedAddresses: List<moe.fuqiuluo.mamu.floating.data.model.SavedAddress>) {
+        val dialog = OffsetXorDialog(
+            context = this,
+            notification = notification,
+            clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager,
+            selectedAddresses = selectedAddresses
+        )
         dialog.show()
     }
 

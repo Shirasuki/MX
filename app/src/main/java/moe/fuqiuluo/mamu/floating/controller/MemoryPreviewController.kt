@@ -13,20 +13,36 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.tencent.mmkv.MMKV
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.data.settings.memoryDisplayFormats
 import moe.fuqiuluo.mamu.data.settings.memoryRegionCacheInterval
 import moe.fuqiuluo.mamu.databinding.FloatingMemoryPreviewLayoutBinding
 import moe.fuqiuluo.mamu.driver.Disassembler
 import moe.fuqiuluo.mamu.driver.LocalMemoryOps
+import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.adapter.MemoryPreviewAdapter
 import moe.fuqiuluo.mamu.floating.data.local.MemoryBackupManager
-import moe.fuqiuluo.mamu.floating.data.model.*
+import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
+import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
+import moe.fuqiuluo.mamu.floating.data.model.FormattedValue
+import moe.fuqiuluo.mamu.floating.data.model.MemoryDisplayFormat
+import moe.fuqiuluo.mamu.floating.data.model.MemoryPreviewItem
+import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
+import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
+import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
 import moe.fuqiuluo.mamu.floating.event.AddressValueChangedEvent
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
+import moe.fuqiuluo.mamu.floating.event.SaveMemoryPreviewEvent
+import moe.fuqiuluo.mamu.floating.event.SearchResultsUpdatedEvent
 import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRangeParallel
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
@@ -160,27 +176,91 @@ class MemoryPreviewController(
         val actions = listOf(
             ToolbarAction(
                 id = 1,
-                icon = R.drawable.icon_search_24px,
-                label = "跳转到地址"
-            ) {
-                // TODO: 显示跳转对话框
-                notification.showWarning("跳转功能待实现")
-            },
-            ToolbarAction(
-                id = 2,
-                icon = R.drawable.icon_list_24px,
-                label = "选择内存范围"
-            ) {
-                // TODO: 显示选择内存范围对话框
-                notification.showWarning("选择内存范围功能待实现")
-            },
-            ToolbarAction(
-                id = 3,
                 icon = R.drawable.calculate_24px,
                 label = "偏移量计算器"
             ) {
                 showOffsetCalculator()
-            }
+            },
+
+            ToolbarAction(
+                id = 200,
+                icon = R.drawable.icon_arrow_left_alt_24px,
+                label = "后退"
+            ) {
+
+            },
+
+            ToolbarAction(
+                id = 201,
+                icon = R.drawable.icon_arrow_right_alt_24px,
+                label = "前进"
+            ) {
+
+            },
+
+            ToolbarAction(
+                id = 2,
+                icon = R.drawable.icon_save_24px,
+                label = "保存"
+            ) {
+                saveSelectedToAddresses()
+            },
+
+            ToolbarAction(
+                id = 3,
+                icon = R.drawable.icon_edit_24px,
+                label = "修改"
+            ) {
+                showBatchModifyDialog()
+            },
+
+            ToolbarAction(
+                id = 4,
+                icon = R.drawable.flip_to_front_24px,
+                label = "交叉勾选"
+            ) {
+                crossSelectBetween()
+            },
+
+            ToolbarAction(
+                id = 5,
+                icon = R.drawable.search_check_24px,
+                label = "选定为搜索结果"
+            ) {
+                setSelectedAsSearchResults()
+            },
+
+            ToolbarAction(
+                id = 6,
+                icon = R.drawable.deselect_24px,
+                label = "清除选择"
+            ) {
+                adapter.clearSelection()
+            },
+
+            ToolbarAction(
+                id = 7,
+                icon = R.drawable.type_xor_24px,
+                label = "计算偏移异或"
+            ) {
+                calculateOffsetXor()
+            },
+
+            ToolbarAction(
+                id = 8,
+                icon = R.drawable.select_all_24px,
+                label = "全选"
+            ) {
+                adapter.selectAll()
+            },
+
+            ToolbarAction(
+                id = 9,
+                icon = R.drawable.flip_to_front_24px,
+                label = "反选"
+            ) {
+                adapter.invertSelection()
+            },
         )
 
         toolbar.setActions(actions)
@@ -1015,13 +1095,242 @@ class MemoryPreviewController(
      */
     private fun showOffsetCalculator() {
         // 使用当前显示的页面起始地址作为初始基址
-        var initialBaseAddress: Long? = if (currentStartAddress > 0) currentStartAddress else null
+        val initialBaseAddress = if (adapter.getSelectedCount() > 0) adapter.getSelectedAddresses()
+            .first() else currentStartAddress
 
         coroutineScope.launch {
             FloatingEventBus.emitUIAction(
                 UIActionEvent.ShowOffsetCalculatorDialog(
                     initialBaseAddress = initialBaseAddress
                 )
+            )
+        }
+    }
+
+    /**
+     * 保存选中的地址到Saved Address
+     */
+    private fun saveSelectedToAddresses() {
+        val selectedAddresses = adapter.getSelectedAddresses()
+        if (selectedAddresses.isEmpty()) {
+            notification.showWarning("未选择任何项目")
+            return
+        }
+
+        // 获取选中的行
+        val selectedRows = adapter.getAllItems()
+            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .filter { selectedAddresses.contains(it.address) }
+
+        coroutineScope.launch {
+            FloatingEventBus.emitSaveMemoryPreview(
+                SaveMemoryPreviewEvent(
+                    selectedItems = selectedRows,
+                    ranges = memoryRegions
+                )
+            )
+            notification.showSuccess("已保存 ${selectedRows.size} 个地址")
+        }
+    }
+
+    /**
+     * 显示批量修改对话框
+     */
+    private fun showBatchModifyDialog() {
+        val selectedAddresses = adapter.getSelectedAddresses()
+        if (selectedAddresses.isEmpty()) {
+            notification.showWarning("未选择任何项目")
+            return
+        }
+
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未绑定进程")
+            return
+        }
+
+        // 获取选中的行
+        val selectedRows = adapter.getAllItems()
+            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .filter { selectedAddresses.contains(it.address) }
+
+        // 转换为SavedAddress格式（BatchModifyValueDialog需要）
+        val tempAddresses = selectedRows.map { row ->
+            SavedAddress(
+                address = row.address,
+                name = "0x${row.address.toString(16).uppercase()}",
+                valueType = DisplayValueType.DWORD.nativeId,
+                value = "",
+                isFrozen = false,
+                range = row.memoryRange ?: MemoryRange.O
+            )
+        }
+
+        val clipboardManager =
+            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        val dialog = BatchModifyValueDialog(
+            context = context,
+            notification = notification,
+            clipboardManager = clipboardManager,
+            savedAddresses = tempAddresses,
+            onConfirm = { items, newValue, valueType ->
+                batchModifyMemoryValues(items.map { it.address }, newValue, valueType)
+            }
+        )
+
+        dialog.show()
+    }
+
+    /**
+     * 批量修改内存值
+     */
+    private fun batchModifyMemoryValues(
+        addresses: List<Long>,
+        newValue: String,
+        valueType: DisplayValueType
+    ) {
+        coroutineScope.launch {
+            try {
+                val dataBytes = ValueTypeUtils.parseExprToBytes(newValue, valueType)
+
+                // 准备批量写入参数
+                val addrs = addresses.toLongArray()
+                val dataArray = Array(addresses.size) { dataBytes }
+
+                // 批量写入内存
+                val results = withContext(Dispatchers.IO) {
+                    WuwaDriver.batchWriteMemory(addrs, dataArray)
+                }
+
+                // 统计结果
+                val successCount = results.count { it }
+                val failureCount = results.size - successCount
+
+                if (failureCount == 0) {
+                    notification.showSuccess("成功修改 $successCount 个地址")
+                    // 刷新当前页面
+                    refreshCurrentPage()
+                } else {
+                    notification.showWarning("成功: $successCount, 失败: $failureCount")
+                }
+            } catch (e: IllegalArgumentException) {
+                notification.showError("值格式错误: ${e.message}")
+            } catch (e: Exception) {
+                notification.showError("批量修改失败: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * 交叉勾选：选中最小和最大选中项之间的所有项
+     */
+    private fun crossSelectBetween() {
+        val selectedAddresses = adapter.getSelectedAddresses()
+        if (selectedAddresses.size < 2) {
+            notification.showWarning("请至少选择2个项目以使用交叉勾选")
+            return
+        }
+
+        // 获取所有MemoryRow items
+        val allItems = adapter.getAllItems()
+            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
+
+        // 找到选中项的索引
+        val selectedIndices = allItems.mapIndexedNotNull { index, row ->
+            if (selectedAddresses.contains(row.address)) index else null
+        }
+
+        if (selectedIndices.size < 2) return
+
+        val minIndex = selectedIndices.minOrNull() ?: return
+        val maxIndex = selectedIndices.maxOrNull() ?: return
+
+        // 选中min到max之间的所有地址
+        val addressesToSelect = allItems
+            .subList(minIndex, maxIndex + 1)
+            .map { it.address }
+
+        adapter.selectAddresses(addressesToSelect)
+        notification.showSuccess("已交叉选中 ${addressesToSelect.size} 个地址")
+    }
+
+    /**
+     * 将选中的地址设为搜索结果
+     */
+    private fun setSelectedAsSearchResults() {
+        val selectedAddresses = adapter.getSelectedAddresses()
+        if (selectedAddresses.isEmpty()) {
+            notification.showWarning("未选择任何项目")
+            return
+        }
+
+        val selectedRows = adapter.getAllItems()
+            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .filter { selectedAddresses.contains(it.address) }
+
+        coroutineScope.launch {
+            val addresses = selectedRows.map { it.address }
+            val types = Array(selectedRows.size) { DisplayValueType.DWORD }
+
+            val success = withContext(Dispatchers.IO) {
+                SearchEngine.addResultsFromAddresses(addresses, types)
+            }
+
+            if (success) {
+                val totalCount = SearchEngine.getTotalResultCount()
+                notification.showSuccess("已将 ${selectedRows.size} 个地址设为搜索结果")
+
+                // 创建内存范围
+                val ranges = selectedRows.map { row ->
+                    val size = DisplayValueType.DWORD.memorySize
+                    DisplayMemRegionEntry(
+                        start = row.address,
+                        end = row.address + size,
+                        type = 0x03,
+                        name = row.memoryRange?.displayName ?: "Unknown",
+                        range = row.memoryRange ?: MemoryRange.O
+                    )
+                }
+
+                // 发送事件更新搜索tab
+                FloatingEventBus.emitSearchResultsUpdated(
+                    SearchResultsUpdatedEvent(totalCount, ranges)
+                )
+            } else {
+                notification.showError("设置搜索结果失败")
+            }
+        }
+    }
+
+    /**
+     * 计算偏移异或（通过Service显示对话框）
+     */
+    private fun calculateOffsetXor() {
+        val selectedAddresses = adapter.getSelectedAddresses()
+        if (selectedAddresses.size < 2) {
+            notification.showWarning("请至少选择 2 个地址")
+            return
+        }
+
+        val selectedRows = adapter.getAllItems()
+            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .filter { selectedAddresses.contains(it.address) }
+
+        // 转换为SavedAddress格式
+        val tempAddresses = selectedRows.map { row ->
+            SavedAddress(
+                address = row.address,
+                name = "0x${row.address.toString(16).uppercase()}",
+                valueType = DisplayValueType.DWORD.nativeId,
+                value = "",
+                isFrozen = false,
+                range = row.memoryRange ?: MemoryRange.O
+            )
+        }
+
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.ShowOffsetXorDialog(tempAddresses)
             )
         }
     }

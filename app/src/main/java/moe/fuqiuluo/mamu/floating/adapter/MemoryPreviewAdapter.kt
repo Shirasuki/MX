@@ -80,6 +80,49 @@ class MemoryPreviewAdapter(
      */
     fun getSelectedCount(): Int = selectedAddresses.size
 
+    /**
+     * 获取所有items（用于交叉勾选算法）
+     */
+    fun getAllItems(): List<MemoryPreviewItem> = items
+
+    /**
+     * 批量选中多个地址
+     */
+    fun selectAddresses(addresses: List<Long>) {
+        selectedAddresses.clear()
+        selectedAddresses.addAll(addresses)
+        notifyItemRangeChanged(0, items.size, PAYLOAD_SELECTION_CHANGED)
+        onSelectionChanged(selectedAddresses.size)
+    }
+
+    /**
+     * 全选所有内存行
+     */
+    fun selectAll() {
+        items.filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .forEach { selectedAddresses.add(it.address) }
+        notifyItemRangeChanged(0, items.size, PAYLOAD_SELECTION_CHANGED)
+        onSelectionChanged(selectedAddresses.size)
+    }
+
+    /**
+     * 反选
+     */
+    fun invertSelection() {
+        val allAddresses = items.filterIsInstance<MemoryPreviewItem.MemoryRow>()
+            .map { it.address }
+
+        allAddresses.forEach { address ->
+            if (selectedAddresses.contains(address)) {
+                selectedAddresses.remove(address)
+            } else {
+                selectedAddresses.add(address)
+            }
+        }
+        notifyItemRangeChanged(0, items.size, PAYLOAD_SELECTION_CHANGED)
+        onSelectionChanged(selectedAddresses.size)
+    }
+
     fun setItems(newItems: List<MemoryPreviewItem>) {
         val oldSize = items.size
         val newSize = newItems.size

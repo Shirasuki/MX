@@ -65,6 +65,13 @@ object FloatingEventBus {
     )
     val navigateToMemoryAddressEvents: SharedFlow<NavigateToMemoryAddressEvent> = _navigateToMemoryAddressEvents.asSharedFlow()
 
+    // 保存内存预览到地址事件流
+    private val _saveMemoryPreviewEvents = MutableSharedFlow<SaveMemoryPreviewEvent>(
+        replay = 0,
+        extraBufferCapacity = 8
+    )
+    val saveMemoryPreviewEvents: SharedFlow<SaveMemoryPreviewEvent> = _saveMemoryPreviewEvents.asSharedFlow()
+
     /**
      * 发送地址值变更事件（单个）
      */
@@ -120,5 +127,12 @@ object FloatingEventBus {
      */
     suspend fun emitNavigateToMemoryAddress(event: NavigateToMemoryAddressEvent) {
         _navigateToMemoryAddressEvents.emit(event)
+    }
+
+    /**
+     * 发送保存内存预览事件
+     */
+    suspend fun emitSaveMemoryPreview(event: SaveMemoryPreviewEvent) {
+        _saveMemoryPreviewEvents.emit(event)
     }
 }

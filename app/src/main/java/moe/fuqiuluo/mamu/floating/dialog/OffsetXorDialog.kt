@@ -21,7 +21,6 @@ import moe.fuqiuluo.mamu.widget.NotificationOverlay
 
 /**
  * 偏移量计算对话框
- * 显示选中地址之间的偏移关系和异或结果
  */
 class OffsetXorDialog(
     context: Context,

@@ -1,6 +1,7 @@
 package moe.fuqiuluo.mamu.floating.event
 
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
+import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 
 /**
  * UI 操作请求事件
@@ -14,6 +15,11 @@ sealed class UIActionEvent {
 
     /** 请求显示内存范围选择对话框 */
     data object ShowMemoryRangeDialog : UIActionEvent()
+
+    /** 请求显示偏移异或计算对话框 */
+    data class ShowOffsetXorDialog(
+        val selectedAddresses: List<SavedAddress>
+    ) : UIActionEvent()
 
     /** 请求绑定进程 */
     data class BindProcessRequest(val process: DisplayProcessInfo) : UIActionEvent()
