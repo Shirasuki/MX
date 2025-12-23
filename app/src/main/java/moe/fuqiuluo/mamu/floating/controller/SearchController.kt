@@ -18,6 +18,7 @@ import moe.fuqiuluo.mamu.floating.event.SaveSearchResultsEvent
 import moe.fuqiuluo.mamu.floating.event.SearchResultsUpdatedEvent
 import moe.fuqiuluo.mamu.databinding.FloatingSearchLayoutBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
+import moe.fuqiuluo.mamu.driver.FuzzyCondition
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchResultItem
@@ -37,6 +38,7 @@ import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.floating.data.model.MemoryBackupRecord
 import moe.fuqiuluo.mamu.floating.dialog.AddressActionDialog
+import moe.fuqiuluo.mamu.floating.dialog.FuzzySearchDialog
 import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.utils.ByteFormatUtils.formatBytes
@@ -62,6 +64,9 @@ class SearchController(
 
     // 持久化的 SearchDialog 实例
     private var searchDialog: SearchDialog? = null
+
+    // 持久化的 FuzzySearchDialog 实例
+    private var fuzzySearchDialog: FuzzySearchDialog? = null
 
     override fun initialize() {
         setupToolbar()
@@ -178,6 +183,7 @@ class SearchController(
                 icon = R.drawable.saved_search_24px,
                 label = "模糊搜索"
             ) {
+                showFuzzySearchDialog()
             },
             ToolbarAction(
                 id = 4,
@@ -440,12 +446,42 @@ class SearchController(
         searchDialog?.show()
     }
 
+    private fun showFuzzySearchDialog() {
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("请先选择进程")
+            return
+        }
+
+        // 搜索结束移除单例
+        val allSearchComplete = {
+            fuzzySearchDialog = null
+        }
+
+        // 单例模式：复用 FuzzySearchDialog 实例
+        if (fuzzySearchDialog == null) {
+            fuzzySearchDialog = FuzzySearchDialog(
+                context = context,
+                notification = notification,
+                onSearchCompleted = { ranges, totalFound ->
+                    onSearchCompleted(ranges, totalFound)
+                    allSearchComplete()
+                },
+                onRefineCompleted = { totalFound ->
+                    onRefineCompleted(totalFound)
+                    allSearchComplete()
+                }
+            )
+        }
+        fuzzySearchDialog?.show()
+    }
+
     /**
      * 隐藏搜索进度对话框（如果正在搜索）
      * 用于退出全屏时隐藏进度 UI，但后台搜索继续
      */
     fun hideSearchProgressIfNeeded() {
         searchDialog?.hideProgressDialog()
+        fuzzySearchDialog?.hideProgressDialog()
     }
 
     /**
@@ -454,6 +490,7 @@ class SearchController(
      */
     fun showSearchProgressIfNeeded() {
         searchDialog?.showProgressDialogIfSearching()
+        fuzzySearchDialog?.showProgressDialogIfSearching()
     }
 
     private fun onRefineCompleted(totalFound: Long) {
@@ -1069,6 +1106,9 @@ class SearchController(
     fun adjustLayoutForOrientation(orientation: Int) {
         if (searchDialog == null || searchDialog?.isSearching == false) {
             searchDialog = null
+        }
+        if (fuzzySearchDialog == null || fuzzySearchDialog?.isSearching == false) {
+            fuzzySearchDialog = null
         }
     }
 

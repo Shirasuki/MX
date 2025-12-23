@@ -3,6 +3,7 @@
 pub mod filter;
 pub mod single_search;
 pub mod group_search;
+pub mod fuzzy_search;
 pub mod manager;
 pub mod shared_buffer;
 

@@ -156,6 +156,7 @@ pub(crate) fn search_in_buffer_with_status(
 /// 单值细化搜索
 /// 逐个读取地址的值，再用rayon并行判断
 /// 返回仍然匹配的地址列表
+#[deprecated]
 pub(crate) fn refine_single_search(
     addresses: &[ValuePair],
     target: &SearchValue,

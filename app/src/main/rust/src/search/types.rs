@@ -28,7 +28,7 @@ impl ValueType {
             _ => None,
         }
     }
-    
+
     #[inline]
     pub fn to_id(&self) -> i32 {
         match self {
@@ -260,6 +260,58 @@ impl SearchValue {
 pub enum SearchMode {
     Unordered,
     Ordered,
+}
+
+/// 模糊搜索条件 - 用于未知值搜索
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum FuzzyCondition {
+    /// 首次搜索 - 记录所有地址的当前值
+    Initial,
+    /// 值未改变
+    Unchanged,
+    /// 值已改变
+    Changed,
+    /// 值增大了
+    Increased,
+    /// 值减小了
+    Decreased,
+    /// 值增加了指定数量
+    IncreasedBy(i64),
+    /// 值减少了指定数量
+    DecreasedBy(i64),
+    /// 值增加了指定范围
+    IncreasedByRange(i64, i64),
+    /// 值减少了指定范围
+    DecreasedByRange(i64, i64),
+    /// 值大于旧值指定百分比 (例如 10 表示新值 > 旧值 * 1.1)
+    IncreasedByPercent(f32),
+    /// 值小于旧值指定百分比
+    DecreasedByPercent(f32),
+}
+
+impl FuzzyCondition {
+    /// 从 ID 转换为 FuzzyCondition (用于 JNI)
+    pub fn from_id(id: i32, param1: i64, param2: i64) -> Option<Self> {
+        match id {
+            0 => Some(FuzzyCondition::Initial),
+            1 => Some(FuzzyCondition::Unchanged),
+            2 => Some(FuzzyCondition::Changed),
+            3 => Some(FuzzyCondition::Increased),
+            4 => Some(FuzzyCondition::Decreased),
+            5 => Some(FuzzyCondition::IncreasedBy(param1)),
+            6 => Some(FuzzyCondition::DecreasedBy(param1)),
+            7 => Some(FuzzyCondition::IncreasedByRange(param1, param2)),
+            8 => Some(FuzzyCondition::DecreasedByRange(param1, param2)),
+            9 => Some(FuzzyCondition::IncreasedByPercent(param1 as f32 / 100.0)),
+            10 => Some(FuzzyCondition::DecreasedByPercent(param1 as f32 / 100.0)),
+            _ => None,
+        }
+    }
+
+    /// 检查是否为首次搜索
+    pub fn is_initial(&self) -> bool {
+        matches!(self, FuzzyCondition::Initial)
+    }
 }
 
 #[derive(Debug, Clone)]

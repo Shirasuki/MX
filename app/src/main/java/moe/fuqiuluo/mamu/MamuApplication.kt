@@ -1,30 +1,22 @@
 @file:Suppress("KotlinJniMissingFunction")
+
 package moe.fuqiuluo.mamu
 
 import android.app.Application
 import android.util.Log
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.lifecycleScope
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import moe.fuqiuluo.mamu.data.local.RootFileSystem
 import moe.fuqiuluo.mamu.data.settings.chunkSize
+import moe.fuqiuluo.mamu.data.settings.compatibilityMode
 import moe.fuqiuluo.mamu.data.settings.memoryAccessMode
 import moe.fuqiuluo.mamu.data.settings.memoryBufferSize
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import java.io.File
 import kotlin.system.exitProcess
-
 
 private const val TAG = "MamuApplication"
 
@@ -75,6 +67,7 @@ class MamuApplication : Application() {
         }
 
         WuwaDriver.setMemoryAccessMode(mmkv.memoryAccessMode) // 设置内存访问模式，同步到 WuwaDriver
+        SearchEngine.setCompatibilityMode(mmkv.compatibilityMode) // 设置兼容模式，同步到 SearchEngine
 
         Log.d(TAG, "MamuApplication initialized")
     }

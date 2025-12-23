@@ -1498,6 +1498,7 @@ fn dfs_unordered_with_cancel<F>(
 ///
 /// # 返回值
 /// 返回满足条件的所有地址的集合
+#[deprecated]
 pub(crate) fn refine_search_group_with_dfs(
     existing_results: &Vec<ValuePair>,
     query: &SearchQuery,

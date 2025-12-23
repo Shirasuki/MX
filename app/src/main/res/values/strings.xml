@@ -59,6 +59,8 @@
     <string name="settings_memory_buffer_size_summary">搜索结果内存缓冲区（修改后需重启应用）</string>
     <string name="settings_dialog_transparency">Dialog透明度</string>
     <string name="settings_dialog_transparency_summary">关闭后Dialog将完全不透明</string>
+    <string name="settings_compatibility_mode">兼容模式</string>
+    <string name="settings_compatibility_mode_summary">启用后所有搜索结果以模糊格式存储，支持精确/模糊搜索无缝切换</string>
     <string name="settings_top_most_layer">最高层级绘制</string>
     <string name="settings_top_most_layer_summary">启用后悬浮窗显示在所有应用之上（易暴毙）</string>
 
@@ -92,6 +94,8 @@
     <string name="success_keyboard_saved">键盘设置已保存</string>
     <string name="success_language_saved">语言设置已保存</string>
     <string name="success_chunk_size_saved">搜索分块大小已保存</string>
+    <string name="success_compatibility_mode_enabled">兼容模式已启用</string>
+    <string name="success_compatibility_mode_disabled">兼容模式已关闭</string>
     <string name="success_topmost_changed">最高层级绘制已%s，需重启悬浮窗生效</string>
     <string name="topmost_enabled">启用</string>
     <string name="topmost_disabled">关闭</string>
@@ -173,6 +177,25 @@
     <string name="default_page_size">100</string>
     <string name="hint_address_start">00000000</string>
     <string name="hint_address_end">FFFFFFFF</string>
+
+    <!-- 模糊搜索对话框 -->
+    <string name="fuzzy_search_dialog_title">模糊搜索</string>
+    <string name="fuzzy_search_initial_title">初始扫描</string>
+    <string name="fuzzy_search_refine_title">细化搜索</string>
+    <string name="fuzzy_search_initial_subtitle">记录指定类型的所有值，为后续细化做准备</string>
+    <string name="fuzzy_search_refine_subtitle">根据条件过滤上次搜索结果</string>
+    <string name="fuzzy_search_select_condition">选择搜索条件</string>
+    <string name="fuzzy_search_select_type">选择数据类型</string>
+    <string name="fuzzy_search_param1">参数1</string>
+    <string name="fuzzy_search_param2">参数2</string>
+    <string name="fuzzy_search_param1_hint">输入数值</string>
+    <string name="fuzzy_search_param2_hint">输入数值</string>
+    <string name="fuzzy_search_range_hint">范围：%1$s ~ %2$s</string>
+    <string name="fuzzy_search_percent_hint">百分比：0~100</string>
+    <string name="fuzzy_search_button_start">开始扫描</string>
+    <string name="fuzzy_search_button_refine">细化</string>
+    <string name="fuzzy_search_no_results">请先进行初始扫描</string>
+    <string name="fuzzy_search_current_results">当前结果：%d 个</string>
     <string name="hint_value_min">最小值</string>
     <string name="hint_value_max">最大值</string>
 

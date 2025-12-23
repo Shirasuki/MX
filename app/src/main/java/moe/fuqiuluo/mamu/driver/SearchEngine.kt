@@ -158,10 +158,11 @@ object SearchEngine {
         type: DisplayValueType,
         ranges: Set<MemoryRange>,
         useDeepSearch: Boolean,
+        keepResult: Boolean = false,
     ): Boolean {
         val nativeRegions = mutableListOf<Long>()
 
-        WuwaDriver.queryMemRegions()
+        WuwaDriver.queryMemRegionsWithRetry()
             .divideToSimpleMemoryRange()
             .filter { ranges.contains(it.range) }
             .forEach {
@@ -176,7 +177,8 @@ object SearchEngine {
             query,
             type.nativeId,
             nativeRegions.toLongArray(),
-            useDeepSearch
+            useDeepSearch,
+            keepResult
         )
     }
 
@@ -186,6 +188,7 @@ object SearchEngine {
      * @param type Data type.
      * @param regions Memory region array, format [start1, end1, start2, end2, ...].
      * @param useDeepSearch Whether to use deep search.
+     * @param keepResult Whether to keep existing results when switching modes.
      * @return Whether the search started successfully.
      */
     fun startSearchAsyncWithCustomRange(
@@ -193,12 +196,13 @@ object SearchEngine {
         type: DisplayValueType,
         regions: LongArray,
         useDeepSearch: Boolean,
+        keepResult: Boolean = false,
     ): Boolean {
         clearSharedBuffer()
         if (!newSharedBuffer()) {
             throw RuntimeException("failed to init SharedBuffer")
         }
-        return nativeStartSearchAsync(query, type.nativeId, regions, useDeepSearch)
+        return nativeStartSearchAsync(query, type.nativeId, regions, useDeepSearch, keepResult)
     }
 
     /**
@@ -237,7 +241,7 @@ object SearchEngine {
     ): Long {
         val nativeRegions = mutableListOf<Long>()
 
-        WuwaDriver.queryMemRegions()
+        WuwaDriver.queryMemRegionsWithRetry()
             .divideToSimpleMemoryRange()
             .filter { ranges.contains(it.range) }
             .forEach {
@@ -366,6 +370,88 @@ object SearchEngine {
     }
 
     /**
+     * Sets compatibility mode.
+     * When enabled, all search results are stored in fuzzy format,
+     * allowing seamless switching between exact and fuzzy searches.
+     * @param enabled Whether to enable compatibility mode.
+     */
+    fun setCompatibilityMode(enabled: Boolean) {
+        nativeSetCompatibilityMode(enabled)
+    }
+
+    /**
+     * Gets compatibility mode.
+     * @return Whether compatibility mode is enabled.
+     */
+    fun getCompatibilityMode(): Boolean {
+        return nativeGetCompatibilityMode()
+    }
+
+    /**
+     * Starts an async fuzzy initial search. Records all values in memory regions.
+     * @param type Data type to search for.
+     * @param ranges Memory range set.
+     * @param keepResult If true and currently in exact mode, convert exact results to fuzzy results.
+     * @return Whether the search started successfully.
+     */
+    fun startFuzzySearchAsync(
+        type: DisplayValueType,
+        ranges: Set<MemoryRange>,
+        keepResult: Boolean = false,
+    ): Boolean {
+        val nativeRegions = mutableListOf<Long>()
+
+        WuwaDriver.queryMemRegionsWithRetry()
+            .divideToSimpleMemoryRange()
+            .filter { ranges.contains(it.range) }
+            .forEach {
+                nativeRegions.add(it.start)
+                nativeRegions.add(it.end)
+            }
+
+        clearSharedBuffer()
+        newSharedBuffer()
+
+        return nativeStartFuzzySearchAsync(type.nativeId, nativeRegions.toLongArray(), keepResult)
+    }
+
+    /**
+     * Starts an async fuzzy initial search with custom memory regions.
+     * @param type Data type to search for.
+     * @param regions Memory region array, format [start1, end1, start2, end2, ...].
+     * @param keepResult If true and currently in exact mode, convert exact results to fuzzy results.
+     * @return Whether the search started successfully.
+     */
+    fun startFuzzySearchAsyncWithCustomRange(
+        type: DisplayValueType,
+        regions: LongArray,
+        keepResult: Boolean = false,
+    ): Boolean {
+        clearSharedBuffer()
+        if (!newSharedBuffer()) {
+            throw RuntimeException("failed to init SharedBuffer")
+        }
+        return nativeStartFuzzySearchAsync(type.nativeId, regions, keepResult)
+    }
+
+    /**
+     * Starts an async fuzzy refine search with a condition.
+     * @param condition Fuzzy condition to apply.
+     * @param param1 First parameter for conditions that need it.
+     * @param param2 Second parameter for range conditions.
+     * @return Whether the search started successfully.
+     */
+    fun startFuzzyRefineAsync(
+        condition: FuzzyCondition,
+        param1: Long = 0,
+        param2: Long = 0,
+    ): Boolean {
+        clearSharedBuffer()
+        newSharedBuffer()
+        return nativeStartFuzzyRefineAsync(condition.nativeId, param1, param2)
+    }
+
+    /**
      * Executes refine search synchronously (legacy).
      */
     @Deprecated("Low performance")
@@ -435,13 +521,15 @@ object SearchEngine {
         query: String,
         defaultType: Int,
         regions: LongArray,
-        useDeepSearch: Boolean
+        useDeepSearch: Boolean,
+        keepResult: Boolean
     ): Boolean
 
     private external fun nativeStartRefineAsync(query: String, defaultType: Int): Boolean
     private external fun nativeIsSearching(): Boolean
     private external fun nativeRequestCancel()
 
+    @Deprecated("同步搜索版本已废弃")
     private external fun nativeSearch(
         query: String,
         defaultType: Int,
@@ -466,6 +554,9 @@ object SearchEngine {
 
     private external fun nativeClearFilter()
     private external fun nativeGetCurrentSearchMode(): Int
+    private external fun nativeSetCompatibilityMode(enabled: Boolean)
+    private external fun nativeGetCompatibilityMode(): Boolean
+    @Deprecated("同步搜索版本已废弃")
     private external fun nativeRefineSearch(
         query: String,
         defaultType: Int,
@@ -475,6 +566,18 @@ object SearchEngine {
     private external fun nativeAddResultsFromAddresses(
         addresses: LongArray,
         types: IntArray
+    ): Boolean
+
+    private external fun nativeStartFuzzySearchAsync(
+        valueType: Int,
+        regions: LongArray,
+        keepResult: Boolean
+    ): Boolean
+
+    private external fun nativeStartFuzzyRefineAsync(
+        conditionId: Int,
+        param1: Long,
+        param2: Long
     ): Boolean
 
     // Legacy native methods kept for backward compatibility.

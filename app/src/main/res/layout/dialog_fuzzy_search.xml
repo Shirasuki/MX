@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_lg"
+    app:maxHeightPercent="0.9"
+    app:maxWidthPercent="0.9">
+
+    <!-- 标题 -->
+    <com.google.android.material.textview.MaterialTextView
+        style="@style/FloatingText.H2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_xs"
+        android:text="@string/fuzzy_search_dialog_title" />
+
+    <!-- 副标题 -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_subtitle"
+        style="@style/FloatingText.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:text="@string/fuzzy_search_initial_subtitle" />
+
+    <!-- 当前结果统计 -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_current_results"
+        style="@style/FloatingText.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:text="@string/fuzzy_search_current_results"
+        android:textColor="@color/floating_primary"
+        android:visibility="gone" />
+
+    <!-- 数据类型选择（初始模式） -->
+    <LinearLayout
+        android:id="@+id/layout_initial_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="visible">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/floating_spacing_sm"
+            android:text="@string/label_type" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/btn_select_type"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/floating_height_button_sm"
+            android:layout_weight="1"
+            android:background="@drawable/bg_transparent_border"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="@dimen/floating_spacing_md"
+            android:paddingEnd="@dimen/floating_spacing_md"
+            android:text="DWORD"
+            android:textColor="@color/floating_text_primary"
+            android:textSize="@dimen/floating_text_caption" />
+    </LinearLayout>
+
+    <!-- 条件按钮（细化模式） -->
+    <ScrollView
+        android:id="@+id/layout_refine_mode"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="vertical"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 第一行：基础条件 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_unchanged"
+                    style="@style/FloatingButton.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/floating_spacing_xs"
+                    android:layout_weight="1"
+                    android:text="值未变化"
+                    android:textSize="@dimen/floating_text_caption" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_changed"
+                    style="@style/FloatingButton.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/floating_spacing_xs"
+                    android:layout_weight="1"
+                    android:text="值已变化"
+                    android:textSize="@dimen/floating_text_caption" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_increased"
+                    style="@style/FloatingButton.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="值增加了"
+                    android:textSize="@dimen/floating_text_caption" />
+
+            </LinearLayout>
+
+            <!-- 第二行：减少 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/floating_spacing_sm"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_decreased"
+                    style="@style/FloatingButton.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="值减少了"
+                    android:textSize="@dimen/floating_text_caption" />
+
+            </LinearLayout>
+
+            <!-- 分隔线 -->
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/floating_spacing_xs"
+                app:dividerColor="@color/floating_divider" />
+
+            <!-- 高级选项展开按钮 -->
+            <LinearLayout
+                android:id="@+id/btn_expand_advanced"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/floating_spacing_sm">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Body"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="高级选项" />
+
+                <ImageView
+                    android:id="@+id/iv_expand_icon"
+                    android:layout_width="@dimen/floating_icon_sm"
+                    android:layout_height="@dimen/floating_icon_sm"
+                    android:rotation="0"
+                    android:src="@drawable/unfold_more_24px"
+                    android:tint="@color/white" />
+
+            </LinearLayout>
+
+            <!-- 高级选项内容（默认折叠） -->
+            <LinearLayout
+                android:id="@+id/layout_advanced_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- 第三行：增加了指定值 -->
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Caption.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_xs"
+                    android:text="值增加了..." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_1"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="1"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_10"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="10"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_100"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="100"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_custom"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="自定义"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                </LinearLayout>
+
+                <!-- 第四行：减少了指定值 -->
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Caption.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_xs"
+                    android:text="值减少了..." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_1"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="1"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_10"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="10"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_100"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="100"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_custom"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="自定义"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                </LinearLayout>
+
+                <!-- 分隔线 -->
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/floating_spacing_xs"
+                    app:dividerColor="@color/floating_divider" />
+
+                <!-- 第五行：百分比变化 -->
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Caption.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_xs"
+                    android:text="值增加了..." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_10_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="10%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_50_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="50%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_100_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="100%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_increased_by_percent_custom"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="自定义"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                </LinearLayout>
+
+                <!-- 第六行：减少百分比 -->
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Caption.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_xs"
+                    android:text="值减少了..." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/floating_spacing_sm"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_10_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="10%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_50_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="50%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_100_percent"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/floating_spacing_xs"
+                        android:layout_weight="1"
+                        android:text="100%"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_decreased_by_percent_custom"
+                        style="@style/FloatingButton.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="自定义"
+                        android:textSize="@dimen/floating_text_caption" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+            <!-- 高级选项内容结束 -->
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/divider_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_xs"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        app:dividerColor="@color/floating_divider" />
+
+    <!-- 底部按钮（仅初始模式显示） -->
+    <LinearLayout
+        android:id="@+id/layout_bottom_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:visibility="visible">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_new_search"
+            style="@style/FloatingButton.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_new_search"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            style="@style/FloatingButton.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_search"
+            style="@style/FloatingButton.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_search" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_refine"
+            style="@style/FloatingButton.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_refine"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

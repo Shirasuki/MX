@@ -12,6 +12,7 @@ import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.databinding.FloatingSettingsLayoutBinding
 import moe.fuqiuluo.mamu.data.settings.autoPause
 import moe.fuqiuluo.mamu.data.settings.chunkSize
+import moe.fuqiuluo.mamu.data.settings.compatibilityMode
 import moe.fuqiuluo.mamu.data.settings.dialogTransparencyEnabled
 import moe.fuqiuluo.mamu.data.settings.filterLinuxProcess
 import moe.fuqiuluo.mamu.data.settings.filterSystemProcess
@@ -30,6 +31,7 @@ import moe.fuqiuluo.mamu.data.settings.selectedMemoryRanges
 import moe.fuqiuluo.mamu.data.settings.skipMemoryOption
 import moe.fuqiuluo.mamu.data.settings.tabSwitchAnimation
 import moe.fuqiuluo.mamu.data.settings.topMostLayer
+import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
@@ -55,6 +57,7 @@ class SettingsController(
         setupMemoryRwMode()
         setupOpacityControl(mmkv)
         setupDialogTransparency(mmkv)
+        setupCompatibilityMode(mmkv)
         setupMemoryBufferSizeControl()
         setupChunkSizeControl()
         setupKeyboard()
@@ -257,6 +260,22 @@ class SettingsController(
             isChecked = mmkv.dialogTransparencyEnabled
             setOnCheckedChangeListener { _, isChecked ->
                 mmkv.dialogTransparencyEnabled = isChecked
+            }
+        }
+    }
+
+    private fun setupCompatibilityMode(mmkv: MMKV) {
+        binding.switchCompatibilityMode.apply {
+            isChecked = mmkv.compatibilityMode
+            setOnCheckedChangeListener { _, isChecked ->
+                mmkv.compatibilityMode = isChecked
+                SearchEngine.setCompatibilityMode(isChecked)
+                notification.showSuccess(
+                    context.getString(
+                        if (isChecked) R.string.success_compatibility_mode_enabled
+                        else R.string.success_compatibility_mode_disabled
+                    )
+                )
             }
         }
     }

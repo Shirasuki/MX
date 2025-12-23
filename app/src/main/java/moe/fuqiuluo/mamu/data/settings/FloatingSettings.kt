@@ -35,6 +35,7 @@ private const val KEY_DIALOG_TRANSPARENCY_ENABLED = "dialog_transparency_enabled
 private const val KEY_KEYBOARD_STATE = "keyboard_state"
 private const val KEY_MEMORY_REGION_CACHE_INTERVAL = "memory_region_cache_interval_v2"
 private const val KEY_MEMORY_DISPLAY_FORMATS = "memory_display_formats"
+private const val KEY_COMPATIBILITY_MODE = "compatibility_mode"
 
 private const val DEFAULT_OPACITY = 0.55f
 private const val DEFAULT_MEMORY_BUFFER_SIZE = 512
@@ -56,6 +57,7 @@ private const val DEFAULT_FAILED_PAGE_THRESHOLD = 4 // 默认连续失败页阈�
 private const val DEFAULT_DIALOG_TRANSPARENCY_ENABLED = true // 默认启用dialog透明度
 private const val DEFAULT_KEYBOARD_STATE = 1 // 默认展开 (0=折叠, 1=展开, 2=功能)
 private const val DEFAULT_MEMORY_REGION_CACHE_INTERVAL = 3000 // 默认 500ms 缓存间隔
+private const val DEFAULT_COMPATIBILITY_MODE = false // 默认不启用兼容模式
 
 /**
  * 悬浮窗透明度 (0.0 - 1.0)
@@ -334,4 +336,15 @@ var MMKV.memoryDisplayFormats: List<MemoryDisplayFormat>
     set(value) {
         val codesString = value.joinToString(",") { it.code }
         encode(KEY_MEMORY_DISPLAY_FORMATS, codesString)
+    }
+
+/**
+ * 兼容模式
+ * true = 启用兼容模式，所有搜索结果以模糊搜索格式存储
+ * false = 标准模式，精确搜索和模糊搜索结果分别存储
+ */
+var MMKV.compatibilityMode: Boolean
+    get() = decodeBool(KEY_COMPATIBILITY_MODE, DEFAULT_COMPATIBILITY_MODE)
+    set(value) {
+        encode(KEY_COMPATIBILITY_MODE, value)
     }

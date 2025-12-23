@@ -5,16 +5,16 @@ use crate::ext::jni::{JniResult, JniResultExt};
 use crate::search::SearchResultItem;
 use crate::search::engine::{SEARCH_ENGINE_MANAGER, SHARED_BUFFER_SIZE, SearchProgressCallback};
 use crate::search::parser::parse_search_query;
+use crate::search::result_manager::SearchResultMode;
 use crate::search::types::ValueType;
 use anyhow::anyhow;
 use jni::objects::{GlobalRef, JIntArray, JLongArray, JObject, JString, JValue};
 use jni::sys::{JNI_FALSE, JNI_TRUE, jboolean, jint, jlong, jobjectArray};
 use jni::{JNIEnv, JavaVM};
 use jni_macro::jni_method;
-use log::{Level, error, log_enabled};
+use log::{Level, error, log_enabled, warn};
 use std::ops::Not;
 use std::sync::Arc;
-use crate::search::result_manager::SearchResultMode;
 
 struct JniCallback {
     vm: JavaVM,
@@ -83,9 +83,7 @@ fn format_value(bytes: &[u8], typ: ValueType) -> String {
         },
         ValueType::Qword => {
             if bytes.len() >= 8 {
-                let value = u64::from_le_bytes([
-                    bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-                ]);
+                let value = u64::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]);
                 format!("{}", value)
             } else {
                 "N/A".to_string()
@@ -101,9 +99,7 @@ fn format_value(bytes: &[u8], typ: ValueType) -> String {
         },
         ValueType::Double => {
             if bytes.len() >= 8 {
-                let value = f64::from_le_bytes([
-                    bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-                ]);
+                let value = f64::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]);
                 format!("{}", value)
             } else {
                 "N/A".to_string()
@@ -112,19 +108,8 @@ fn format_value(bytes: &[u8], typ: ValueType) -> String {
     }
 }
 
-#[jni_method(
-    70,
-    "moe/fuqiuluo/mamu/driver/SearchEngine",
-    "nativeInitSearchEngine",
-    "(JLjava/lang/String;J)Z"
-)]
-pub fn jni_init_search_engine(
-    mut env: JNIEnv,
-    _class: JObject,
-    memory_buffer_size: jlong,
-    cache_dir: JString,
-    chunk_size: jlong,
-) -> jboolean {
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeInitSearchEngine", "(JLjava/lang/String;J)Z")]
+pub fn jni_init_search_engine(mut env: JNIEnv, _class: JObject, memory_buffer_size: jlong, cache_dir: JString, chunk_size: jlong) -> jboolean {
     (|| -> JniResult<jboolean> {
         let cache_dir_str: String = env.get_string(&cache_dir)?.into();
 
@@ -140,12 +125,7 @@ pub fn jni_init_search_engine(
 }
 
 /// Sets the shared buffer for progress communication. Requires at least 32 bytes.
-#[jni_method(
-    70,
-    "moe/fuqiuluo/mamu/driver/SearchEngine",
-    "nativeSetSharedBuffer",
-    "(Ljava/nio/ByteBuffer;)Z"
-)]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeSetSharedBuffer", "(Ljava/nio/ByteBuffer;)Z")]
 pub fn jni_set_shared_buffer(mut env: JNIEnv, _class: JObject, buffer: JObject) -> jboolean {
     (|| -> JniResult<jboolean> {
         let buffer = (&buffer).into();
@@ -184,12 +164,7 @@ pub fn jni_clear_shared_buffer(mut env: JNIEnv, _class: JObject) {
 }
 
 /// Starts an async search. Returns immediately. Progress is communicated via the shared buffer.
-#[jni_method(
-    70,
-    "moe/fuqiuluo/mamu/driver/SearchEngine",
-    "nativeStartSearchAsync",
-    "(Ljava/lang/String;I[JZ)Z"
-)]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeStartSearchAsync", "(Ljava/lang/String;I[JZZ)Z")]
 pub fn jni_start_search_async(
     mut env: JNIEnv,
     _class: JObject,
@@ -197,12 +172,12 @@ pub fn jni_start_search_async(
     default_type: jint,
     regions: JLongArray,
     use_deep_search: jboolean,
+    keep_results: jboolean,
 ) -> jboolean {
     (|| -> JniResult<jboolean> {
         let query: String = env.get_string(&query_str)?.into();
 
-        let value_type =
-            jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
+        let value_type = jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
 
         let search_query = parse_search_query(&query, value_type).map_err(|e| anyhow!("Parse error: {}", e))?;
 
@@ -214,16 +189,13 @@ pub fn jni_start_search_async(
         let mut regions_buf = vec![0i64; regions_len];
         env.get_long_array_region(&regions, 0, &mut regions_buf)?;
 
-        let memory_regions: Vec<(u64, u64)> = regions_buf
-            .chunks(2)
-            .map(|chunk| (chunk[0] as u64, chunk[1] as u64))
-            .collect();
+        let memory_regions: Vec<(u64, u64)> = regions_buf.chunks(2).map(|chunk| (chunk[0] as u64, chunk[1] as u64)).collect();
 
         let mut manager = SEARCH_ENGINE_MANAGER
             .write()
             .map_err(|_| anyhow!("Failed to acquire SearchEngineManager write lock"))?;
 
-        manager.start_search_async(search_query, memory_regions, use_deep_search != JNI_FALSE)?;
+        manager.start_search_async(search_query, memory_regions, use_deep_search != JNI_FALSE, keep_results != JNI_FALSE)?;
 
         Ok(JNI_TRUE)
     })()
@@ -231,18 +203,12 @@ pub fn jni_start_search_async(
 }
 
 /// Starts an async refine search. Returns immediately.
-#[jni_method(
-    70,
-    "moe/fuqiuluo/mamu/driver/SearchEngine",
-    "nativeStartRefineAsync",
-    "(Ljava/lang/String;I)Z"
-)]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeStartRefineAsync", "(Ljava/lang/String;I)Z")]
 pub fn jni_start_refine_async(mut env: JNIEnv, _class: JObject, query_str: JString, default_type: jint) -> jboolean {
     (|| -> JniResult<jboolean> {
         let query: String = env.get_string(&query_str)?.into();
 
-        let value_type =
-            jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
+        let value_type = jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
 
         let search_query = parse_search_query(&query, value_type).map_err(|e| anyhow!("Parse error: {}", e))?;
 
@@ -303,8 +269,7 @@ pub fn jni_search(
     (|| -> JniResult<jlong> {
         let query: String = env.get_string(&query_str)?.into();
 
-        let value_type =
-            jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
+        let value_type = jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
 
         let search_query = parse_search_query(&query, value_type).map_err(|e| anyhow!("Parse error: {}", e))?;
 
@@ -316,20 +281,14 @@ pub fn jni_search(
         let mut regions_buf = vec![0i64; regions_len];
         env.get_long_array_region(&regions, 0, &mut regions_buf)?;
 
-        let memory_regions: Vec<(u64, u64)> = regions_buf
-            .chunks(2)
-            .map(|chunk| (chunk[0] as u64, chunk[1] as u64))
-            .collect();
+        let memory_regions: Vec<(u64, u64)> = regions_buf.chunks(2).map(|chunk| (chunk[0] as u64, chunk[1] as u64)).collect();
 
         let callback: Option<Arc<dyn SearchProgressCallback>> = if callback_obj.is_null() {
             None
         } else {
             let vm = env.get_java_vm()?;
             let global_ref = env.new_global_ref(callback_obj)?;
-            Some(Arc::new(JniCallback {
-                vm,
-                callback: global_ref,
-            }))
+            Some(Arc::new(JniCallback { vm, callback: global_ref }))
         };
 
         let mut manager = SEARCH_ENGINE_MANAGER
@@ -353,21 +312,18 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
     (|| -> JniResult<jobjectArray> {
         // Use warn level for diagnostic - easier to see in logcat
         if log_enabled!(Level::Debug) {
-            log::warn!("jni_get_results called: start={}, size={}", start, size);
+            warn!("jni_get_results called: start={}, size={}", start, size);
         }
         let search_manager = SEARCH_ENGINE_MANAGER
             .read()
             .map_err(|_| anyhow!("Failed to acquire SearchEngineManager read lock"))?;
 
+        let current_mode = search_manager.get_current_mode()?;
+
         if log_enabled!(Level::Debug) {
             let total_count = search_manager.get_total_count().unwrap_or(0);
             // Diagnostic log - always print to help debug timing issues
-            log::warn!(
-                "[DIAG] jni_get_results: total_count={}, requesting start={}, size={}",
-                total_count,
-                start,
-                size
-            );
+            warn!("[DIAG] jni_get_results: mode={:?}, total_count={}, requesting start={}, size={}", current_mode, total_count, start, size);
         }
         let mut results = search_manager
             .get_results(start as usize, size as usize)?
@@ -377,7 +333,7 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
             .collect::<Vec<(usize, SearchResultItem)>>();
 
         if log_enabled!(Level::Debug) {
-            log::warn!("[DIAG] jni_get_results: got {} results", results.len());
+            warn!("[DIAG] jni_get_results: got {} results", results.len());
         }
         let filter = search_manager.get_filter();
         if filter.is_active() {
@@ -397,7 +353,7 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
                     if filter.enable_type_filter && filter.type_ids.is_empty().not() {
                         let typ = match item {
                             SearchResultItem::Exact(exact) => exact.typ,
-                            SearchResultItem::Fuzzy(fuzzy) => fuzzy.typ(),
+                            SearchResultItem::Fuzzy(fuzzy) => fuzzy.value_type,
                         };
                         if !filter.type_ids.contains(&typ) {
                             return false;
@@ -409,12 +365,19 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
                 .collect::<Vec<(usize, SearchResultItem)>>();
         }
 
-        let class = env.find_class("moe/fuqiuluo/mamu/driver/ExactSearchResultItem")?;
+        // 根据模式选择不同的 Java 类
+        let (class, is_fuzzy) = match current_mode {
+            SearchResultMode::Exact => {
+                (env.find_class("moe/fuqiuluo/mamu/driver/ExactSearchResultItem")?, false)
+            },
+            SearchResultMode::Fuzzy => {
+                (env.find_class("moe/fuqiuluo/mamu/driver/FuzzySearchResultItem")?, true)
+            },
+        };
+
         let array = env.new_object_array(results.len() as jint, &class, JObject::null())?;
 
-        let driver_manager = DRIVER_MANAGER
-            .read()
-            .map_err(|_| anyhow!("Failed to acquire DriverManager read lock"))?;
+        let driver_manager = DRIVER_MANAGER.read().map_err(|_| anyhow!("Failed to acquire DriverManager read lock"))?;
 
         for (i, (native_position, item)) in results.into_iter().enumerate() {
             let obj = match item {
@@ -423,10 +386,7 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
                         let size = exact.typ.size();
                         let mut buffer = vec![0u8; size];
 
-                        if driver_manager
-                            .read_memory_unified(exact.address, &mut buffer, None)
-                            .is_ok()
-                        {
+                        if driver_manager.read_memory_unified(exact.address, &mut buffer, None).is_ok() {
                             format_value(&buffer, exact.typ)
                         } else {
                             "N/A".to_string()
@@ -441,13 +401,33 @@ pub fn jni_get_results(mut env: JNIEnv, _class: JObject, start: jint, size: jint
                         &[
                             JValue::Long(native_position as i64),
                             JValue::Long(exact.address as i64),
-                            JValue::Int(exact.typ as jint),
+                            JValue::Int(exact.typ.to_id()),
                             JValue::Object(&value_jstring),
                         ],
                     )?
                 },
-                SearchResultItem::Fuzzy(_) => {
-                    return Err(anyhow!("FuzzySearchResultItem not supported in jni_get_results"));
+                SearchResultItem::Fuzzy(fuzzy) => {
+                    let buffer = fuzzy.value.as_ref();
+                    let current_value_str = format_value(&buffer, fuzzy.value_type);
+
+                    let current_value_jstring = env.new_string(&current_value_str)?;
+
+                    // data class FuzzySearchResultItem(
+                    //     override val nativePosition: Long,
+                    //     val address: Long,
+                    //     val value: String,
+                    //     val valueType: Int
+                    // ): SearchResultItem
+                    env.new_object(
+                        &class,
+                        "(JJLjava/lang/String;I)V",
+                        &[
+                            JValue::Long(native_position as i64),
+                            JValue::Long(fuzzy.address as i64),
+                            JValue::Object(&current_value_jstring),
+                            JValue::Int(fuzzy.value_type.to_id()),
+                        ],
+                    )?
                 },
             };
             env.set_object_array_element(&array, i as jint, obj)?;
@@ -478,7 +458,7 @@ pub fn jni_get_total_result_count(mut env: JNIEnv, _class: JObject) -> jlong {
 pub fn jni_clear_result(mut env: JNIEnv, _class: JObject) {
     (|| -> JniResult<()> {
         if log_enabled!(Level::Debug) {
-            log::warn!("jni_clear_result called - clearing all search results");
+            warn!("jni_clear_result called - clearing all search results");
         }
 
         let mut manager = SEARCH_ENGINE_MANAGER
@@ -610,6 +590,35 @@ pub fn jni_get_current_search_mode(mut env: JNIEnv, _class: JObject) -> jint {
     .or_throw(&mut env)
 }
 
+/// Sets compatibility mode.
+/// When enabled, all search results are stored in fuzzy format,
+/// allowing seamless switching between exact and fuzzy searches.
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeSetCompatibilityMode", "(Z)V")]
+pub fn jni_set_compatibility_mode(mut env: JNIEnv, _class: JObject, enabled: jboolean) {
+    (|| -> JniResult<()> {
+        let mut manager = SEARCH_ENGINE_MANAGER
+            .write()
+            .map_err(|_| anyhow!("Failed to acquire SearchEngineManager write lock"))?;
+
+        manager.set_compatibility_mode(enabled != JNI_FALSE);
+        Ok(())
+    })()
+    .or_throw(&mut env)
+}
+
+/// Gets compatibility mode.
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeGetCompatibilityMode", "()Z")]
+pub fn jni_get_compatibility_mode(mut env: JNIEnv, _class: JObject) -> jboolean {
+    (|| -> JniResult<jboolean> {
+        let manager = SEARCH_ENGINE_MANAGER
+            .read()
+            .map_err(|_| anyhow!("Failed to acquire SearchEngineManager read lock"))?;
+
+        Ok(if manager.get_compatibility_mode() { JNI_TRUE } else { JNI_FALSE })
+    })()
+    .or_throw(&mut env)
+}
+
 /// Legacy synchronous refine search method.
 #[jni_method(
     70,
@@ -617,18 +626,11 @@ pub fn jni_get_current_search_mode(mut env: JNIEnv, _class: JObject) -> jint {
     "nativeRefineSearch",
     "(Ljava/lang/String;ILmoe/fuqiuluo/mamu/driver/SearchProgressCallback;)J"
 )]
-pub fn jni_refine_search(
-    mut env: JNIEnv,
-    _class: JObject,
-    query_str: JString,
-    default_type: jint,
-    callback_obj: JObject,
-) -> jlong {
+pub fn jni_refine_search(mut env: JNIEnv, _class: JObject, query_str: JString, default_type: jint, callback_obj: JObject) -> jlong {
     (|| -> JniResult<jlong> {
         let query: String = env.get_string(&query_str)?.into();
 
-        let value_type =
-            jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
+        let value_type = jint_to_value_type(default_type).ok_or_else(|| anyhow!("Invalid value type: {}", default_type))?;
 
         let search_query = parse_search_query(&query, value_type).map_err(|e| anyhow!("Parse error: {}", e))?;
 
@@ -637,10 +639,7 @@ pub fn jni_refine_search(
         } else {
             let vm = env.get_java_vm()?;
             let global_ref = env.new_global_ref(callback_obj)?;
-            Some(Arc::new(JniCallback {
-                vm,
-                callback: global_ref,
-            }))
+            Some(Arc::new(JniCallback { vm, callback: global_ref }))
         };
 
         let mut manager = SEARCH_ENGINE_MANAGER
@@ -655,12 +654,7 @@ pub fn jni_refine_search(
 }
 
 /// Legacy method for backward compatibility. Use nativeSetSharedBuffer instead.
-#[jni_method(
-    70,
-    "moe/fuqiuluo/mamu/driver/SearchEngine",
-    "nativeSetProgressBuffer",
-    "(Ljava/nio/ByteBuffer;)Z"
-)]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeSetProgressBuffer", "(Ljava/nio/ByteBuffer;)Z")]
 pub fn jni_set_progress_buffer(mut env: JNIEnv, _class: JObject, buffer: JObject) -> jboolean {
     jni_set_shared_buffer(env, _class, buffer)
 }
@@ -673,12 +667,7 @@ pub fn jni_clear_progress_buffer(mut env: JNIEnv, _class: JObject) {
 
 /// Adds results from saved addresses. Clears existing results and adds new ones.
 #[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeAddResultsFromAddresses", "([J[I)Z")]
-pub fn jni_add_results_from_addresses(
-    mut env: JNIEnv,
-    _class: JObject,
-    addresses_array: JLongArray,
-    types_array: JIntArray,
-) -> jboolean {
+pub fn jni_add_results_from_addresses(mut env: JNIEnv, _class: JObject, addresses_array: JLongArray, types_array: JIntArray) -> jboolean {
     (|| -> JniResult<jboolean> {
         let addr_len = env.get_array_length(&addresses_array)? as usize;
         let type_len = env.get_array_length(&types_array)? as usize;
@@ -708,8 +697,7 @@ pub fn jni_add_results_from_addresses(
         for i in 0..addr_len {
             let address = addresses[i] as u64;
             let type_id = types[i];
-            let value_type = ValueType::from_id(type_id)
-                .ok_or_else(|| anyhow!("Invalid value type id: {}", type_id))?;
+            let value_type = ValueType::from_id(type_id).ok_or_else(|| anyhow!("Invalid value type id: {}", type_id))?;
             results.push(SearchResultItem::new_exact(address, value_type));
         }
 
@@ -720,5 +708,77 @@ pub fn jni_add_results_from_addresses(
         }
 
         Ok(JNI_TRUE)
-    })().or_throw(&mut env)
+    })()
+    .or_throw(&mut env)
+}
+
+/// Starts async fuzzy initial search. Records all values in memory regions.
+///
+/// Parameters:
+/// - value_type: The value type to search for (0=Byte, 1=Word, 2=Dword, 3=Qword, 4=Float, 5=Double)
+/// - regions: Array of [start1, end1, start2, end2, ...] memory region pairs
+/// - keep_results: If true and currently in exact mode, convert exact results to fuzzy results
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeStartFuzzySearchAsync", "(I[JZ)Z")]
+pub fn jni_start_fuzzy_search_async(mut env: JNIEnv, _class: JObject, value_type_id: jint, regions: JLongArray, keep_results: jboolean) -> jboolean {
+    (|| -> JniResult<jboolean> {
+        let value_type = jint_to_value_type(value_type_id).ok_or_else(|| anyhow!("Invalid value type: {}", value_type_id))?;
+
+        let regions_len = env.get_array_length(&regions)? as usize;
+        if regions_len % 2 != 0 {
+            return Err(anyhow!("Regions array length must be even"));
+        }
+
+        let mut regions_buf = vec![0i64; regions_len];
+        env.get_long_array_region(&regions, 0, &mut regions_buf)?;
+
+        let memory_regions: Vec<(u64, u64)> = regions_buf.chunks(2).map(|chunk| (chunk[0] as u64, chunk[1] as u64)).collect();
+
+        let mut manager = SEARCH_ENGINE_MANAGER
+            .write()
+            .map_err(|_| anyhow!("Failed to acquire SearchEngineManager write lock"))?;
+
+        manager.start_fuzzy_search_async(value_type, memory_regions, keep_results != JNI_FALSE)?;
+
+        Ok(JNI_TRUE)
+    })()
+    .or_throw(&mut env)
+}
+
+/// Starts async fuzzy refine search with a condition.
+///
+/// Parameters:
+/// - condition_id: The fuzzy condition type
+///   - 0: Initial (should not be used for refine)
+///   - 1: Unchanged
+///   - 2: Changed
+///   - 3: Increased
+///   - 4: Decreased
+///   - 5: IncreasedBy(param1)
+///   - 6: DecreasedBy(param1)
+///   - 7: IncreasedByRange(param1, param2)
+///   - 8: DecreasedByRange(param1, param2)
+///   - 9: IncreasedByPercent(param1 / 100.0)
+///   - 10: DecreasedByPercent(param1 / 100.0)
+/// - param1: First parameter for conditions that need it
+/// - param2: Second parameter for range conditions
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/SearchEngine", "nativeStartFuzzyRefineAsync", "(IJJ)Z")]
+pub fn jni_start_fuzzy_refine_async(mut env: JNIEnv, _class: JObject, condition_id: jint, param1: jlong, param2: jlong) -> jboolean {
+    use crate::search::types::FuzzyCondition;
+
+    (|| -> JniResult<jboolean> {
+        let condition = FuzzyCondition::from_id(condition_id, param1, param2).ok_or_else(|| anyhow!("Invalid fuzzy condition id: {}", condition_id))?;
+
+        if condition.is_initial() {
+            return Err(anyhow!("Cannot use Initial condition for refine search"));
+        }
+
+        let mut manager = SEARCH_ENGINE_MANAGER
+            .write()
+            .map_err(|_| anyhow!("Failed to acquire SearchEngineManager write lock"))?;
+
+        manager.start_fuzzy_refine_async(condition)?;
+
+        Ok(JNI_TRUE)
+    })()
+    .or_throw(&mut env)
 }
