@@ -303,4 +303,12 @@
     <string name="theme_indigo">靛蓝</string>
     <string name="theme_indigo_desc">深邃沉稳</string>
 
+    <!-- 搜索历史 -->
+    <string name="search_history_title">搜索历史</string>
+    <string name="search_history_empty">暂无搜索历史</string>
+    <string name="search_history_clear_all">清空全部</string>
+    <string name="search_history_cleared">搜索历史已清空</string>
+    <string name="search_history_deleted">已删除</string>
+    <string name="button_delete">删除</string>
+
 </resources>

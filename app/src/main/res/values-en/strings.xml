@@ -260,4 +260,12 @@
     <string name="theme_indigo">Indigo</string>
     <string name="theme_indigo_desc">Deep Calm</string>
 
+    <!-- Search History -->
+    <string name="search_history_title">Search History</string>
+    <string name="search_history_empty">No search history</string>
+    <string name="search_history_clear_all">Clear All</string>
+    <string name="search_history_cleared">Search history cleared</string>
+    <string name="search_history_deleted">Deleted</string>
+    <string name="button_delete">Delete</string>
+
 </resources>

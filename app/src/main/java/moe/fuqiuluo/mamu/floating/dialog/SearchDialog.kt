@@ -23,6 +23,7 @@ import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.data.settings.getDialogOpacity
 import moe.fuqiuluo.mamu.data.settings.keyboardType
 import moe.fuqiuluo.mamu.data.settings.selectedMemoryRanges
+import moe.fuqiuluo.mamu.floating.data.local.SearchHistoryRepository
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange
@@ -359,7 +360,20 @@ class SearchDialog(
             }
 
             override fun onHistory() {
-                notification.showSuccess(context.getString(moe.fuqiuluo.mamu.R.string.feature_history_todo))
+                // 显示搜索历史对话框
+                SearchHistoryDialog(
+                    context = context,
+                    notification = notification,
+                    onHistorySelected = { expression, valueType ->
+                        // 填充选中的历史记录到输入框
+                        binding.inputValue.setText(expression)
+                        binding.inputValue.setSelection(expression.length)
+                        currentValueType = valueType
+                        searchDialogState.lastSelectedValueType = valueType
+                        binding.btnValueType.text = valueType.displayName
+                        updateSubtitleRange(valueType)
+                    }
+                ).show()
             }
 
             override fun onPaste() {
@@ -388,11 +402,14 @@ class SearchDialog(
             binding.btnRefine.visibility = View.GONE
         }
 
-        val preCheck: (String) -> Boolean = preCheck@{ expression ->
+        val preCheck: (String, DisplayValueType) -> Boolean = preCheck@{ expression, valueType ->
             if (expression.isEmpty()) {
                 notification.showError(context.getString(R.string.error_empty_search_value))
                 return@preCheck false
             }
+
+            // 保存搜索历史
+            SearchHistoryRepository.addHistory(expression, valueType)
 
             searchDialogState.lastInputValue = expression
             dialog.dismiss()
@@ -405,7 +422,7 @@ class SearchDialog(
             val expression = binding.inputValue.text.toString().trim()
             val valueType = currentValueType
 
-            if (!preCheck(expression)) {
+            if (!preCheck(expression, valueType)) {
                 return@performSearch
             }
 
@@ -460,7 +477,7 @@ class SearchDialog(
             val expression = binding.inputValue.text.toString().trim()
             val valueType = currentValueType
 
-            if (!preCheck(expression)) {
+            if (!preCheck(expression, valueType)) {
                 return@refineSearch
             }
 

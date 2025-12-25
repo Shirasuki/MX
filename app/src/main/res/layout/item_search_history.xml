@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_settings_item_ripple"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/floating_touch_target"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/floating_spacing_lg"
+    android:paddingEnd="@dimen/floating_spacing_sm"
+    android:paddingTop="@dimen/floating_spacing_sm"
+    android:paddingBottom="@dimen/floating_spacing_sm">
+
+    <!-- 左侧内容区域 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- 搜索表达式 -->
+        <TextView
+            android:id="@+id/text_expression"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/floating_text_primary"
+            android:textSize="@dimen/floating_text_body" />
+
+        <!-- 类型和时间 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 值类型标签 -->
+            <TextView
+                android:id="@+id/text_value_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/floating_text_caption" />
+
+            <View
+                android:layout_width="@dimen/floating_spacing_sm"
+                android:layout_height="0dp" />
+
+            <!-- 时间 -->
+            <TextView
+                android:id="@+id/text_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/floating_text_secondary"
+                android:textSize="@dimen/floating_text_caption" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 删除按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_delete"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="@dimen/floating_icon_md"
+        android:layout_height="@dimen/floating_icon_md"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:contentDescription="@string/button_delete"
+        app:icon="@drawable/icon_close_24px"
+        app:iconPadding="0dp"
+        app:iconGravity="textStart"
+        app:iconSize="16dp"
+        app:iconTint="@color/floating_text_secondary" />
+
+</LinearLayout>
