@@ -72,11 +72,10 @@ class DriverInstallViewModel : ViewModel() {
                 if (result.success) {
                     _uiState.value = _uiState.value.copy(
                         isInstalling = false,
-                        successMessage = "驱动安装成功！应用将在 2 秒后重启...",
+                        successMessage = "驱动安装成功！应用即将重启...",
                         selectedDriver = null
                     )
-                    // 延迟2秒后触发重启
-                    delay(3000)
+                    delay(2000)
                     _uiState.value = _uiState.value.copy(shouldRestartApp = true)
                 } else {
                     _uiState.value = _uiState.value.copy(

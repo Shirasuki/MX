@@ -65,7 +65,7 @@ object PermissionConfig {
      */
     val INSTALL_TIME_PERMISSIONS = listOf(
         "android.permission.QUERY_ALL_PACKAGES",  // 查询所有应用包名
-        "android.permission.INTERNET"              // 网络访问
+        "android.permission.INTERNET",            // 网络访问
     )
 }
 

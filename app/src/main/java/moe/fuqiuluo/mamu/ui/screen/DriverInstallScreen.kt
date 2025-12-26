@@ -1,13 +1,8 @@
 package moe.fuqiuluo.mamu.ui.screen
 
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.os.Handler
-import android.os.Looper
-import android.os.Process
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,6 +28,8 @@ import moe.fuqiuluo.mamu.ui.theme.AdaptiveLayoutInfo
 import moe.fuqiuluo.mamu.ui.theme.Dimens
 import moe.fuqiuluo.mamu.ui.theme.rememberAdaptiveLayoutInfo
 import moe.fuqiuluo.mamu.ui.viewmodel.DriverInstallViewModel
+import moe.fuqiuluo.mamu.utils.RootConfigManager
+import moe.fuqiuluo.mamu.utils.RootShellExecutor
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -477,21 +474,10 @@ fun ErrorLogDialog(
 }
 
 private fun restartApp(context: Context) {
-    val packageManager = context.packageManager
-    val intent = packageManager.getLaunchIntentForPackage(context.packageName)
-    intent?.let {
-        it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        context.startActivity(it)
-    }
-
-    if (context is Activity) {
-        context.finish()
-    }
-
-    Handler(Looper.getMainLooper()).postDelayed({
-        Process.killProcess(Process.myPid())
-        exitProcess(0)
-    }, 300)
+    val pkg = context.packageName
+    RootShellExecutor.execNoWait(
+        suCmd = RootConfigManager.getCustomRootCommand(),
+        command = "(sleep 1 && am start-activity -n $pkg/.PermissionSetupActivity) &"
+    )
+    exitProcess(0)
 }
