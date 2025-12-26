@@ -1,7 +1,5 @@
 # Mamu
 
-> 一个尝试的分支，听ChatGpt的把BplusTree全改成Vec试试看性能表现如何，从300ms单次搜索变成800ms（单值搜索）
-
 **A memory modifier similar to GameGuardian**, written in Kotlin+Rust, based on [android-wuwa](https://github.com/fuqiuluo/android-wuwa)!
 
 [![License](https://img.shields.io/badge/license-GPLv3-green.svg)](https://github.com/Shirasuki/MX/blob/master/LICENSE)
