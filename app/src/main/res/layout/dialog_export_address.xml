@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:minWidth="300dp"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_lg"
+    app:maxWidth="400dp">
+
+    <!-- 标题 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <ImageView
+            android:layout_width="@dimen/floating_icon_md"
+            android:layout_height="@dimen/floating_icon_md"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/icon_save_24px"
+            android:contentDescription="@string/dialog_export_title" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.H2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dialog_export_title" />
+
+    </LinearLayout>
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:background="#2F2F2F" />
+
+    <!-- 文件名输入 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/label_file_name" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/input_file_name"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/floating_height_button_sm"
+                android:background="@android:color/transparent"
+                android:hint="@string/hint_file_name"
+                android:inputType="text"
+                android:paddingStart="@dimen/floating_spacing_xs"
+                android:paddingEnd="@dimen/floating_spacing_xs"
+                android:textColor="@color/floating_text_primary"
+                android:textColorHint="@color/floating_text_secondary"
+                android:textSize="@dimen/floating_text_body" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerColor="@color/floating_divider" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 保存路径 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/label_save_path" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_save_path"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_transparent_border"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/floating_spacing_sm"
+            android:paddingVertical="@dimen/floating_spacing_xs"
+            android:text="/sdcard/Mamu/export"
+            android:textColor="@color/floating_text_secondary"
+            android:textSize="@dimen/floating_text_caption"
+            android:ellipsize="middle"
+            android:singleLine="true" />
+
+    </LinearLayout>
+
+    <!-- 导出数量提示 -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_export_count"
+        style="@style/FloatingText.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:text="@string/export_count_hint"
+        android:textColor="@color/floating_text_secondary" />
+
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="@dimen/floating_spacing_sm"
+        android:background="#2F2F2F" />
+
+    <!-- 按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            style="@style/FloatingButton.Text.White"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_export"
+            style="@style/FloatingButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_export" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

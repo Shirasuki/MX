@@ -35,6 +35,8 @@ import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 import moe.fuqiuluo.mamu.floating.dialog.AddressActionDialog
 import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
+import moe.fuqiuluo.mamu.floating.dialog.ExportAddressDialog
+import moe.fuqiuluo.mamu.floating.dialog.ImportAddressDialog
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.OffsetXorDialog
 import moe.fuqiuluo.mamu.floating.dialog.RemoveOptionsDialog
@@ -375,6 +377,20 @@ class SavedAddressController(
                 label = "偏移量计算器"
             ) {
                 showOffsetCalculator()
+            },
+            ToolbarAction(
+                id = 13,
+                icon = R.drawable.icon_list_24px,
+                label = "导入选择项"
+            ) {
+                showImportAddressDialog()
+            },
+            ToolbarAction(
+                id = 14,
+                icon = R.drawable.icon_save_24px,
+                label = "导出选择项"
+            ) {
+                exportSelectedAddresses()
             },
         )
 
@@ -1055,6 +1071,64 @@ class SavedAddressController(
                 notification.showError("载入失败或文件为空")
             }
         }
+    }
+
+    /**
+     * 显示导入地址对话框
+     */
+    private fun showImportAddressDialog() {
+        val dialog = ImportAddressDialog(
+            context = context,
+            notification = notification,
+            coroutineScope = coroutineScope,
+            onImportComplete = { importedAddresses ->
+                saveAddresses(importedAddresses)
+            }
+        )
+        dialog.show()
+    }
+
+    /**
+     * 导出选中的地址到文件
+     */
+    private fun exportSelectedAddresses() {
+        val selectedItems = adapter.getSelectedItems()
+        if (selectedItems.size < 2) {
+            notification.showWarning("请至少选择 2 个地址")
+            return
+        }
+
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未绑定进程")
+            return
+        }
+
+        // 获取当前进程的包名作为默认文件名
+        val processInfo = WuwaDriver.getProcessInfo(WuwaDriver.currentBindPid)
+        val defaultFileName = processInfo?.name ?: "export_${System.currentTimeMillis()}"
+
+        // 创建ranges列表
+        val ranges = selectedItems.map { item ->
+            val size = item.displayValueType?.memorySize ?: 4
+            DisplayMemRegionEntry(
+                start = item.address,
+                end = item.address + size,
+                type = 0x03,
+                name = item.range.displayName,
+                range = item.range
+            )
+        }
+
+        val dialog = ExportAddressDialog(
+            context = context,
+            notification = notification,
+            coroutineScope = coroutineScope,
+            selectedItems = selectedItems,
+            ranges = ranges,
+            defaultFileName = defaultFileName
+        )
+
+        dialog.show()
     }
 
     /**

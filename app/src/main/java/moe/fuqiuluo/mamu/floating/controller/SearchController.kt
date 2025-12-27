@@ -38,6 +38,7 @@ import moe.fuqiuluo.mamu.floating.data.model.DisplayProcessInfo
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.floating.data.model.MemoryBackupRecord
 import moe.fuqiuluo.mamu.floating.dialog.AddressActionDialog
+import moe.fuqiuluo.mamu.floating.dialog.ExportAddressDialog
 import moe.fuqiuluo.mamu.floating.dialog.FuzzySearchDialog
 import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
@@ -246,6 +247,13 @@ class SearchController(
                 label = "过滤"
             ) {
                 showFilterDialog()
+            },
+            ToolbarAction(
+                id = 15,
+                icon = R.drawable.icon_save_24px,
+                label = "导出选择项"
+            ) {
+                exportSelectedAddresses()
             },
         )
 
@@ -842,6 +850,37 @@ class SearchController(
                 )
             )
         }
+    }
+
+    /**
+     * 导出选中的地址到文件
+     */
+    private fun exportSelectedAddresses() {
+        val selectedItems = searchResultAdapter.getSelectedItems()
+        if (selectedItems.size < 2) {
+            notification.showWarning("请至少选择 2 个地址")
+            return
+        }
+
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未绑定进程")
+            return
+        }
+
+        // 获取当前进程的包名作为默认文件名
+        val processInfo = WuwaDriver.getProcessInfo(WuwaDriver.currentBindPid)
+        val defaultFileName = processInfo?.name ?: "export_${System.currentTimeMillis()}"
+
+        val dialog = ExportAddressDialog(
+            context = context,
+            notification = notification,
+            coroutineScope = coroutineScope,
+            selectedItems = selectedItems,
+            ranges = getRanges(),
+            defaultFileName = defaultFileName
+        )
+
+        dialog.show()
     }
 
     /**

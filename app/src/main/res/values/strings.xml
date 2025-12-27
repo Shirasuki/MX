@@ -303,6 +303,24 @@
     <string name="theme_indigo">靛蓝</string>
     <string name="theme_indigo_desc">深邃沉稳</string>
 
+    <!-- 导出/导入对话框 -->
+    <string name="dialog_export_title">导出地址</string>
+    <string name="dialog_import_title">导入地址</string>
+    <string name="label_file_name">文件名：</string>
+    <string name="label_save_path">路径：</string>
+    <string name="hint_file_name">输入文件名</string>
+    <string name="export_count_hint">将导出 %d 个地址</string>
+    <string name="button_export">导出</string>
+    <string name="button_import">导入</string>
+    <string name="export_min_selection_warning">请至少选择 2 个地址</string>
+    <string name="label_export_selected">导出选择项</string>
+    <string name="label_import_selected">导入选择项</string>
+    <string name="import_select_file_hint">选择要导入的文件</string>
+    <string name="import_no_files">没有找到可导入的文件</string>
+    <string name="import_success">成功导入 %d 个地址</string>
+    <string name="import_failed">导入失败</string>
+    <string name="import_pid_mismatch_warning">警告：文件中的PID(%1$d)与当前进程PID(%2$d)不匹配</string>
+
     <!-- 搜索历史 -->
     <string name="search_history_title">搜索历史</string>
     <string name="search_history_empty">暂无搜索历史</string>

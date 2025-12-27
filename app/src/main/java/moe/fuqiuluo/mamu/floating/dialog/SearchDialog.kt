@@ -431,7 +431,7 @@ class SearchDialog(
                 val ranges = mmkv.selectedMemoryRanges
 
                 val nativeRegions = mutableListOf<Long>()
-                WuwaDriver.queryMemRegions()
+                WuwaDriver.queryMemRegionsWithRetry()
                     .divideToSimpleMemoryRange()
                     .also {
                         searchRanges = it

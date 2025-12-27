@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_settings_item_ripple"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/floating_spacing_md"
+    android:paddingVertical="@dimen/floating_spacing_sm">
+
+    <ImageView
+        android:layout_width="@dimen/floating_icon_md"
+        android:layout_height="@dimen/floating_icon_md"
+        android:layout_marginEnd="@dimen/floating_spacing_md"
+        android:src="@drawable/icon_list_24px"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/file_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textColor="@color/floating_text_primary"
+            android:textSize="@dimen/floating_text_body" />
+
+        <TextView
+            android:id="@+id/file_size"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/floating_text_secondary"
+            android:textSize="@dimen/floating_text_caption" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="@dimen/floating_icon_sm"
+        android:layout_height="@dimen/floating_icon_sm"
+        android:src="@drawable/icon_arrow_drop_down_24px"
+        android:rotation="-90"
+        android:contentDescription="@null" />
+
+</LinearLayout>

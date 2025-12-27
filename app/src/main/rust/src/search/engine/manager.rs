@@ -1,18 +1,18 @@
-use super::super::SearchResultItem;
 use super::super::result_manager::{FuzzySearchResultItem, SearchResultManager, SearchResultMode};
 use super::super::types::{FuzzyCondition, SearchQuery, ValueType};
+use super::super::SearchResultItem;
 use super::filter::SearchFilter;
 use super::fuzzy_search;
 use super::group_search;
 use super::shared_buffer::{SearchErrorCode, SearchStatus, SharedBuffer};
 use super::single_search;
-use crate::core::DRIVER_MANAGER;
 use crate::core::globals::TOKIO_RUNTIME;
+use crate::core::DRIVER_MANAGER;
 use crate::search::result_manager::ExactSearchResultItem;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use bplustree::BPlusTreeSet;
 use lazy_static::lazy_static;
-use log::{Level, debug, error, info, log_enabled, warn};
+use log::{debug, error, info, log_enabled, warn, Level};
 use rayon::prelude::*;
 use std::cmp::Ordering as CmpOrdering;
 use std::path::PathBuf;
@@ -222,7 +222,14 @@ impl SearchEngineManager {
     }
 
     /// Internal async search task that runs in tokio runtime.
-    async fn run_search_task(query: SearchQuery, regions: Vec<(u64, u64)>, use_deep_search: bool, chunk_size: usize, compatibility_mode: bool, cancel_token: CancellationToken) {
+    async fn run_search_task(
+        query: SearchQuery,
+        regions: Vec<(u64, u64)>,
+        use_deep_search: bool,
+        chunk_size: usize,
+        compatibility_mode: bool,
+        cancel_token: CancellationToken,
+    ) {
         let start_time = Instant::now();
         let total_regions = regions.len();
         let is_group_search = query.values.len() > 1;
@@ -253,7 +260,7 @@ impl SearchEngineManager {
 
         // Run the CPU-intensive search in a blocking task with rayon.
         let search_result = tokio::task::spawn_blocking(move || {
-            let all_results: Vec<BPlusTreeSet<ValuePair>> = regions
+            let mut all_results: Vec<_> = regions
                 .par_iter()
                 .enumerate()
                 .filter_map(|(idx, (start, end))| {
@@ -306,7 +313,7 @@ impl SearchEngineManager {
                         Ok(results) => results,
                         Err(e) => {
                             error!("Failed to search region {}: {:?}", idx, e);
-                            BPlusTreeSet::new(BPLUS_TREE_ORDER)
+                            Vec::new()
                         },
                     };
 
@@ -329,7 +336,17 @@ impl SearchEngineManager {
 
                     Some(region_results)
                 })
-                .collect();
+                .reduce(Vec::new, |mut a, mut b| {
+                    a.append(&mut b);
+                    a
+                });
+
+            let start = Instant::now();
+            all_results.sort_unstable_by(|a, b| a.addr.cmp(&b.addr));
+            all_results.dedup();
+            if log_enabled!(Level::Debug) {
+                info!("搜索排序去重复耗时: {:?}", start.elapsed())
+            }
 
             all_results
         })
@@ -360,42 +377,40 @@ impl SearchEngineManager {
                                     error!("Failed to set mode: {:?}", e);
                                 }
                                 if let Ok(driver_manager) = DRIVER_MANAGER.read() {
-                                    for region_results in all_results {
-                                        if !region_results.is_empty() {
-                                            let fuzzy_results: Vec<FuzzySearchResultItem> = region_results
-                                                .into_iter() // todo 可以并行吗?
-                                                .filter_map(|pair| {
-                                                    let size = pair.value_type.size();
-                                                    let mut buffer = vec![0u8; size];
-                                                    if driver_manager.read_memory_unified(pair.addr, &mut buffer, None).is_ok() {
-                                                        Some(FuzzySearchResultItem::from_bytes(pair.addr, &buffer, pair.value_type))
-                                                    } else {
-                                                        None
-                                                    }
-                                                })
-                                                .collect();
-                                            if let Err(e) = result_mgr.add_fuzzy_results_batch(fuzzy_results) {
-                                                error!("Failed to add fuzzy results: {:?}", e);
+                                    let fuzzy_results: Vec<FuzzySearchResultItem> = all_results
+                                        .into_iter() // todo 可以并行吗?
+                                        .filter_map(|pair| {
+                                            let size = pair.value_type.size();
+                                            let mut buffer = vec![0u8; size];
+                                            if driver_manager.read_memory_unified(pair.addr, &mut buffer, None).is_ok() {
+                                                Some(FuzzySearchResultItem::from_bytes(pair.addr, &buffer, pair.value_type))
+                                            } else {
+                                                None
                                             }
-                                        }
+                                        })
+                                        .collect();
+                                    if let Err(e) = result_mgr.add_fuzzy_results_batch(fuzzy_results) {
+                                        error!("Failed to add fuzzy results: {:?}", e);
                                     }
                                 }
                             } else {
                                 // 标准模式：存储为精确搜索格式
-                                for region_results in all_results {
-                                    if !region_results.is_empty() {
-                                        let converted_results: Vec<SearchResultItem> = region_results.into_iter().map(|pair| pair.into()).collect();
-                                        if let Err(e) = result_mgr.add_results_batch(converted_results) {
-                                            error!("Failed to add results: {:?}", e);
-                                        }
-                                    }
+                                let converted_results: Vec<_> = all_results
+                                    .into_iter()
+                                    .map(|pair| SearchResultItem::new_exact(pair.addr, pair.value_type))
+                                    .collect();
+                                if let Err(e) = result_mgr.add_results_batch(converted_results) {
+                                    error!("Failed to add results: {:?}", e);
                                 }
                             }
 
                             let elapsed = start_time.elapsed().as_millis() as u64;
                             let final_count = result_mgr.total_count();
 
-                            info!("Search completed: {} results in {} ms (compat_mode={})", final_count, elapsed, compatibility_mode);
+                            info!(
+                                "Search completed: {} results in {} ms (compat_mode={})",
+                                final_count, elapsed, compatibility_mode
+                            );
 
                             // Update progress info but NOT status yet (write lock still held).
                             manager.shared_buffer.write_found_count(final_count as i64);
@@ -985,7 +1000,15 @@ impl SearchEngineManager {
                 false
             };
 
-            fuzzy_search::fuzzy_refine_search(&current_results, condition, Some(&processed_clone), Some(&found_clone), &update_progress, Some(&check_cancelled)).unwrap_or_else(|e| {
+            fuzzy_search::fuzzy_refine_search(
+                &current_results,
+                condition,
+                Some(&processed_clone),
+                Some(&found_clone),
+                &update_progress,
+                Some(&check_cancelled),
+            )
+            .unwrap_or_else(|e| {
                 error!("Fuzzy refine failed: {:?}", e);
                 BPlusTreeSet::new(BPLUS_TREE_ORDER)
             })
@@ -1052,6 +1075,7 @@ impl SearchEngineManager {
     }
 
     /// Legacy synchronous search method. Kept for backward compatibility.
+    #[deprecated]
     pub fn search_memory(
         &mut self,
         query: &SearchQuery,
@@ -1083,7 +1107,7 @@ impl SearchEngineManager {
         let completed_regions = Arc::new(AtomicUsize::new(0));
         let total_found_count = Arc::new(AtomicI64::new(0));
 
-        let all_results: Vec<BPlusTreeSet<ValuePair>> = regions
+        let mut all_results = regions
             .par_iter()
             .enumerate()
             .map(|(idx, (start, end))| {
@@ -1093,19 +1117,19 @@ impl SearchEngineManager {
 
                 let result = if is_group_search {
                     if use_deep_search {
-                        group_search::search_region_group_deep(query, *start, *end, chunk_size)
+                        group_search::search_region_group_deep(query, *start, *end, chunk_size) // 废弃调用点
                     } else {
-                        group_search::search_region_group(query, *start, *end, chunk_size)
+                        group_search::search_region_group(query, *start, *end, chunk_size) // 废弃调用点
                     }
                 } else {
-                    single_search::search_region_single(&query.values[0], *start, *end, chunk_size)
+                    single_search::search_region_single(&query.values[0], *start, *end, chunk_size) // 废弃调用点
                 };
 
                 let region_results = match result {
                     Ok(results) => results,
                     Err(e) => {
                         error!("Failed to search region {}: {:?}", idx, e);
-                        BPlusTreeSet::new(BPLUS_TREE_ORDER)
+                        Vec::new()
                     },
                 };
 
@@ -1122,14 +1146,19 @@ impl SearchEngineManager {
 
                 region_results
             })
-            .collect();
+            .reduce(Vec::new, |mut a, mut b| {
+                a.append(&mut b);
+                a
+            });
 
-        for region_results in all_results {
-            if !region_results.is_empty() {
-                let converted_results: Vec<SearchResultItem> = region_results.into_iter().map(|pair| pair.into()).collect();
-                result_mgr.add_results_batch(converted_results)?;
-            }
-        }
+        all_results.sort_unstable_by(|a, b| a.addr.cmp(&b.addr));
+        all_results.dedup();
+
+        let converted_results: Vec<_> = all_results
+            .into_iter()
+            .map(|pair| SearchResultItem::new_exact(pair.addr, pair.value_type))
+            .collect();
+        result_mgr.add_results_batch(converted_results)?;
 
         let elapsed = start_time.elapsed().as_millis() as u64;
         let final_count = result_mgr.total_count();
@@ -1293,32 +1322,32 @@ impl SearchEngineManager {
         Ok(final_count)
     }
 
-    #[cfg(test)]
-    pub fn search_in_buffer_with_status(
-        buffer: &[u8],
-        buffer_addr: u64,
-        region_start: u64,
-        region_end: u64,
-        alignment: usize,
-        search_value: &super::super::SearchValue,
-        value_type: ValueType,
-        page_status: &crate::wuwa::PageStatusBitmap,
-        results: &mut BPlusTreeSet<ValuePair>,
-        matches_checked: &mut usize,
-    ) {
-        single_search::search_in_buffer_with_status(
-            buffer,
-            buffer_addr,
-            region_start,
-            region_end,
-            alignment,
-            search_value,
-            value_type,
-            page_status,
-            results,
-            matches_checked,
-        )
-    }
+    // #[cfg(test)]
+    // pub fn search_in_buffer_with_status(
+    //     buffer: &[u8],
+    //     buffer_addr: u64,
+    //     region_start: u64,
+    //     region_end: u64,
+    //     alignment: usize,
+    //     search_value: &super::super::SearchValue,
+    //     value_type: ValueType,
+    //     page_status: &crate::wuwa::PageStatusBitmap,
+    //     results: &mut BPlusTreeSet<ValuePair>,
+    //     matches_checked: &mut usize,
+    // ) {
+    //     single_search::search_in_chunks_with_status(
+    //         // 测试使用
+    //         buffer,
+    //         buffer_addr,
+    //         region_start,
+    //         region_end,
+    //         alignment,
+    //         search_value,
+    //         value_type,
+    //         page_status,
+    //         results,
+    //     )
+    // }
 
     #[cfg(test)]
     pub fn try_match_group_at_address(buffer: &[u8], addr: u64, query: &SearchQuery) -> Option<Vec<usize>> {

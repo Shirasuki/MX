@@ -1,5 +1,5 @@
-use std::fmt;
 use anyhow::anyhow;
+use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueType {
@@ -130,10 +130,7 @@ impl SearchValue {
 
     #[inline]
     pub fn fixed_float(value: f64, value_type: ValueType) -> Self {
-        SearchValue::FixedFloat {
-            value,
-            value_type,
-        }
+        SearchValue::FixedFloat { value, value_type }
     }
 
     #[inline]
@@ -172,6 +169,27 @@ impl SearchValue {
     }
 
     #[inline]
+    pub fn is_fixed_int(&self) -> bool {
+        matches!(self, SearchValue::FixedInt { .. })
+    }
+
+    #[inline]
+    pub fn is_range(&self) -> bool {
+        matches!(self, SearchValue::RangeFloat { .. } | SearchValue::RangeInt { .. })
+    }
+
+    #[inline]
+    pub fn bytes(&self) -> anyhow::Result<&[u8]> {
+        match self {
+            SearchValue::FixedInt { value, value_type } => {
+                let size = value_type.size();
+                Ok(&value[..size])
+            },
+            _ => Err(anyhow!("unsupported value type to get bytes: {:?}", self)),
+        }
+    }
+
+    #[inline]
     pub fn matched(&self, other: &[u8]) -> anyhow::Result<bool> {
         match self {
             SearchValue::FixedInt { value, value_type } => {
@@ -180,7 +198,7 @@ impl SearchValue {
                     return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
                 }
                 Ok(&value[..size] == &other[..size])
-            }
+            },
             SearchValue::FixedFloat { value, value_type } => {
                 let size = value_type.size();
                 if other.len() < size {
@@ -190,16 +208,21 @@ impl SearchValue {
                     4 => {
                         let bytes = other[..4].try_into()?;
                         f32::from_le_bytes(bytes) as f64
-                    }
+                    },
                     8 => {
                         let bytes = other[..8].try_into()?;
                         f64::from_le_bytes(bytes)
-                    }
+                    },
                     _ => return Err(anyhow!("Invalid float size: {}", size)),
                 };
                 Ok((*value - other_value).abs() < f64::EPSILON)
-            }
-            SearchValue::RangeInt { start, end, value_type, exclude } => {
+            },
+            SearchValue::RangeInt {
+                start,
+                end,
+                value_type,
+                exclude,
+            } => {
                 let size = value_type.size();
                 if other.len() < size {
                     return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
@@ -209,19 +232,19 @@ impl SearchValue {
                     2 => {
                         let bytes: [u8; 2] = other[..2].try_into()?;
                         i128::from(i16::from_le_bytes(bytes))
-                    }
+                    },
                     4 => {
                         let bytes: [u8; 4] = other[..4].try_into()?;
                         i128::from(i32::from_le_bytes(bytes))
-                    }
+                    },
                     8 => {
                         let bytes: [u8; 8] = other[..8].try_into()?;
                         i128::from(i64::from_le_bytes(bytes))
-                    }
+                    },
                     16 => {
                         let bytes: [u8; 16] = other[..16].try_into()?;
                         i128::from_le_bytes(bytes)
-                    }
+                    },
                     _ => return Err(anyhow!("Invalid integer size: {}", size)),
                 };
                 if *exclude {
@@ -229,8 +252,13 @@ impl SearchValue {
                 } else {
                     Ok(other_value >= *start && other_value <= *end)
                 }
-            }
-            SearchValue::RangeFloat { start, end, value_type, exclude } => {
+            },
+            SearchValue::RangeFloat {
+                start,
+                end,
+                value_type,
+                exclude,
+            } => {
                 let size = value_type.size();
                 if other.len() < size {
                     return Err(anyhow!("Input slice too small: expected at least {} bytes, got {}", size, other.len()));
@@ -239,11 +267,11 @@ impl SearchValue {
                     4 => {
                         let bytes = other[..4].try_into()?;
                         f32::from_le_bytes(bytes) as f64
-                    }
+                    },
                     8 => {
                         let bytes = other[..8].try_into()?;
                         f64::from_le_bytes(bytes)
-                    }
+                    },
                     _ => return Err(anyhow!("Invalid float size: {}", size)),
                 };
                 if *exclude {
@@ -251,7 +279,7 @@ impl SearchValue {
                 } else {
                     Ok(other_value >= *start && other_value <= *end)
                 }
-            }
+            },
         }
     }
 }
@@ -324,11 +352,7 @@ pub struct SearchQuery {
 impl SearchQuery {
     #[inline]
     pub fn new(values: Vec<SearchValue>, mode: SearchMode, range: u16) -> Self {
-        SearchQuery {
-            values,
-            mode,
-            range,
-        }
+        SearchQuery { values, mode, range }
     }
 
     pub fn total_size(&self) -> usize {
@@ -359,6 +383,4 @@ impl SearchQuery {
 }
 
 #[cfg(test)]
-mod test {
-
-}
+mod test {}

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicUsize};
 use super::super::types::{SearchMode, SearchQuery, SearchValue, ValueType};
@@ -15,12 +16,12 @@ pub(crate) fn search_region_group(
     start: u64,
     end: u64,
     per_chunk_size: usize,
-) -> Result<BPlusTreeSet<ValuePair>> {
+) -> Result<Vec<ValuePair>> {
     let driver_manager = DRIVER_MANAGER
         .read()
         .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
-    let mut results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
+    let mut results = Vec::new();
     let mut read_success = 0usize;
     let mut read_failed = 0usize;
     let mut matches_checked = 0usize;
@@ -174,7 +175,7 @@ pub(crate) fn search_region_group_deep(
     start: u64,
     end: u64,
     per_chunk_size: usize,
-) -> Result<BPlusTreeSet<ValuePair>> {
+) -> Result<Vec<ValuePair>> {
     // Use a no-op cancel check for backward compatibility.
     search_region_group_deep_with_cancel(query, start, end, per_chunk_size, &|| false)
 }
@@ -187,20 +188,20 @@ pub(crate) fn search_region_group_deep_with_cancel<F>(
     end: u64,
     per_chunk_size: usize,
     check_cancelled: &F,
-) -> Result<BPlusTreeSet<ValuePair>>
+) -> Result<Vec<ValuePair>>
 where
     F: Fn() -> bool,
 {
     // Check cancellation before starting.
     if check_cancelled() {
-        return Ok(BPlusTreeSet::new(BPLUS_TREE_ORDER));
+        return Ok(Vec::new());
     }
 
     let driver_manager = DRIVER_MANAGER
         .read()
         .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
-    let mut results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
+    let mut results = Vec::new();
     let mut read_success = 0usize;
     let mut read_failed = 0usize;
     let mut matches_checked = 0usize;
@@ -355,7 +356,7 @@ pub(crate) fn search_in_buffer_group(
     min_element_size: usize,
     query: &SearchQuery,
     page_status: &PageStatusBitmap,
-    results: &mut BPlusTreeSet<ValuePair>,
+    results: &mut Vec<ValuePair>,
     matches_checked: &mut usize,
 ) {
     // anchor-first 优化：尝试使用第一个 Fixed 值作为 anchor 进行 SIMD 扫描
@@ -548,7 +549,7 @@ pub(crate) fn search_in_buffer_group(
                 for (idx, value_offset) in offsets.iter().enumerate() {
                     let value_addr = check_start + *value_offset as u64;
                     let value_type = query.values[idx].value_type();
-                    results.insert((value_addr, value_type).into());
+                    results.push((value_addr, value_type).into());
                 }
             }
         }
@@ -565,7 +566,7 @@ pub(crate) fn search_in_buffer_group_fallback(
     min_element_size: usize,
     query: &SearchQuery,
     page_status: &PageStatusBitmap,
-    results: &mut BPlusTreeSet<ValuePair>,
+    results: &mut Vec<ValuePair>,
     matches_checked: &mut usize,
 ) {
     let buffer_end = buffer_addr + buffer.len() as u64;
@@ -631,7 +632,7 @@ pub(crate) fn search_in_buffer_group_fallback(
                         for (idx, value_offset) in offsets.iter().enumerate() {
                             let value_addr = addr + *value_offset as u64;
                             let value_type = query.values[idx].value_type();
-                            results.insert((value_addr, value_type).into());
+                            results.push((value_addr, value_type).into());
                         }
                     }
                 }
@@ -773,7 +774,7 @@ pub(crate) fn search_in_buffer_group_deep_with_cancel<F>(
     min_element_size: usize,
     query: &SearchQuery,
     page_status: &PageStatusBitmap,
-    results: &mut BPlusTreeSet<ValuePair>,
+    results: &mut Vec<ValuePair>,
     matches_checked: &mut usize,
     check_cancelled: &F,
 ) where
@@ -903,7 +904,7 @@ fn dfs_ordered(
     search_offset: usize,
     query: &SearchQuery,
     chosen: &mut Vec<(u64, ValueType)>,
-    used: &mut std::collections::HashSet<u64>,
+    used: &mut HashSet<u64>,
     results: &mut BPlusTreeSet<ValuePair>,
 ) {
     // Found complete match
@@ -1050,7 +1051,7 @@ fn dfs_unordered(
     search_offset: usize,
     query: &SearchQuery,
     chosen: &mut Vec<(u64, ValueType)>,
-    used: &mut std::collections::HashSet<u64>,
+    used: &mut HashSet<u64>,
     results: &mut BPlusTreeSet<ValuePair>,
 ) {
     // Found complete match
@@ -1108,7 +1109,7 @@ fn search_ordered_deep_with_cancel<F>(
     min_element_size: usize,
     query: &SearchQuery,
     page_status: &PageStatusBitmap,
-    results: &mut BPlusTreeSet<ValuePair>,
+    results: &mut Vec<ValuePair>,
     matches_checked: &mut usize,
     check_cancelled: &F,
 ) where
@@ -1217,8 +1218,8 @@ fn dfs_ordered_with_cancel<F>(
     search_offset: usize,
     query: &SearchQuery,
     chosen: &mut Vec<(u64, ValueType)>,
-    used: &mut std::collections::HashSet<u64>,
-    results: &mut BPlusTreeSet<ValuePair>,
+    used: &mut HashSet<u64>,
+    results: &mut Vec<ValuePair>,
     check_cancelled: &F,
     cancelled: &AtomicBool,
 ) where
@@ -1234,7 +1235,7 @@ fn dfs_ordered_with_cancel<F>(
     // Found complete match.
     if query_idx == query.values.len() {
         for (addr, vt) in chosen.iter() {
-            results.insert(ValuePair::new(*addr, *vt));
+            results.push(ValuePair::new(*addr, *vt));
         }
         return;
     }
@@ -1302,7 +1303,7 @@ fn search_unordered_deep_with_cancel<F>(
     min_element_size: usize,
     query: &SearchQuery,
     page_status: &PageStatusBitmap,
-    results: &mut BPlusTreeSet<ValuePair>,
+    results: &mut Vec<ValuePair>,
     matches_checked: &mut usize,
     check_cancelled: &F,
 ) where
@@ -1412,8 +1413,8 @@ fn dfs_unordered_with_cancel<F>(
     search_offset: usize,
     query: &SearchQuery,
     chosen: &mut Vec<(u64, ValueType)>,
-    used: &mut std::collections::HashSet<u64>,
-    results: &mut BPlusTreeSet<ValuePair>,
+    used: &mut HashSet<u64>,
+    results: &mut Vec<ValuePair>,
     check_cancelled: &F,
     cancelled: &AtomicBool,
 ) where
@@ -1427,7 +1428,7 @@ fn dfs_unordered_with_cancel<F>(
 
     if query_idx == query.values.len() {
         for (addr, vt) in chosen.iter() {
-            results.insert(ValuePair::new(*addr, *vt));
+            results.push(ValuePair::new(*addr, *vt));
         }
         return;
     }
