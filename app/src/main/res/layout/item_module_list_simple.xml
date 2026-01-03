@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/floating_spacing_sm"
+    android:paddingEnd="@dimen/floating_spacing_sm"
+    android:paddingTop="@dimen/floating_spacing_xs"
+    android:paddingBottom="@dimen/floating_spacing_xs"
+    android:background="@drawable/ripple_item_background"
+    android:minHeight="40dp">
+
+    <TextView
+        android:id="@+id/content_text"
+        style="@style/FloatingText.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:textColor="@color/floating_text_primary"
+        android:fontFamily="monospace"
+        android:textSize="13sp"
+        android:lineSpacingExtra="2dp"
+        tools:text="Jh: 02000000-22000000 rw-p '[anon:dalvik-main space]'" />
+
+</LinearLayout>

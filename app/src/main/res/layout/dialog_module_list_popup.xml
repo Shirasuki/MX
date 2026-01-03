@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_md"
+    app:maxHeightPercent="0.8">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/FloatingText.H3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="模块列表"
+            android:textColor="@color/floating_text_primary" />
+
+        <TextView
+            android:id="@+id/tvCount"
+            style="@style/FloatingText.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/floating_text_secondary" />
+
+    </LinearLayout>
+
+    <!-- 筛选选项 -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:scrollbars="none"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/cbPermission"
+                style="@style/FloatingCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="权限"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/cbMemory"
+                style="@style/FloatingCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_sm"
+                android:text="内存"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/cbPath"
+                style="@style/FloatingCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_sm"
+                android:text="路径"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/cbStart"
+                style="@style/FloatingCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_sm"
+                android:text="地址"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/cbSearch"
+                style="@style/FloatingCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_sm"
+                android:layout_marginEnd="@dimen/floating_spacing_sm"
+                android:text="搜索"
+                android:checked="false" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <!-- 搜索输入框（默认隐藏） -->
+    <LinearLayout
+        android:id="@+id/searchContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/inputSearch"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/floating_height_button_sm"
+            android:background="@android:color/transparent"
+            android:cursorVisible="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:hint="搜索名称、地址、权限..."
+            android:inputType="textNoSuggestions"
+            android:imeOptions="actionSearch"
+            android:maxLines="1"
+            android:paddingStart="@dimen/floating_spacing_xs"
+            android:paddingEnd="@dimen/floating_spacing_xs"
+            android:textColor="@color/floating_text_primary"
+            android:textColorHint="@color/floating_text_tertiary"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/floating_text_body" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/floating_primary_light" />
+
+    </LinearLayout>
+
+    <!-- 模块列表 -->
+    <ListView
+        android:id="@+id/moduleList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="2dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        android:minHeight="200dp" />
+
+    <!-- 按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClose"
+            style="@style/FloatingButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="关闭"
+            android:textColor="#C9A07A"
+            app:rippleColor="#30C9A07A" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

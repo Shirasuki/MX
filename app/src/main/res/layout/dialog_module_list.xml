@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_md">
+
+    <!-- 地址输入区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            style="@style/FloatingText.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="地址"
+            android:textColor="@color/floating_text_secondary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/floating_spacing_sm"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/inputAddress"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/floating_height_button_sm"
+                android:background="@android:color/transparent"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:hint="输入地址"
+                android:inputType="textNoSuggestions"
+                android:imeOptions="actionDone"
+                android:maxLines="1"
+                android:paddingStart="@dimen/floating_spacing_xs"
+                android:paddingEnd="@dimen/floating_spacing_xs"
+                android:textColor="@color/floating_text_primary"
+                android:textColorHint="@color/floating_text_tertiary"
+                android:textCursorDrawable="@null"
+                android:textSize="@dimen/floating_text_body"
+                tools:text="7F00000000" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/floating_primary_light" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnShowModule"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="@dimen/floating_spacing_sm"
+            android:src="@drawable/icon_arrow_drop_down_24px"
+            android:contentDescription="展示"
+            android:background="@drawable/ripple_item_background"
+            android:padding="4dp"
+            app:tint="@color/floating_primary_light" />
+
+    </LinearLayout>
+
+    <!-- 历史和类型筛选按钮行 -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:scrollbars="none"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- 历史按钮 -->
+            <TextView
+                android:id="@+id/btnHistory"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:text="历史"
+                android:textColor="@color/floating_text_secondary"
+                android:textSize="14sp"
+                android:background="@drawable/bg_button_filter" />
+
+            <!-- Cd按钮 -->
+            <TextView
+                android:id="@+id/btnFilterCd"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:text="Cd"
+                android:textColor="#C9A07A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_button_filter_outline" />
+
+            <!-- Cb按钮 -->
+            <TextView
+                android:id="@+id/btnFilterCb"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:text="Cb"
+                android:textColor="#C9A07A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_button_filter_outline" />
+
+            <!-- Ps按钮 -->
+            <TextView
+                android:id="@+id/btnFilterPs"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:text="Ps"
+                android:textColor="#C9A07A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_button_filter_outline" />
+
+            <!-- Xa按钮 -->
+            <TextView
+                android:id="@+id/btnFilterXa"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center"
+                android:text="Xa"
+                android:textColor="#C9A07A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_button_filter_outline" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <!-- ALL按钮 -->
+    <TextView
+        android:id="@+id/btnAll"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:gravity="center"
+        android:text="All"
+        android:textColor="@color/floating_text_secondary"
+        android:textSize="16sp"
+        android:background="@drawable/bg_button_all" />
+
+    <!-- 分隔线 -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/floating_spacing_sm"
+        android:background="@color/floating_divider" />
+
+    <!-- 内置键盘 -->
+    <moe.fuqiuluo.mamu.widget.BuiltinKeyboard
+        android:id="@+id/builtinKeyboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_sm" />
+
+    <!-- 按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/floating_spacing_md"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            style="@style/FloatingButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textColor="#C9A07A"
+            app:rippleColor="#30C9A07A" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoto"
+            style="@style/FloatingButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/floating_spacing_sm"
+            android:text="转到"
+            android:textColor="#C9A07A"
+            app:rippleColor="#30C9A07A" />
+
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

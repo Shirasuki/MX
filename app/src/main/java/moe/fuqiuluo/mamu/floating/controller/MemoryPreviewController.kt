@@ -26,6 +26,7 @@ import moe.fuqiuluo.mamu.data.settings.memoryRegionCacheInterval
 import moe.fuqiuluo.mamu.databinding.FloatingMemoryPreviewLayoutBinding
 import moe.fuqiuluo.mamu.driver.Disassembler
 import moe.fuqiuluo.mamu.driver.LocalMemoryOps
+import moe.fuqiuluo.mamu.driver.MemRegionEntry
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.adapter.MemoryPreviewAdapter
@@ -40,6 +41,7 @@ import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 import moe.fuqiuluo.mamu.floating.dialog.AddressActionDialog
 import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
+import moe.fuqiuluo.mamu.floating.dialog.ModuleListDialog
 import moe.fuqiuluo.mamu.floating.event.AddressValueChangedEvent
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.SaveMemoryPreviewEvent
@@ -186,6 +188,14 @@ class MemoryPreviewController(
                 label = "偏移量计算器"
             ) {
                 showOffsetCalculator()
+            },
+
+            ToolbarAction(
+                id = 100,
+                icon = R.drawable.icon_goto_module_24px,
+                label = "转到"
+            ) {
+                showModuleListDialog()
             },
 
             ToolbarAction(
@@ -1168,6 +1178,68 @@ class MemoryPreviewController(
                     initialBaseAddress = initialBaseAddress
                 )
             )
+        }
+    }
+
+    /**
+     * 显示模块内存列表对话框
+     * 用于快速跳转到指定模块的内存地址
+     */
+    private fun showModuleListDialog() {
+        if (!WuwaDriver.isProcessBound) {
+            notification.showError("未绑定进程")
+            return
+        }
+
+        val currentPid = WuwaDriver.currentBindPid
+        if (currentPid <= 0) {
+            notification.showError("无效的进程 PID")
+            return
+        }
+
+        // 先检查进程是否存活
+        if (!WuwaDriver.isProcessAlive(currentPid)) {
+            notification.showError("目标进程已退出 (PID: $currentPid)")
+            return
+        }
+
+        coroutineScope.launch {
+            try {
+                // 在后台线程查询内存区域（每次都获取最新数据）
+                val regions = withContext(Dispatchers.IO) {
+                    WuwaDriver.queryMemRegionsWithRetry(currentPid)
+                }
+
+                // 转换为 DisplayMemRegionEntry 并按地址排序（由小到大）
+                val modules = regions
+                    .map { DisplayMemRegionEntry.fromMemRegionEntry(it) }
+                    .sortedBy { it.start }
+
+                if (modules.isEmpty()) {
+                    notification.showWarning("未找到任何模块")
+                    return@launch
+                }
+
+                // 显示模块列表对话框
+                ModuleListDialog(
+                    context = context,
+                    modules = modules,
+                    onModuleSelected = { selectedModule ->
+                        // 跳转到选中模块的起始地址
+                        jumpToPage(selectedModule.start)
+                        notification.showSuccess("已跳转到: ${selectedModule.name.substringAfterLast("/")}")
+                    }
+                ).show()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "加载模块列表失败", e)
+                // 检查是否是进程退出导致的
+                if (WuwaDriver.currentBindPid > 0 && !WuwaDriver.isProcessAlive(WuwaDriver.currentBindPid)) {
+                    notification.showError("目标进程已退出")
+                } else {
+                    notification.showError("加载模块列表失败: ${e.message ?: "未知错误"}")
+                }
+            }
         }
     }
 

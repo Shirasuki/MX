@@ -129,7 +129,9 @@ fun MainScreen(
                                 )
                             }
                         }
-                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        Box(modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()) {
                             TabContent(
                                 selectedTab = selectedTab,
                                 windowSizeClass = windowSizeClass,
