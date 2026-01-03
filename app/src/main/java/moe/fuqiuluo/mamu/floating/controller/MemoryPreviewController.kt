@@ -26,7 +26,6 @@ import moe.fuqiuluo.mamu.data.settings.memoryRegionCacheInterval
 import moe.fuqiuluo.mamu.databinding.FloatingMemoryPreviewLayoutBinding
 import moe.fuqiuluo.mamu.driver.Disassembler
 import moe.fuqiuluo.mamu.driver.LocalMemoryOps
-import moe.fuqiuluo.mamu.driver.MemRegionEntry
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.adapter.MemoryPreviewAdapter
@@ -71,6 +70,9 @@ class MemoryPreviewController(
         // ViewHolder 预创建数量
         private const val MEMORY_ROW_POOL_SIZE = 32
         private const val NAVIGATION_POOL_SIZE = 2
+        
+        // 导航历史最大数量
+        private const val MAX_NAVIGATION_HISTORY = 100
     }
 
     // 当前显示的格式列表
@@ -81,6 +83,11 @@ class MemoryPreviewController(
 
     // 当前跳转的目标地址（用于高亮显示）
     private var targetAddress: Long? = null
+
+    // 导航历史记录
+    private val navigationHistory = mutableListOf<Long>()
+    private var navigationIndex = -1
+    private var isNavigating = false  // 防止前进后退时重复添加历史
 
     // 缓存的内存区域列表（已分类和排序）
     private var memoryRegions: List<DisplayMemRegionEntry> = emptyList()
@@ -203,7 +210,7 @@ class MemoryPreviewController(
                 icon = R.drawable.icon_arrow_left_alt_24px,
                 label = "后退"
             ) {
-
+                navigateBack()
             },
 
             ToolbarAction(
@@ -211,7 +218,7 @@ class MemoryPreviewController(
                 icon = R.drawable.icon_arrow_right_alt_24px,
                 label = "前进"
             ) {
-
+                navigateForward()
             },
 
             ToolbarAction(
@@ -475,6 +482,21 @@ class MemoryPreviewController(
 
         // 计算页头地址（向下对齐到页边界，固定4KB页大小）
         val pageStartAddress = (requestedAddress / PAGE_SIZE) * PAGE_SIZE
+        
+        // 记录导航历史（仅在非前进后退操作时，且地址有变化）
+        if (!isNavigating) {
+            // 检查是否与当前历史位置的地址不同
+            val currentHistoryAddress = if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
+                navigationHistory[navigationIndex]
+            } else {
+                -1L
+            }
+            
+            if (pageStartAddress != currentHistoryAddress) {
+                addToNavigationHistory(pageStartAddress)
+            }
+        }
+        
         currentStartAddress = pageStartAddress
 
         // 记录目标地址用于高亮
@@ -482,6 +504,64 @@ class MemoryPreviewController(
 
         // 加载页面
         loadPage(pageStartAddress, requestedAddress)
+    }
+    
+    /**
+     * 添加地址到导航历史
+     */
+    private fun addToNavigationHistory(address: Long) {
+        // 如果当前不在历史末尾，删除后面的记录
+        if (navigationIndex >= 0 && navigationIndex < navigationHistory.size - 1) {
+            navigationHistory.subList(navigationIndex + 1, navigationHistory.size).clear()
+        }
+        
+        // 避免连续重复地址
+        if (navigationHistory.isEmpty() || navigationHistory.last() != address) {
+            navigationHistory.add(address)
+            navigationIndex = navigationHistory.size - 1
+            
+            // 限制历史记录数量
+            while (navigationHistory.size > MAX_NAVIGATION_HISTORY) {
+                navigationHistory.removeAt(0)
+                navigationIndex--
+            }
+        }
+    }
+    
+    /**
+     * 后退到上一个地址
+     */
+    private fun navigateBack() {
+        if (navigationHistory.isEmpty() || navigationIndex <= 0) {
+            notification.showWarning("已经是最早的记录")
+            return
+        }
+        
+        isNavigating = true
+        navigationIndex--
+        val address = navigationHistory[navigationIndex]
+        jumpToPage(address)
+        isNavigating = false
+        
+        notification.showSuccess("后退 (${navigationIndex + 1}/${navigationHistory.size})")
+    }
+    
+    /**
+     * 前进到下一个地址
+     */
+    private fun navigateForward() {
+        if (navigationHistory.isEmpty() || navigationIndex >= navigationHistory.size - 1) {
+            notification.showWarning("已经是最新的记录")
+            return
+        }
+        
+        isNavigating = true
+        navigationIndex++
+        val address = navigationHistory[navigationIndex]
+        jumpToPage(address)
+        isNavigating = false
+        
+        notification.showSuccess("前进 (${navigationIndex + 1}/${navigationHistory.size})")
     }
 
     /**
