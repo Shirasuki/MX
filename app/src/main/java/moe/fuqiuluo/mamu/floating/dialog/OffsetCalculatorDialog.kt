@@ -32,6 +32,7 @@ import moe.fuqiuluo.mamu.floating.data.model.FormattedValue
 import moe.fuqiuluo.mamu.floating.data.model.MemoryDisplayFormat
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.NavigateToMemoryAddressEvent
+import moe.fuqiuluo.mamu.floating.event.UIActionEvent
 import moe.fuqiuluo.mamu.pp.ExecutionException
 import moe.fuqiuluo.mamu.pp.ExecutionResult
 import moe.fuqiuluo.mamu.pp.ParseException
@@ -648,8 +649,9 @@ class OffsetCalculatorDialog(
         }
 
         coroutineScope.launch {
-            FloatingEventBus.emitNavigateToMemoryAddress(
-                NavigateToMemoryAddressEvent(address = result.finalAddress)
+            // 使用 JumpToMemoryPreview 事件，会先切换到内存预览 Tab 再跳转
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.JumpToMemoryPreview(address = result.finalAddress)
             )
         }
 

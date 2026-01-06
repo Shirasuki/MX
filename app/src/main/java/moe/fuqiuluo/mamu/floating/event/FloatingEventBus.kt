@@ -25,7 +25,7 @@ object FloatingEventBus {
 
     // 进程状态变更事件流
     private val _processStateEvents = MutableSharedFlow<ProcessStateEvent>(
-        replay = 1,  // 保留最新状态，新订阅者可以立即获取当前状态
+        replay = 0,  // 1 ？保留最新状态，新订阅者可以立即获取当前状态
         extraBufferCapacity = 4
     )
     val processStateEvents: SharedFlow<ProcessStateEvent> = _processStateEvents.asSharedFlow()
