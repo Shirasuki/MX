@@ -149,7 +149,7 @@ class BuiltinKeyboard @JvmOverloads constructor(
             R.id.key_5 to "5", R.id.key_6 to "6", R.id.key_7 to "7", R.id.key_8 to "8",
             R.id.key_9 to "9", R.id.key_0 to "0",
             R.id.key_a to "A", R.id.key_b to "B", R.id.key_c to "C", R.id.key_d to "D",
-            R.id.key_e to "E", R.id.key_f to "F", R.id.key_g to "G",
+            R.id.key_e to "E", R.id.key_f to "F",
             R.id.key_h to "h", R.id.key_q to "Q", R.id.key_r to "r", R.id.key_w to "W", R.id.key_x to "X",
             R.id.key_colon to ":", R.id.key_semicolon to ";", R.id.key_tilde to "~",
             R.id.key_dot to ".", R.id.key_minus to "-", R.id.key_comma to ",",

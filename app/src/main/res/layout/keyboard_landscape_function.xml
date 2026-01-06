@@ -216,11 +216,10 @@
             android:src="@drawable/arrow_right_alt_24px" />
 
         <ImageButton
-            android:id="@+id/key_disabled"
+            android:id="@+id/key_collapse"
             style="@style/KeyboardIconButton"
-            android:contentDescription="禁用"
-            android:enabled="false"
-            android:src="@drawable/icon_close_24px" />
+            android:contentDescription="折叠"
+            android:src="@drawable/unfold_less_24px" />
     </LinearLayout>
 
 </LinearLayout>

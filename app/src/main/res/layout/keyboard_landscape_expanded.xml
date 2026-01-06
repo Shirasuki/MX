@@ -54,6 +54,11 @@
         android:weightSum="7">
 
         <Button
+            android:id="@+id/key_d"
+            style="@style/KeyboardButton"
+            android:text="D" />
+
+        <Button
             android:id="@+id/key_e"
             style="@style/KeyboardButton"
             android:text="E" />
@@ -62,11 +67,6 @@
             android:id="@+id/key_f"
             style="@style/KeyboardButton"
             android:text="F" />
-
-        <Button
-            android:id="@+id/key_g"
-            style="@style/KeyboardButton"
-            android:text="G" />
 
         <Button
             android:id="@+id/key_4"
