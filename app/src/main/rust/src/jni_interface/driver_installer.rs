@@ -27,7 +27,7 @@ lazy_static! {
         ),
         (
             ss!("android13-5.15"),
-            ss!("https://vip.123pan.cn/1818969283/yk6baz03t0m000d7w33gud8zyu2p4u4kDIYPBdrzBIi1DvxPAIazAY==.png")
+            ss!("https://vip.123pan.cn/1818969283/yk6baz03t0n000d7w33hpq8k5i3zr1e4DIYPBdrzBIi1DvxPAIazAY==.png")
         ),
         (
             ss!("android14-5.15"),
