@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<moe.fuqiuluo.mamu.widget.FixedLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="@dimen/floating_spacing_lg"
+    app:maxHeightPercent="0.9"
+    app:maxWidthPercent="0.9">
+
+    <!-- 标题 -->
+    <com.google.android.material.textview.MaterialTextView
+        style="@style/FloatingText.H2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_xs"
+        android:text="@string/pointer_scan_dialog_title" />
+
+    <!-- 副标题 -->
+    <com.google.android.material.textview.MaterialTextView
+        style="@style/FloatingText.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/floating_spacing_md"
+        android:text="@string/pointer_scan_dialog_subtitle" />
+
+    <!-- 目标地址输入 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="目标地址"
+            android:textColor="@color/floating_text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0x"
+                android:textColor="@color/floating_text_secondary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/input_target_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/floating_height_button_sm"
+                    android:background="@android:color/transparent"
+                    android:cursorVisible="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:hint="@string/hint_target_address"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="@dimen/floating_spacing_xs"
+                    android:paddingEnd="@dimen/floating_spacing_xs"
+                    android:textColor="@color/floating_text_primary"
+                    android:textColorHint="@color/floating_text_secondary"
+                    android:textCursorDrawable="@null"
+                    android:textSize="@dimen/floating_text_body">
+
+                    <requestFocus />
+                </EditText>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:dividerColor="@color/floating_divider" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 扫描深度 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="扫描深度 / 最大指针链长度"
+            android:textColor="@color/floating_text_secondary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="极大影响指针链计算速度，越小越快"
+            android:textColor="@color/floating_text_secondary"
+            android:alpha="0.7" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/input_max_depth"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/floating_height_button_sm"
+                android:background="@android:color/transparent"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:hint="默认: 4"
+                android:inputType="number"
+                android:paddingStart="@dimen/floating_spacing_xs"
+                android:paddingEnd="@dimen/floating_spacing_xs"
+                android:text="4"
+                android:textColor="@color/floating_text_primary"
+                android:textColorHint="@color/floating_text_secondary"
+                android:textCursorDrawable="@null"
+                android:textSize="@dimen/floating_text_body" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerColor="@color/floating_divider" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 最大偏移范围 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="最大偏移范围"
+            android:textColor="@color/floating_text_secondary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="单个指针偏移量的最大值（16进制），越大扫描范围越广"
+            android:textColor="@color/floating_text_secondary"
+            android:alpha="0.7" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/FloatingText.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0x"
+                android:textColor="@color/floating_text_secondary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/floating_spacing_xs"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/input_max_offset"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/floating_height_button_sm"
+                    android:background="@android:color/transparent"
+                    android:cursorVisible="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:hint="默认: 3e8"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="@dimen/floating_spacing_xs"
+                    android:paddingEnd="@dimen/floating_spacing_xs"
+                    android:text="3e8"
+                    android:textColor="@color/floating_text_primary"
+                    android:textColorHint="@color/floating_text_secondary"
+                    android:textCursorDrawable="@null"
+                    android:textSize="@dimen/floating_text_body" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:dividerColor="@color/floating_divider" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 数据量限制 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="结果数量限制"
+            android:textColor="@color/floating_text_secondary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/FloatingText.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/floating_spacing_xs"
+            android:text="最多返回多少条指针链结果，避免结果过多导致卡顿"
+            android:textColor="@color/floating_text_secondary"
+            android:alpha="0.7" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/input_max_results"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/floating_height_button_sm"
+                android:background="@android:color/transparent"
+                android:cursorVisible="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:hint="默认: 0 (无限制)"
+                android:inputType="number"
+                android:paddingStart="@dimen/floating_spacing_xs"
+                android:paddingEnd="@dimen/floating_spacing_xs"
+                android:text="0"
+                android:textColor="@color/floating_text_primary"
+                android:textColorHint="@color/floating_text_secondary"
+                android:textCursorDrawable="@null"
+                android:textSize="@dimen/floating_text_body" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerColor="@color/floating_divider" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 循环引用检测 Switch -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="@dimen/floating_spacing_md">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Small"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="使用分层BFS构造指针链"
+                    android:textColor="@color/floating_text_primary" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/FloatingText.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="前提是你有足够多的内存去支持这项操作"
+                    android:textColor="@color/floating_text_secondary"
+                    android:alpha="0.7" />
+            </LinearLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_layer_bfs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 底部按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:layout_marginTop="@dimen/floating_spacing_sm">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            style="@style/FloatingButton.Text.White"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:text="@string/button_cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_scan"
+            style="@style/FloatingButton.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_search" />
+    </LinearLayout>
+
+</moe.fuqiuluo.mamu.widget.FixedLinearLayout>

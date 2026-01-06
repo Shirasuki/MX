@@ -73,6 +73,40 @@ object LocalMemoryOps {
         return nativeGetPageSize()
     }
 
+    /**
+     * 获取静态全局变量 PRACTICE_GLOBAL_INSTANCE 的地址
+     * 这个地址位于 .data/.bss 段，可以作为指针链的基址
+     * @return 静态变量的地址
+     */
+    fun getStaticBase(): ULong {
+        return nativeGetStaticBase().toULong()
+    }
+
+    /**
+     * 设置静态全局变量 PRACTICE_GLOBAL_INSTANCE 的值
+     * 用于构建指针链教程的基础结构
+     * @param value 要写入的指针值
+     */
+    fun setStaticBase(value: ULong) {
+        nativeSetStaticBase(value.toLong())
+    }
+
+    /**
+     * 读取Long值（小端序，8字节指针）
+     */
+    fun readLong(address: ULong): Long {
+        val bytes = read(address, 8)
+        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).long
+    }
+
+    /**
+     * 写入Long值（小端序，8字节指针）
+     */
+    fun writeLong(address: ULong, value: Long) {
+        val bytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array()
+        write(address, bytes)
+    }
+
     // Native methods
     private external fun nativeAlloc(size: Int): Long
     private external fun nativeFree(address: Long, size: Int)
@@ -80,4 +114,6 @@ object LocalMemoryOps {
     private external fun nativeWrite(address: Long, data: ByteArray)
     private external fun nativeGetPid(): Int
     private external fun nativeGetPageSize(): Int
+    private external fun nativeGetStaticBase(): Long
+    private external fun nativeSetStaticBase(value: Long)
 }

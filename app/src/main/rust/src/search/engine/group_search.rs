@@ -1,25 +1,19 @@
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicI64, AtomicUsize};
 use super::super::types::{SearchMode, SearchQuery, SearchValue, ValueType};
-use super::manager::{BPLUS_TREE_ORDER, PAGE_MASK, PAGE_SIZE, ValuePair};
+use super::manager::{ValuePair, BPLUS_TREE_ORDER};
 use crate::core::DRIVER_MANAGER;
+use crate::search::{PAGE_MASK, PAGE_SIZE};
 use crate::wuwa::PageStatusBitmap;
-use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::Result;
 use bplustree::BPlusTreeSet;
-use log::{Level, debug, log_enabled, warn};
+use log::{debug, log_enabled, warn, Level};
 use memchr::memmem;
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicUsize};
+use std::sync::Arc;
 
-pub(crate) fn search_region_group(
-    query: &SearchQuery,
-    start: u64,
-    end: u64,
-    per_chunk_size: usize,
-) -> Result<Vec<ValuePair>> {
-    let driver_manager = DRIVER_MANAGER
-        .read()
-        .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
+pub(crate) fn search_region_group(query: &SearchQuery, start: u64, end: u64, per_chunk_size: usize) -> Result<Vec<ValuePair>> {
+    let driver_manager = DRIVER_MANAGER.read().map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
     let mut results = Vec::new();
     let mut read_success = 0usize;
@@ -41,11 +35,7 @@ pub(crate) fn search_region_group(
         let mut page_status = PageStatusBitmap::new(chunk_len, current as usize);
 
         // 读取数据到滑动窗口的后半部分
-        let read_result = driver_manager.read_memory_unified(
-            current, 
-            &mut sliding_buffer[per_chunk_size..per_chunk_size + chunk_len], 
-            Some(&mut page_status)
-        );
+        let read_result = driver_manager.read_memory_unified(current, &mut sliding_buffer[per_chunk_size..per_chunk_size + chunk_len], Some(&mut page_status));
 
         match read_result {
             Ok(_) => {
@@ -135,10 +125,7 @@ pub(crate) fn search_region_group(
             },
             Err(error) => {
                 if log_enabled!(Level::Debug) {
-                    warn!(
-                        "Failed to read memory at 0x{:X} - 0x{:X}, err: {:?}",
-                        current, chunk_end, error
-                    );
+                    warn!("Failed to read memory at 0x{:X} - 0x{:X}, err: {:?}", current, chunk_end, error);
                 }
                 read_failed += 1;
                 prev_chunk_valid = false;
@@ -170,12 +157,7 @@ pub(crate) fn search_region_group(
 
 /// Deep group search for a memory region - finds ALL possible combinations
 /// This is the deep search version of search_region_group
-pub(crate) fn search_region_group_deep(
-    query: &SearchQuery,
-    start: u64,
-    end: u64,
-    per_chunk_size: usize,
-) -> Result<Vec<ValuePair>> {
+pub(crate) fn search_region_group_deep(query: &SearchQuery, start: u64, end: u64, per_chunk_size: usize) -> Result<Vec<ValuePair>> {
     // Use a no-op cancel check for backward compatibility.
     search_region_group_deep_with_cancel(query, start, end, per_chunk_size, &|| false)
 }
@@ -197,9 +179,7 @@ where
         return Ok(Vec::new());
     }
 
-    let driver_manager = DRIVER_MANAGER
-        .read()
-        .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
+    let driver_manager = DRIVER_MANAGER.read().map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
     let mut results = Vec::new();
     let mut read_success = 0usize;
@@ -225,11 +205,7 @@ where
 
         let mut page_status = PageStatusBitmap::new(chunk_len, current as usize);
 
-        let read_result = driver_manager.read_memory_unified(
-            current,
-            &mut sliding_buffer[per_chunk_size..per_chunk_size + chunk_len],
-            Some(&mut page_status)
-        );
+        let read_result = driver_manager.read_memory_unified(current, &mut sliding_buffer[per_chunk_size..per_chunk_size + chunk_len], Some(&mut page_status));
 
         match read_result {
             Ok(_) => {
@@ -315,10 +291,7 @@ where
             },
             Err(error) => {
                 if log_enabled!(Level::Debug) {
-                    warn!(
-                        "Failed to read memory at 0x{:X} - 0x{:X}, err: {:?}",
-                        current, chunk_end, error
-                    );
+                    warn!("Failed to read memory at 0x{:X} - 0x{:X}, err: {:?}", current, chunk_end, error);
                 }
                 read_failed += 1;
                 prev_chunk_valid = false;
@@ -464,10 +437,7 @@ pub(crate) fn search_in_buffer_group(
         // 根据搜索模式计算需要验证的区域
         let (start_addr, _start_offset) = if query.mode == SearchMode::Ordered {
             // Ordered 模式：根据 anchor 在 query 中的位置，反推序列起始位置
-            let anchor_offset_in_sequence = query.values[..anchor_idx]
-                .iter()
-                .map(|v| v.value_type().size())
-                .sum::<usize>();
+            let anchor_offset_in_sequence = query.values[..anchor_idx].iter().map(|v| v.value_type().size()).sum::<usize>();
 
             let seq_start_addr = anchor_addr.saturating_sub(anchor_offset_in_sequence as u64);
             let seq_start_offset = offset.saturating_sub(anchor_offset_in_sequence);
@@ -476,30 +446,18 @@ pub(crate) fn search_in_buffer_group(
         } else {
             // Unordered 模式：从 anchor_addr - range 开始
             let range_start = anchor_addr.saturating_sub(query.range as u64);
-            let range_start_offset = if range_start < buffer_addr {
-                0
-            } else {
-                (range_start - buffer_addr) as usize
-            };
+            let range_start_offset = if range_start < buffer_addr { 0 } else { (range_start - buffer_addr) as usize };
             (range_start, range_start_offset)
         };
 
         // 检查地址是否在有效范围内
-        let check_range_addr = if query.mode == SearchMode::Ordered {
-            start_addr
-        } else {
-            anchor_addr
-        };
+        let check_range_addr = if query.mode == SearchMode::Ordered { start_addr } else { anchor_addr };
         if check_range_addr < region_start || check_range_addr >= region_end {
             continue;
         }
 
         // 检查地址是否在有效页范围内
-        let check_addr = if query.mode == SearchMode::Ordered {
-            start_addr
-        } else {
-            anchor_addr
-        };
+        let check_addr = if query.mode == SearchMode::Ordered { start_addr } else { anchor_addr };
         let mut in_valid_page = false;
         for (start_page, end_page) in &page_ranges {
             let page_range_start = buffer_page_start + (start_page * *PAGE_SIZE) as u64;
@@ -524,10 +482,7 @@ pub(crate) fn search_in_buffer_group(
             if start_addr < buffer_addr {
                 continue;
             }
-            (
-                start_addr,
-                (start_addr + min_buffer_size).min(buffer_end).min(region_end),
-            )
+            (start_addr, (start_addr + min_buffer_size).min(buffer_end).min(region_end))
         } else {
             // Unordered 模式：需要覆盖 anchor 前后的范围
             let unordered_start = anchor_addr.saturating_sub(query.range as u64).max(buffer_addr);
@@ -541,11 +496,7 @@ pub(crate) fn search_in_buffer_group(
         if check_start_offset + range_size <= buffer.len() {
             *matches_checked += 1;
 
-            if let Some(offsets) = try_match_group_at_address(
-                &buffer[check_start_offset..check_start_offset + range_size],
-                check_start,
-                query,
-            ) {
+            if let Some(offsets) = try_match_group_at_address(&buffer[check_start_offset..check_start_offset + range_size], check_start, query) {
                 for (idx, value_offset) in offsets.iter().enumerate() {
                     let value_addr = check_start + *value_offset as u64;
                     let value_type = query.values[idx].value_type();
@@ -609,11 +560,7 @@ pub(crate) fn search_in_buffer_group_fallback(
         } else {
             // range_start > first_addr，需要对齐
             let rem = range_start % min_element_size as u64;
-            if rem == 0 {
-                range_start
-            } else {
-                range_start + min_element_size as u64 - rem
-            }
+            if rem == 0 { range_start } else { range_start + min_element_size as u64 - rem }
         };
 
         // 在这个有效页范围内搜索
@@ -626,8 +573,7 @@ pub(crate) fn search_in_buffer_group_fallback(
                 if range_size >= query.range as usize && offset + range_size <= buffer.len() {
                     *matches_checked += 1;
 
-                    if let Some(offsets) = try_match_group_at_address(&buffer[offset..offset + range_size], addr, query)
-                    {
+                    if let Some(offsets) = try_match_group_at_address(&buffer[offset..offset + range_size], addr, query) {
                         // 保存所有匹配值的地址
                         for (idx, value_offset) in offsets.iter().enumerate() {
                             let value_addr = addr + *value_offset as u64;
@@ -859,11 +805,7 @@ fn search_ordered_deep(
             first_addr
         } else {
             let rem = range_start % min_element_size as u64;
-            if rem == 0 {
-                range_start
-            } else {
-                range_start + min_element_size as u64 - rem
-            }
+            if rem == 0 { range_start } else { range_start + min_element_size as u64 - rem }
         };
 
         while addr < range_end {
@@ -1005,11 +947,7 @@ fn search_unordered_deep(
             first_addr
         } else {
             let rem = range_start % min_element_size as u64;
-            if rem == 0 {
-                range_start
-            } else {
-                range_start + min_element_size as u64 - rem
-            }
+            if rem == 0 { range_start } else { range_start + min_element_size as u64 - rem }
         };
 
         while addr < range_end {
@@ -1160,11 +1098,7 @@ fn search_ordered_deep_with_cancel<F>(
             first_addr
         } else {
             let rem = range_start % min_element_size as u64;
-            if rem == 0 {
-                range_start
-            } else {
-                range_start + min_element_size as u64 - rem
-            }
+            if rem == 0 { range_start } else { range_start + min_element_size as u64 - rem }
         };
 
         let mut iteration_count = 0u64;
@@ -1353,11 +1287,7 @@ fn search_unordered_deep_with_cancel<F>(
             first_addr
         } else {
             let rem = range_start % min_element_size as u64;
-            if rem == 0 {
-                range_start
-            } else {
-                range_start + min_element_size as u64 - rem
-            }
+            if rem == 0 { range_start } else { range_start + min_element_size as u64 - rem }
         };
 
         let mut iteration_count = 0u64;
@@ -1514,9 +1444,7 @@ pub(crate) fn refine_search_group_with_dfs(
         debug!("当前结果数量: {}", existing_results.len())
     }
 
-    let driver_manager = DRIVER_MANAGER
-        .read()
-        .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
+    let driver_manager = DRIVER_MANAGER.read().map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
     let mut refined_results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
 
@@ -1593,10 +1521,7 @@ pub(crate) fn refine_search_group_with_dfs(
     // 主循环：每个锚点执行 DFS
     for anchor_addr in anchors {
         let (min_addr, max_addr) = match query.mode {
-            SearchMode::Unordered => (
-                anchor_addr.saturating_sub(query.range as u64),
-                anchor_addr + query.range as u64,
-            ),
+            SearchMode::Unordered => (anchor_addr.saturating_sub(query.range as u64), anchor_addr + query.range as u64),
             SearchMode::Ordered => (anchor_addr, anchor_addr + query.range as u64),
         };
 
@@ -1735,9 +1660,7 @@ where
         return Ok(BPlusTreeSet::new(BPLUS_TREE_ORDER));
     }
 
-    let driver_manager = DRIVER_MANAGER
-        .read()
-        .map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
+    let driver_manager = DRIVER_MANAGER.read().map_err(|_| anyhow!("Failed to acquire DriverManager lock"))?;
 
     let mut refined_results = BPlusTreeSet::new(BPLUS_TREE_ORDER);
 
@@ -1920,10 +1843,7 @@ where
             }
 
             let (min_addr, max_addr) = match query.mode {
-                SearchMode::Unordered => (
-                    anchor_addr.saturating_sub(query.range as u64),
-                    anchor_addr + query.range as u64,
-                ),
+                SearchMode::Unordered => (anchor_addr.saturating_sub(query.range as u64), anchor_addr + query.range as u64),
                 SearchMode::Ordered => (*anchor_addr, anchor_addr + query.range as u64),
             };
 
@@ -1973,18 +1893,12 @@ where
                     if let Some(found_counter) = &total_found_counter {
                         found_counter.fetch_add(local_results.len(), Ordering::Relaxed);
                     }
-                    let found = total_found_counter
-                        .map(|c| c.load(Ordering::Relaxed))
-                        .unwrap_or(0);
+                    let found = total_found_counter.map(|c| c.load(Ordering::Relaxed)).unwrap_or(0);
                     update_progress(processed, found);
                 }
             }
 
-            if local_results.is_empty() {
-                None
-            } else {
-                Some(local_results)
-            }
+            if local_results.is_empty() { None } else { Some(local_results) }
         })
         .collect();
 

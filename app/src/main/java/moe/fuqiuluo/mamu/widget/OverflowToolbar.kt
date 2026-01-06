@@ -51,28 +51,18 @@ class OverflowToolbar @JvmOverloads constructor(
     init {
         orientation = HORIZONTAL
 
-        iconWidth = dpToPx(40)
-        overflowButtonWidth = dpToPx(40)
+        // 从资源文件获取图标大小
+        iconWidth = context.resources.getDimensionPixelSize(R.dimen.floating_icon_xl)
+        overflowButtonWidth = context.resources.getDimensionPixelSize(R.dimen.floating_icon_xl)
 
-        iconContainer = LinearLayout(context).apply {
-            orientation = HORIZONTAL
-            layoutParams = LayoutParams(0, LayoutParams.MATCH_PARENT, 1f)
-            setBackgroundColor(Color.TRANSPARENT)
-        }
-        addView(iconContainer)
+        // 从 XML 加载布局
+        LayoutInflater.from(context).inflate(R.layout.widget_overflow_toolbar, this, true)
 
-        overflowButton = ImageButton(context).apply {
-            layoutParams = LayoutParams(overflowButtonWidth, LayoutParams.MATCH_PARENT)
-            setImageResource(R.drawable.icon_more_vert_24px)
-            setColorFilter(Color.WHITE)
-            setBackgroundColor(Color.TRANSPARENT)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8))
-            contentDescription = "更多"
+        // 获取视图引用
+        iconContainer = findViewById(R.id.icon_container)
+        overflowButton = findViewById<ImageButton>(R.id.overflow_button).apply {
             setOnClickListener { invokeOverflow() }
-            visibility = GONE
         }
-        addView(overflowButton)
 
         logD("init: iconWidth=$iconWidth overflowButtonWidth=$overflowButtonWidth")
     }
@@ -181,7 +171,7 @@ class OverflowToolbar @JvmOverloads constructor(
         } else {
             // 需要溢出：预留溢出按钮后再计算
             val widthForIcons = (availableWidth - overflowButtonWidth).coerceAtLeast(0)
-            val maxWithOverflow = (widthForIcons / iconWidth).coerceAtLeast(0)
+            val maxWithOverflow = (widthForIcons / iconWidth).coerceAtLeast(0) + 1
             val visCount = maxWithOverflow.coerceAtMost(actions.size)
             actions.take(visCount) to actions.drop(visCount)
         }
@@ -225,6 +215,8 @@ class OverflowToolbar @JvmOverloads constructor(
         logD("rebuildIconContainer: removeAllViews then add ${visibleActions.size} buttons")
         iconContainer.removeAllViews()
 
+        val padding = context.resources.getDimensionPixelSize(R.dimen.floating_spacing_sm)
+
         visibleActions.forEach { action ->
             val button = ImageButton(context).apply {
                 layoutParams = LayoutParams(iconWidth, LayoutParams.MATCH_PARENT)
@@ -232,7 +224,7 @@ class OverflowToolbar @JvmOverloads constructor(
                 setColorFilter(Color.WHITE)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
                 setBackgroundColor(Color.TRANSPARENT)
-                setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8))
+                setPadding(padding, padding, padding, padding)
                 contentDescription = action.label
                 setOnClickListener { action.onClick() }
             }
@@ -244,10 +236,5 @@ class OverflowToolbar @JvmOverloads constructor(
         if (overflowActions.isEmpty()) return
 
         overflowCallback?.invoke()
-    }
-
-    private fun dpToPx(dp: Int): Int {
-        val density = context.resources.displayMetrics.density
-        return (dp * density + 0.5f).toInt()
     }
 }

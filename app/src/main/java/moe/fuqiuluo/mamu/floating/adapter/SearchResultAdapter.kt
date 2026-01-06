@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import moe.fuqiuluo.mamu.databinding.ItemSearchResultBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
+import moe.fuqiuluo.mamu.driver.PointerChainResultItem
 import moe.fuqiuluo.mamu.driver.SearchResultItem
 import moe.fuqiuluo.mamu.floating.data.local.MemoryBackupManager
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
@@ -378,6 +379,9 @@ class SearchResultAdapter(
                             backupValueText.visibility = View.GONE
                         }
 
+                        // 指针链信息（Exact搜索不显示）
+                        pointerChainText.visibility = View.GONE
+
                         // 类型简称和颜色
                         val valueType = item.displayValueType ?: DisplayValueType.DWORD
                         typeText.apply {
@@ -411,6 +415,9 @@ class SearchResultAdapter(
                             backupValueText.visibility = View.GONE
                         }
 
+                        // 指针链信息（Fuzzy搜索不显示）
+                        pointerChainText.visibility = View.GONE
+
                         // 类型简称和颜色
                         val valueType = item.displayValueType ?: DisplayValueType.DWORD
                         typeText.apply {
@@ -419,6 +426,37 @@ class SearchResultAdapter(
                         }
 
                         // 内存范围简称和颜色 - 使用二分查找 O(log n) 替代线性查找 O(n)
+                        val memoryRange = findMemoryRangeByAddress(item.address)
+                        rangeText.apply {
+                            text = memoryRange.code
+                            setTextColor(memoryRange.color)
+                        }
+                    }
+                }
+
+                is PointerChainResultItem -> {
+                    binding.apply {
+                        // 地址
+                        addressText.text = item.address.toString(16).uppercase()
+
+                        // 当前值（指针地址）
+                        valueText.text = item.value
+
+                        // 备份值不显示（指针扫描结果不需要备份）
+                        backupValueText.visibility = View.GONE
+
+                        // 显示指针链描述
+                        pointerChainText.text = item.chainString
+                        pointerChainText.visibility = View.VISIBLE
+
+                        // 类型（指针总是 QWORD）
+                        val valueType = item.displayValueType
+                        typeText.apply {
+                            text = valueType.code
+                            setTextColor(valueType.textColor)
+                        }
+
+                        // 内存范围简称和颜色
                         val memoryRange = findMemoryRangeByAddress(item.address)
                         rangeText.apply {
                             text = memoryRange.code

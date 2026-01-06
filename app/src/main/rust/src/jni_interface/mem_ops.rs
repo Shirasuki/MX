@@ -5,7 +5,11 @@ use jni::objects::{JByteArray, JObject};
 use jni::sys::{jint, jlong};
 use jni_macro::jni_method;
 use std::alloc::{Layout, alloc, dealloc};
+use std::ffi::c_void;
+use std::ptr;
 use nix::libc;
+
+static mut PRACTICE_GLOBAL_INSTANCE: *mut c_void = ptr::null_mut();
 
 /// Allocate memory of specified size (like malloc)
 #[jni_method(70, "moe/fuqiuluo/mamu/driver/LocalMemoryOps", "nativeAlloc", "(I)J")]
@@ -80,5 +84,24 @@ pub fn jni_practice_get_page_size(_env: JNIEnv, _obj: JObject) -> jint {
         let page_size = libc::sysconf(libc::_SC_PAGESIZE);
 
         page_size as jint
+    }
+}
+
+/// Get the address of PRACTICE_GLOBAL_INSTANCE (static .data/.bss variable)
+/// This is used as the base address for pointer chain tutorial
+/// Returns the ADDRESS of the static variable itself (in .data/.bss), not its value
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/LocalMemoryOps", "nativeGetStaticBase", "()J")]
+pub fn jni_practice_get_static_base(_env: JNIEnv, _obj: JObject) -> jlong {
+    unsafe {
+        ptr::addr_of!(PRACTICE_GLOBAL_INSTANCE) as jlong
+    }
+}
+
+/// Set the value of PRACTICE_GLOBAL_INSTANCE (write pointer to static variable)
+/// This is used to construct the pointer chain for tutorial
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/LocalMemoryOps", "nativeSetStaticBase", "(J)V")]
+pub fn jni_practice_set_static_base(_env: JNIEnv, _obj: JObject, value: jlong) {
+    unsafe {
+        PRACTICE_GLOBAL_INSTANCE = value as *mut c_void;
     }
 }

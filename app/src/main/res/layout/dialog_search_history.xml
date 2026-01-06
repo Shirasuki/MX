@@ -7,8 +7,8 @@
     android:background="@drawable/dialog_background"
     android:minWidth="280dp"
     android:orientation="vertical"
-    app:maxHeightPercent="0.8"
-    app:maxWidth="480dp">
+    app:maxWidthPercent="0.8"
+    app:maxHeightPercent="0.9">
 
     <!-- 标题栏 -->
     <LinearLayout

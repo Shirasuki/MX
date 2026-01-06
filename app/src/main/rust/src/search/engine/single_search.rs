@@ -1,7 +1,8 @@
 use super::super::types::{SearchValue, ValueType};
-use super::manager::{ValuePair, BPLUS_TREE_ORDER, PAGE_MASK, PAGE_SIZE};
+use super::manager::{ValuePair, BPLUS_TREE_ORDER};
 use crate::core::DRIVER_MANAGER;
 use crate::search::engine::memchr_ext::MemchrExt;
+use crate::search::{PAGE_MASK, PAGE_SIZE};
 use crate::wuwa::PageStatusBitmap;
 use anyhow::{anyhow, Result};
 use bplustree::BPlusTreeSet;
@@ -62,7 +63,10 @@ pub(crate) fn search_in_chunks_with_status(
 
     let bytes_opt = target.bytes();
     let fast_int = target.is_fixed_int() && bytes_opt.as_ref().ok().filter(|b| !b.is_empty()).is_some();
-    let use_memchr_for_multibyte = if MEMCHR_FIND_ANCHOR && fast_int && let Ok(bytes) = bytes_opt {
+    let use_memchr_for_multibyte = if MEMCHR_FIND_ANCHOR
+        && fast_int
+        && let Ok(bytes) = bytes_opt
+    {
         bytes.len() > 1 && bytes.len() <= 8 && bytes[0] != 0x00 && bytes[0] != 0xFF && bytes[0] != 0xFE
     } else {
         false
@@ -104,7 +108,7 @@ pub(crate) fn search_in_chunks_with_status(
                 // memchr 多字节加速路径
                 let bytes = target.bytes().unwrap();
                 let first_byte = bytes[0];
-                let align_mask = (element_size - 1) as u64;  // 对齐掩码（2^n - 1）
+                let align_mask = (element_size - 1) as u64; // 对齐掩码（2^n - 1）
 
                 // 按页遍历，只在成功页上搜索
                 let start_page_idx = rs / *PAGE_SIZE;
@@ -133,14 +137,14 @@ pub(crate) fn search_in_chunks_with_status(
 
                         // 边界检查：确保有足够空间读取完整元素
                         if actual_pos + element_size > page_end {
-                            break;  // 当前页剩余空间不足
+                            break; // 当前页剩余空间不足
                         }
 
                         let addr = buffer_addr + actual_pos as u64;
 
                         // 对齐检查（使用位运算）
                         if (addr & align_mask) != 0 {
-                            continue;  // 不对齐，跳过
+                            continue; // 不对齐，跳过
                         }
 
                         // 范围检查：确保在搜索区域内
@@ -155,7 +159,7 @@ pub(crate) fn search_in_chunks_with_status(
                     }
                 }
 
-                return local;  // 早返回，避免执行慢速路径
+                return local; // 早返回，避免执行慢速路径
             }
 
             // 这里用 while 方便跳过失败页
@@ -184,7 +188,6 @@ pub(crate) fn search_in_chunks_with_status(
                 }
 
                 let other = &buffer[pos..pos + element_size];
-
 
                 let ok = if fast_int {
                     // 如果你有 bytes，且 element_size == bytes.len()，可以直接比较，避免 matched() 的类型分发成本

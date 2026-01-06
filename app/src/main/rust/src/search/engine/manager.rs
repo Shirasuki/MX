@@ -8,7 +8,6 @@ use super::shared_buffer::{SearchErrorCode, SearchStatus, SharedBuffer};
 use super::single_search;
 use crate::core::globals::TOKIO_RUNTIME;
 use crate::core::DRIVER_MANAGER;
-use crate::search::result_manager::ExactSearchResultItem;
 use anyhow::{anyhow, Result};
 use bplustree::BPlusTreeSet;
 use lazy_static::lazy_static;
@@ -51,18 +50,6 @@ impl From<(u64, ValueType)> for ValuePair {
     fn from(tuple: (u64, ValueType)) -> Self {
         Self::new(tuple.0, tuple.1)
     }
-}
-
-lazy_static! {
-    pub static ref PAGE_SIZE: usize = {
-        nix::unistd::sysconf(nix::unistd::SysconfVar::PAGE_SIZE)
-            .ok()
-            .flatten()
-            .filter(|&size| size > 0)
-            .map(|size| size as usize)
-            .unwrap_or(4096)
-    };
-    pub static ref PAGE_MASK: usize = !(*PAGE_SIZE - 1);
 }
 
 /// B+ tree order for search results. Large value to avoid splits.

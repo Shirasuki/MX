@@ -13,7 +13,18 @@ data class DisplayMemRegionEntry(
 
         /**
          * 从 MemRegionEntry 创建 DisplayMemRegionEntry
+         *
+         * @deprecated 请使用 DevideMemRange.kt 中的 divideToSimpleMemoryRange() 扩展函数，
+         * 它包含更完整和准确的内存范围分类逻辑
          */
+        @Deprecated(
+            message = "Use Array<MemRegionEntry>.divideToSimpleMemoryRange() instead",
+            replaceWith = ReplaceWith(
+                "arrayOf(region).divideToSimpleMemoryRange().firstOrNull() ?: DisplayMemRegionEntry(region.start, region.end, region.type, region.name, MemoryRange.O)",
+                "moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange"
+            ),
+            level = DeprecationLevel.WARNING
+        )
         fun fromMemRegionEntry(region: MemRegionEntry): DisplayMemRegionEntry {
             return DisplayMemRegionEntry(
                 start = region.start,
@@ -26,7 +37,14 @@ data class DisplayMemRegionEntry(
 
         /**
          * 根据内存区域信息判断其所属的 MemoryRange 类型
+         *
+         * @deprecated 此方法的逻辑不完整。请使用 DevideMemRange.kt 中的 classifyRegion() 函数，
+         * 它包含更详细的判断规则和边界情况处理
          */
+        @Deprecated(
+            message = "Use classifyRegion() from DevideMemRange.kt for more accurate classification",
+            level = DeprecationLevel.WARNING
+        )
         private fun determineMemoryRange(region: MemRegionEntry): MemoryRange {
             val name = region.name.lowercase()
             val isExec = region.isExecutable

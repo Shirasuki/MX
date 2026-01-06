@@ -20,6 +20,8 @@ import moe.fuqiuluo.mamu.databinding.FloatingSearchLayoutBinding
 import moe.fuqiuluo.mamu.driver.ExactSearchResultItem
 import moe.fuqiuluo.mamu.driver.FuzzyCondition
 import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
+import moe.fuqiuluo.mamu.driver.PointerChainResult
+import moe.fuqiuluo.mamu.driver.PointerChainResultItem
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.SearchResultItem
 import moe.fuqiuluo.mamu.driver.WuwaDriver
@@ -30,6 +32,7 @@ import moe.fuqiuluo.mamu.floating.dialog.BatchModifyValueDialog
 import moe.fuqiuluo.mamu.floating.dialog.FilterDialog
 import moe.fuqiuluo.mamu.floating.dialog.FilterDialogState
 import moe.fuqiuluo.mamu.floating.dialog.ModifyValueDialog
+import moe.fuqiuluo.mamu.floating.dialog.PointerScanDialog
 import moe.fuqiuluo.mamu.floating.dialog.RemoveOptionsDialog
 import moe.fuqiuluo.mamu.floating.dialog.SearchDialog
 import moe.fuqiuluo.mamu.floating.dialog.SearchDialogState
@@ -68,6 +71,9 @@ class SearchController(
 
     // 持久化的 FuzzySearchDialog 实例
     private var fuzzySearchDialog: FuzzySearchDialog? = null
+
+    // 持久化的 PointerScanDialog 实例
+    private var pointerScanDialog: PointerScanDialog? = null
 
     override fun initialize() {
         setupToolbar()
@@ -185,6 +191,13 @@ class SearchController(
                 label = "模糊搜索"
             ) {
                 showFuzzySearchDialog()
+            },
+            ToolbarAction(
+                id = 16,
+                icon = R.drawable.icon_schema_24px,
+                label = "指针扫描"
+            ) {
+                showPointerScanDialog()
             },
             ToolbarAction(
                 id = 4,
@@ -510,6 +523,10 @@ class SearchController(
      */
     fun showFuzzySearchDialogIfCompleted() {
         fuzzySearchDialog?.showDialogIfSearchCompleted()
+    }
+
+    fun showPointerScannerProgressIfNeeded() {
+        pointerScanDialog?.showProgressDialogIfScanning()
     }
 
     private fun onRefineCompleted(totalFound: Long) {
@@ -1160,11 +1177,69 @@ class SearchController(
         if (fuzzySearchDialog == null || fuzzySearchDialog?.isSearching == false) {
             fuzzySearchDialog = null
         }
+        if (pointerScanDialog == null || pointerScanDialog?.isScanning == false) {
+            pointerScanDialog = null
+        }
     }
 
     override fun cleanup() {
         super.cleanup()
         binding.searchFastScroller.detachFromRecyclerView()
+        searchDialog?.release()
+        fuzzySearchDialog?.release()
+        pointerScanDialog?.release()
         coroutineScope.cancel()
+    }
+
+    private fun showPointerScanDialog() {
+        if (pointerScanDialog?.isScanning == true) {
+            pointerScanDialog?.showProgressDialogIfScanning()
+            return
+        }
+
+        if (pointerScanDialog == null) {
+            pointerScanDialog = PointerScanDialog(
+                context = context,
+                notification = notification,
+                onScanCompleted = { ranges, chains ->
+                    onPointerScanCompleted(ranges, chains)
+                }
+            ).apply {
+                onCancel = {
+                    if (!isScanning) {
+                        pointerScanDialog = null
+                    }
+                }
+            }
+        }
+
+        pointerScanDialog?.show()
+    }
+
+    private fun onPointerScanCompleted(ranges: List<DisplayMemRegionEntry>, chains: List<PointerChainResult>) {
+        // 清空现有搜索结果
+        SearchEngine.clearSearchResults()
+        searchResultAdapter.clearResults()
+
+        // 将指针链结果转换为 PointerChainResultItem
+        val pointerResults = chains.mapIndexed { index, chain ->
+            PointerChainResultItem(
+                nativePosition = index.toLong(),
+                address = chain.targetAddress,
+                chainString = chain.simpleChainString,
+                moduleName = chain.moduleName,
+                depth = chain.depth
+            )
+        }
+
+        // 添加到适配器
+        searchResultAdapter.setResults(pointerResults)
+        searchResultAdapter.setRanges(ranges) // 指针扫描结果不需要内存范围
+        updateSearchResultCount(pointerResults.size, pointerResults.size)
+        showEmptyState(pointerResults.isEmpty())
+
+        // 清理对话框
+        pointerScanDialog?.release()
+        pointerScanDialog = null
     }
 }

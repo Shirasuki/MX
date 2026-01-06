@@ -8,8 +8,8 @@
     android:minWidth="300dp"
     android:orientation="vertical"
     android:padding="@dimen/floating_spacing_lg"
-    app:maxWidth="400dp"
-    app:maxHeightPercent="0.7">
+    app:maxWidthPercent="0.8"
+    app:maxHeightPercent="0.9">
 
     <!-- 标题 -->
     <LinearLayout

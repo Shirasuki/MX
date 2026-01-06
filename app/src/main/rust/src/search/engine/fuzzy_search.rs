@@ -1,6 +1,6 @@
 use super::super::result_manager::FuzzySearchResultItem;
 use super::super::types::{FuzzyCondition, ValueType};
-use super::manager::{BPLUS_TREE_ORDER, PAGE_SIZE};
+use super::manager::{BPLUS_TREE_ORDER};
 use crate::core::DRIVER_MANAGER;
 use crate::wuwa::PageStatusBitmap;
 use anyhow::{anyhow, Result};
@@ -10,6 +10,7 @@ use rayon::prelude::*;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use crate::search::engine::batch_reader::{cluster_addresses, parallel_batch_read};
+use crate::search::PAGE_SIZE;
 
 /// 模糊搜索初始扫描
 /// 记录指定内存区域内所有地址的当前值

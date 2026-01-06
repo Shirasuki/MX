@@ -1,12 +1,46 @@
 package moe.fuqiuluo.mamu.ui.tutorial.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -21,7 +55,8 @@ import moe.fuqiuluo.mamu.ui.theme.rememberAdaptiveLayoutInfo
 @Composable
 fun TutorialPracticeScreen(
     windowSizeClass: WindowSizeClass,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNextLevel: () -> Unit = {}
 ) {
     val adaptiveLayout = rememberAdaptiveLayoutInfo(windowSizeClass)
     // 分配内存并存储初始值 42
@@ -74,7 +109,8 @@ fun TutorialPracticeScreen(
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
@@ -95,7 +131,11 @@ fun TutorialPracticeScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.spacingSm(adaptiveLayout))
+                            horizontalArrangement = Arrangement.spacedBy(
+                                Dimens.spacingSm(
+                                    adaptiveLayout
+                                )
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.School,
@@ -146,7 +186,11 @@ fun TutorialPracticeScreen(
 
                         steps.forEachIndexed { index, step ->
                             Row(
-                                modifier = Modifier.padding(vertical = Dimens.spacingXxs(adaptiveLayout)),
+                                modifier = Modifier.padding(
+                                    vertical = Dimens.spacingXxs(
+                                        adaptiveLayout
+                                    )
+                                ),
                                 verticalAlignment = Alignment.Top
                             ) {
                                 Text(
@@ -190,18 +234,20 @@ fun TutorialPracticeScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text(
-                            text = if (memoryAddress != 0UL) {
-                                // 屏蔽 MTE/TBI 标签，只显示低 48 位有效地址
-                                val cleanAddress = memoryAddress and 0x0000FFFFFFFFFFFFUL
-                                "0x${cleanAddress.toString(16).uppercase()}"
-                            } else {
-                                "分配中..."
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        SelectionContainer {
+                            Text(
+                                text = if (memoryAddress != 0UL) {
+                                    // 屏蔽 MTE/TBI 标签，只显示低 48 位有效地址
+                                    val cleanAddress = memoryAddress and 0x0000FFFFFFFFFFFFUL
+                                    "0x${cleanAddress.toString(16).uppercase()}"
+                                } else {
+                                    "分配中..."
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(Dimens.spacingLg(adaptiveLayout)))
 
@@ -226,7 +272,11 @@ fun TutorialPracticeScreen(
 
                         // +1 / -1 按钮
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.spacingLg(adaptiveLayout))
+                            horizontalArrangement = Arrangement.spacedBy(
+                                Dimens.spacingLg(
+                                    adaptiveLayout
+                                )
+                            )
                         ) {
                             FilledTonalButton(
                                 onClick = {
@@ -263,29 +313,53 @@ fun TutorialPracticeScreen(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier.padding(Dimens.paddingLg(adaptiveLayout)),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.spacingMd(adaptiveLayout))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(Dimens.iconLg(adaptiveLayout))
+                            verticalArrangement = Arrangement.spacedBy(
+                                Dimens.spacingMd(
+                                    adaptiveLayout
+                                )
                             )
-                            Column {
-                                Text(
-                                    text = "恭喜完成！",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    Dimens.spacingMd(
+                                        adaptiveLayout
+                                    )
                                 )
-                                Text(
-                                    text = "你已经学会了基本的单值搜索和修改",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(Dimens.iconLg(adaptiveLayout))
                                 )
+                                Column {
+                                    Text(
+                                        text = "恭喜完成！",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "你已经学会了基本的单值搜索和修改",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+
+                            Button(
+                                onClick = onNextLevel,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.NavigateNext,
+                                    contentDescription = null
+                                )
+                                Spacer(modifier = Modifier.width(Dimens.spacingXs(adaptiveLayout)))
+                                Text("进入下一关：指针链搜索")
                             }
                         }
                     }

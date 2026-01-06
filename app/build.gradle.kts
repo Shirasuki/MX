@@ -6,6 +6,20 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val gitCommitCount = providers.exec {
+    commandLine("git", "rev-list", "--count", "HEAD")
+}.standardOutput.asText.map { it.trim().toInt() }
+
+val gitCommitHashProvider = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.map { it.trim() }
+
+val timestampVersionCode = providers.provider {
+    (System.currentTimeMillis() / 1000L).toInt()
+}
+
+val appVersionNameProvider = gitCommitHashProvider
+
 android {
     namespace = "moe.fuqiuluo.mamu"
     compileSdk = 36
@@ -15,8 +29,8 @@ android {
         applicationId = "moe.fuqiuluo.mamu"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = timestampVersionCode.get()
+        versionName = "1.0.1" + ".r${gitCommitCount.get()}." + appVersionNameProvider.get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,11 +43,14 @@ android {
 
         // Release signing from environment variables (populated by CI or local builds)
         create("release") {
-            val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH") ?: file("keystore/release.keystore").absolutePath
+            val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+                ?: file("keystore/release.keystore").absolutePath
             storeFile = file(keystorePath)
-            storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "defaultPasswordNotForProduction"
+            storePassword =
+                System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "defaultPasswordNotForProduction"
             keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "mamu_release"
-            keyPassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "defaultPasswordNotForProduction"
+            keyPassword =
+                System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "defaultPasswordNotForProduction"
         }
     }
 
@@ -57,6 +74,28 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/DEPENDENCIES.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/notice.txt"
+            excludes += "/META-INF/dependencies.txt"
+            excludes += "/META-INF/LGPL2.1"
+            excludes += "/META-INF/ASL2.0"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/license.txt"
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
+        }
     }
 }
 

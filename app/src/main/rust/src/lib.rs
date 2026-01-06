@@ -1,10 +1,11 @@
 #![allow(non_snake_case)]
 pub mod core;
-pub mod wuwa;
-pub mod ext;
-pub mod search;
 pub mod disasm;
+pub mod ext;
 pub mod jni_interface;
+pub mod pointer_scan;
+pub mod search;
+pub mod wuwa;
 
 use android_logger::Config;
 use jni::sys::{jint, JNI_VERSION_1_6};
@@ -28,11 +29,7 @@ fn init_logger(_env: &mut JNIEnv, _vm: &JavaVM) {
         LevelFilter::Info
     };
 
-    android_logger::init_once(
-        Config::default()
-            .with_max_level(log_level)
-            .with_tag(s!("MamuCore")),
-    );
+    android_logger::init_once(Config::default().with_max_level(log_level).with_tag(s!("MamuCore")));
 }
 
 #[allow(non_snake_case)]

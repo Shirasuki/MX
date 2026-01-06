@@ -77,11 +77,35 @@
             android:textColor="#88FFFFFF"
             android:textSize="@dimen/floating_text_small"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/pointer_chain_text"
             app:layout_constraintEnd_toStartOf="@id/info_container"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toEndOf="@id/address_text"
             app:layout_constraintTop_toBottomOf="@id/value_text" />
+
+        <!-- 指针链描述（仅对 PointerChainResultItem 显示） -->
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/pointer_chain_text"
+            style="@style/FloatingText.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/floating_spacing_md"
+            android:layout_marginEnd="@dimen/floating_spacing_sm"
+            android:ellipsize="end"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:text="[lib+0x123]->0x10"
+            android:textColor="@color/floating_text_secondary"
+            android:visibility="gone"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="6sp"
+            app:autoSizeMaxTextSize="12sp"
+            app:autoSizeStepGranularity="1sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/info_container"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@id/address_text"
+            app:layout_constraintTop_toBottomOf="@id/backup_value_text" />
 
         <!-- 类型+范围信息 -->
         <LinearLayout

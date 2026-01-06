@@ -135,6 +135,19 @@
     <string name="tab_saved_addresses">保存的地址</string>
     <string name="tab_memory_preview">内存预览</string>
     <string name="tab_breakpoints">断点</string>
+
+    <!-- 指针扫描 Dialog -->
+    <string name="pointer_scan_dialog_title">指针扫描</string>
+    <string name="pointer_scan_dialog_subtitle">输入目标地址以查找指向该地址的指针链</string>
+    <string name="label_target_address">目标地址:</string>
+    <string name="hint_target_address">输入16进制地址</string>
+    <string name="error_invalid_address">无效的地址格式</string>
+    <string name="error_process_not_bound">请先绑定进程</string>
+    <string name="error_no_memory_regions">无法获取内存区域</string>
+    <string name="success_pointer_scan_started">指针扫描已启动</string>
+    <string name="success_pointer_scan_complete">找到 %d 个指针</string>
+    <string name="warning_pointer_scan_cancelled">指针扫描已取消</string>
+    <string name="error_pointer_scan_failed">扫描失败: %s</string>
     <string name="label_value_encrypted">此值是否被加密</string>
     <string name="label_deep_search">深度搜索 (慢)</string>
     <string name="label_value_allow_pagefault">深度访问（缺页）</string>

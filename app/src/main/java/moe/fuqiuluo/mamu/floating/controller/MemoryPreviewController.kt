@@ -46,6 +46,7 @@ import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
 import moe.fuqiuluo.mamu.floating.event.SaveMemoryPreviewEvent
 import moe.fuqiuluo.mamu.floating.event.SearchResultsUpdatedEvent
 import moe.fuqiuluo.mamu.floating.event.UIActionEvent
+import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRange
 import moe.fuqiuluo.mamu.floating.ext.divideToSimpleMemoryRangeParallel
 import moe.fuqiuluo.mamu.utils.ValueTypeUtils
 import moe.fuqiuluo.mamu.widget.NotificationOverlay
@@ -70,7 +71,7 @@ class MemoryPreviewController(
         // ViewHolder 预创建数量
         private const val MEMORY_ROW_POOL_SIZE = 32
         private const val NAVIGATION_POOL_SIZE = 2
-        
+
         // 导航历史最大数量
         private const val MAX_NAVIGATION_HISTORY = 100
     }
@@ -197,13 +198,6 @@ class MemoryPreviewController(
                 showOffsetCalculator()
             },
 
-            ToolbarAction(
-                id = 100,
-                icon = R.drawable.icon_goto_module_24px,
-                label = "转到"
-            ) {
-                showModuleListDialog()
-            },
 
             ToolbarAction(
                 id = 200,
@@ -219,6 +213,14 @@ class MemoryPreviewController(
                 label = "前进"
             ) {
                 navigateForward()
+            },
+
+            ToolbarAction(
+                id = 100,
+                icon = R.drawable.baseline_forward_24,
+                label = "转到"
+            ) {
+                showModuleListDialog()
             },
 
             ToolbarAction(
@@ -482,21 +484,22 @@ class MemoryPreviewController(
 
         // 计算页头地址（向下对齐到页边界，固定4KB页大小）
         val pageStartAddress = (requestedAddress / PAGE_SIZE) * PAGE_SIZE
-        
+
         // 记录导航历史（仅在非前进后退操作时，且地址有变化）
         if (!isNavigating) {
             // 检查是否与当前历史位置的地址不同
-            val currentHistoryAddress = if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
-                navigationHistory[navigationIndex]
-            } else {
-                -1L
-            }
-            
+            val currentHistoryAddress =
+                if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
+                    navigationHistory[navigationIndex]
+                } else {
+                    -1L
+                }
+
             if (pageStartAddress != currentHistoryAddress) {
                 addToNavigationHistory(pageStartAddress)
             }
         }
-        
+
         currentStartAddress = pageStartAddress
 
         // 记录目标地址用于高亮
@@ -505,7 +508,7 @@ class MemoryPreviewController(
         // 加载页面
         loadPage(pageStartAddress, requestedAddress)
     }
-    
+
     /**
      * 添加地址到导航历史
      */
@@ -514,12 +517,12 @@ class MemoryPreviewController(
         if (navigationIndex >= 0 && navigationIndex < navigationHistory.size - 1) {
             navigationHistory.subList(navigationIndex + 1, navigationHistory.size).clear()
         }
-        
+
         // 避免连续重复地址
         if (navigationHistory.isEmpty() || navigationHistory.last() != address) {
             navigationHistory.add(address)
             navigationIndex = navigationHistory.size - 1
-            
+
             // 限制历史记录数量
             while (navigationHistory.size > MAX_NAVIGATION_HISTORY) {
                 navigationHistory.removeAt(0)
@@ -527,7 +530,7 @@ class MemoryPreviewController(
             }
         }
     }
-    
+
     /**
      * 后退到上一个地址
      */
@@ -536,16 +539,16 @@ class MemoryPreviewController(
             notification.showWarning("已经是最早的记录")
             return
         }
-        
+
         isNavigating = true
         navigationIndex--
         val address = navigationHistory[navigationIndex]
         jumpToPage(address)
         isNavigating = false
-        
+
         notification.showSuccess("后退 (${navigationIndex + 1}/${navigationHistory.size})")
     }
-    
+
     /**
      * 前进到下一个地址
      */
@@ -554,13 +557,13 @@ class MemoryPreviewController(
             notification.showWarning("已经是最新的记录")
             return
         }
-        
+
         isNavigating = true
         navigationIndex++
         val address = navigationHistory[navigationIndex]
         jumpToPage(address)
         isNavigating = false
-        
+
         notification.showSuccess("前进 (${navigationIndex + 1}/${navigationHistory.size})")
     }
 
@@ -1292,7 +1295,7 @@ class MemoryPreviewController(
 
                 // 转换为 DisplayMemRegionEntry 并按地址排序（由小到大）
                 val modules = regions
-                    .map { DisplayMemRegionEntry.fromMemRegionEntry(it) }
+                    .divideToSimpleMemoryRange()
                     .sortedBy { it.start }
 
                 if (modules.isEmpty()) {
@@ -1304,10 +1307,20 @@ class MemoryPreviewController(
                 ModuleListDialog(
                     context = context,
                     modules = modules,
+                    notification = notification,
                     onModuleSelected = { selectedModule ->
                         // 跳转到选中模块的起始地址
                         jumpToPage(selectedModule.start)
-                        notification.showSuccess("已跳转到: ${selectedModule.name.substringAfterLast("/")}")
+                        notification.showSuccess(
+                            "已跳转到: ${
+                                selectedModule.name.substringAfterLast(
+                                    "/"
+                                )
+                            }"
+                        )
+                    },
+                    onGoto = { address ->
+                        jumpToPage(address)
                     }
                 ).show()
 

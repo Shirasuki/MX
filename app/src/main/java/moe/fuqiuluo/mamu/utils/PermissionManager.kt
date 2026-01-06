@@ -154,13 +154,13 @@ object PermissionManager {
         }
 
         // 检查 AppOps 权限
-        // 1. 悬浮窗权限
+        // 悬浮窗权限
         val hasOverlayPermission = Settings.canDrawOverlays(context)
         if (!hasOverlayPermission) {
             missingPermissions.add("SYSTEM_ALERT_WINDOW")
         }
 
-        // 2. MANAGE_EXTERNAL_STORAGE 权限（Android 11+）
+        // MANAGE_EXTERNAL_STORAGE 权限（Android 11+）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val hasManageStorage = android.os.Environment.isExternalStorageManager()
             if (!hasManageStorage) {

@@ -9,25 +9,47 @@ import moe.fuqiuluo.mamu.driver.WuwaDriver
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 
-suspend fun Array<MemRegionEntry>.divideToSimpleMemoryRangeParallel(): List<DisplayMemRegionEntry> = coroutineScope {
-    val currentPid = WuwaDriver.currentBindPid
-    if (!WuwaDriver.isProcessBound) return@coroutineScope emptyList()
-    if (!WuwaDriver.isProcessAlive(currentPid)) return@coroutineScope emptyList()
-    val procInfo = WuwaDriver.getProcessInfo(currentPid)
-    val procName = procInfo.name
+suspend fun Array<MemRegionEntry>.divideToSimpleMemoryRangeParallel(): List<DisplayMemRegionEntry> =
+    coroutineScope {
+        val currentPid = WuwaDriver.currentBindPid
+        if (!WuwaDriver.isProcessBound) return@coroutineScope emptyList()
+        if (!WuwaDriver.isProcessAlive(currentPid)) return@coroutineScope emptyList()
+        val procInfo = WuwaDriver.getProcessInfo(currentPid)
+        val procName = procInfo.name
 
-    // 分块并行处理，每块约 500 个
-    val chunkSize = 500
-    val chunks = this@divideToSimpleMemoryRangeParallel.toList().chunked(chunkSize)
+        // 分块并行处理，每块约 500 个
+        val chunkSize = 500
+        val chunks = this@divideToSimpleMemoryRangeParallel.toList().chunked(chunkSize)
 
-    chunks.map { chunk ->
-        async(Dispatchers.Default) {
-            chunk.mapNotNull { entry ->
-                classifyRegion(entry, procName)
+        val classified = chunks.map { chunk ->
+            async(Dispatchers.Default) {
+                chunk.mapNotNull { entry ->
+                    classifyRegion(entry, procName)
+                }
             }
-        }
-    }.awaitAll().flatten()
-}
+        }.awaitAll().flatten()
+
+        // 后处理：将 .bss 段关联到前一个 lib（参考 C++ 实现 memextend.cpp:88-102）
+//    var prevEntry: DisplayMemRegionEntry? = null
+//    classified.map { entry ->
+//        if (entry.range == MemoryRange.Cb && prevEntry != null &&
+//            (prevEntry.range == MemoryRange.Cd ||
+//             prevEntry.range == MemoryRange.Oa ||
+//             prevEntry.range == MemoryRange.Xs ||
+//             prevEntry.range == MemoryRange.Xa ||
+//             prevEntry.range == MemoryRange.Xx)) {
+//            // 提取库名（去掉路径）并加上 :bss 后缀
+//            val libName = prevEntry.name.substringAfterLast('/')
+//            entry.copy(name = "$libName:bss")
+//        } else {
+//            entry
+//        }.also {
+//            prevEntry = it
+//        }
+//    }
+
+        return@coroutineScope classified
+    }
 
 fun Array<MemRegionEntry>.divideToSimpleMemoryRange(): List<DisplayMemRegionEntry> {
     val currentPid = WuwaDriver.currentBindPid
@@ -35,9 +57,30 @@ fun Array<MemRegionEntry>.divideToSimpleMemoryRange(): List<DisplayMemRegionEntr
     if (!WuwaDriver.isProcessAlive(currentPid)) return emptyList()
     val procInfo = WuwaDriver.getProcessInfo(currentPid)
 
-    return mapNotNull { entry ->
+    val classified = mapNotNull { entry ->
         classifyRegion(entry, procInfo.name)
     }
+
+    // 后处理：将 .bss 段关联到前一个 lib（参考 C++ 实现 memextend.cpp:88-102）
+//    var prevEntry: DisplayMemRegionEntry? = null
+//    return classified.map { entry ->
+//        if (entry.range == MemoryRange.Cb && prevEntry != null &&
+//            (prevEntry.range == MemoryRange.Cd ||
+//             prevEntry.range == MemoryRange.Oa ||
+//             prevEntry.range == MemoryRange.Xs ||
+//             prevEntry.range == MemoryRange.Xa ||
+//             prevEntry.range == MemoryRange.Xx)) {
+//            // 提取库名（去掉路径）并加上 :bss 后缀
+//            val libName = prevEntry.name.substringAfterLast('/')
+//            entry.copy(name = "$libName:bss")
+//        } else {
+//            entry
+//        }.also {
+//            prevEntry = it
+//        }
+//    }
+
+    return classified
 }
 
 private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemRegionEntry? {
@@ -63,7 +106,8 @@ private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemR
             if ((entry.name.contains("jit-cache") ||
                         entry.name.contains("jit-code-cache") ||
                         entry.name.contains("dalvik-jit")) &&
-                (entry.isExecutable || entry.isShared)) {
+                (entry.isExecutable || entry.isShared)
+            ) {
                 return@run MemoryRange.Jc
             }
 
@@ -128,13 +172,15 @@ private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemR
             // Thread stack and TLS: readable + writable
             if ((entry.name.contains("[anon:stack_and_tls:") ||
                         entry.name.contains("[anon:thread signal stack]")) &&
-                entry.isReadable && entry.isWritable) {
+                entry.isReadable && entry.isWritable
+            ) {
                 return@run MemoryRange.Ts
             }
 
             // VDEX files: readable + writable
             if ((entry.name.endsWith(".vdex")) &&
-                entry.isReadable) {
+                entry.isReadable
+            ) {
                 return@run MemoryRange.Vx
             }
 
@@ -143,7 +189,8 @@ private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemR
                         entry.name.endsWith(".odex") ||
                         entry.name.contains(".dex (del") ||
                         entry.name.contains(".odex (del")) &&
-                entry.isReadable) {
+                entry.isReadable
+            ) {
                 return@run MemoryRange.Dx
             }
 

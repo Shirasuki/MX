@@ -14,6 +14,7 @@ import moe.fuqiuluo.mamu.databinding.DialogModuleListBinding
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
 import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
+import moe.fuqiuluo.mamu.widget.NotificationOverlay
 
 /**
  * 模块内存列表对话框
@@ -22,7 +23,9 @@ import moe.fuqiuluo.mamu.widget.BuiltinKeyboard
 class ModuleListDialog(
     context: Context,
     private val modules: List<DisplayMemRegionEntry>,
-    private val onModuleSelected: (DisplayMemRegionEntry) -> Unit
+    private val notification: NotificationOverlay,
+    private val onModuleSelected: (DisplayMemRegionEntry) -> Unit,
+    private val onGoto: (Long) -> Unit,
 ) : BaseDialog(context) {
 
     private var currentFocusedInput: EditText? = null
@@ -127,7 +130,7 @@ class ModuleListDialog(
     private fun showFilteredModulesPopup(range: MemoryRange) {
         val filteredModules = modules.filter { it.range == range }
         val title = "${range.code} - ${range.displayName}"
-        
+
         ModuleListPopupDialog(context, title, filteredModules) { selectedModule ->
             addToHistory(selectedModule)
             onModuleSelected(selectedModule)
@@ -174,40 +177,31 @@ class ModuleListDialog(
                 val startIndex = (targetIndex - 10).coerceAtLeast(0)
                 val endIndex = (targetIndex + 10).coerceAtMost(modules.size)
                 val nearbyModules = modules.subList(startIndex, endIndex)
-                
-                ModuleListPopupDialog(context, "地址 ${input.uppercase()} 附近", nearbyModules) { selectedModule ->
+
+                ModuleListPopupDialog(
+                    context,
+                    "地址 ${input.uppercase()} 附近",
+                    nearbyModules
+                ) { selectedModule ->
                     addToHistory(selectedModule)
                     onModuleSelected(selectedModule)
                     dialog.dismiss()
                 }.show()
             }
         } catch (e: Exception) {
-            // 地址格式错误
+            notification.showError("地址格式错误")
         }
     }
 
     private fun gotoAddress(input: String) {
         try {
-            val address = input.toLong(16)
-            val targetModule = modules.find { it.start <= address && address < it.end }
-            if (targetModule != null) {
-                addToHistory(targetModule)
-                onModuleSelected(targetModule)
-                dialog.dismiss()
-            } else {
-                // 创建虚拟模块用于跳转
-                val virtualModule = DisplayMemRegionEntry(
-                    start = address,
-                    end = address + 0x1000,
-                    type = 0,
-                    name = "直接跳转",
-                    range = MemoryRange.O
-                )
-                onModuleSelected(virtualModule)
-                dialog.dismiss()
-            }
+            val address = input.let {
+                if (it.startsWith("0x", ignoreCase = true)) it.substring(2) else it
+            }.toLong(16)
+            onGoto(address)
+            dialog.dismiss()
         } catch (e: Exception) {
-            // 地址格式错误
+            notification.showError("地址格式错误")
         }
     }
 
@@ -268,7 +262,8 @@ class ModuleListDialog(
             }
 
             override fun onPaste() {
-                val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                val clipboardManager =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                 val clip = clipboardManager?.primaryClip
                 if (clip != null && clip.itemCount > 0) {
                     val text = clip.getItemAt(0).text?.toString() ?: ""

@@ -20,6 +20,7 @@ import moe.fuqiuluo.mamu.driver.FuzzySearchResultItem
 import moe.fuqiuluo.mamu.driver.SearchResultItem
 import moe.fuqiuluo.mamu.data.settings.getDialogOpacity
 import moe.fuqiuluo.mamu.data.settings.keyboardType
+import moe.fuqiuluo.mamu.driver.PointerChainResultItem
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
 import moe.fuqiuluo.mamu.floating.data.model.SavedAddress
 import moe.fuqiuluo.mamu.floating.event.FloatingEventBus
@@ -66,6 +67,11 @@ class ModifyValueDialog : BaseDialog {
                 address = searchResultItem.address,
                 value = searchResultItem.value,
                 displayValueType = searchResultItem.displayValueType ?: DisplayValueType.DWORD
+            )
+            is PointerChainResultItem -> ModifyTarget(
+                address = searchResultItem.address,
+                value = searchResultItem.value,
+                displayValueType = searchResultItem.displayValueType
             )
             else -> {
                 Log.e(TAG, "Unsupported SearchResultItem type")

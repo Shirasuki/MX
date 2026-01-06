@@ -13,6 +13,7 @@ import moe.fuqiuluo.mamu.data.settings.chunkSize
 import moe.fuqiuluo.mamu.data.settings.compatibilityMode
 import moe.fuqiuluo.mamu.data.settings.memoryAccessMode
 import moe.fuqiuluo.mamu.data.settings.memoryBufferSize
+import moe.fuqiuluo.mamu.driver.PointerScanner
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
 import java.io.File
@@ -40,9 +41,7 @@ class MamuApplication : Application() {
         MMKV.initialize(this)
 
         Thread.setDefaultUncaughtExceptionHandler { thread: Thread, throwable: Throwable ->
-            if (throwable.message != null &&
-                throwable.message!!.contains("agent.so")
-            ) {
+            if (throwable.message != null && throwable.message!!.contains("agent.so")) {
                 clearCodeCache()
                 Log.w(TAG, "FUck Xiaomi!!!!!!!!!!!!!")
             } else {
@@ -59,10 +58,23 @@ class MamuApplication : Application() {
         val mmkv = MMKV.defaultMMKV()
         val bufferSize = mmkv.memoryBufferSize.toLong() * 1024L * 1024L // MB -> bytes
         val chunkSizeBytes = mmkv.chunkSize.toLong() * 1024L // KB -> bytes
-        val cacheDir = cacheDir.absolutePath
 
-        if (!SearchEngine.initSearchEngine(bufferSize, cacheDir, chunkSizeBytes)) {
+        if (!SearchEngine.initSearchEngine(
+                bufferSize, cacheDir.absoluteFile.resolve("search_engine").also {
+                    if (!it.exists()) it.mkdirs()
+                }.absolutePath, chunkSizeBytes
+            )
+        ) {
             Log.e(TAG, "Failed to initialize Search Engine")
+            exitProcess(1)
+        }
+
+        if (!PointerScanner.init(
+                cacheDir.absoluteFile.resolve("pointer_chain")
+                    .also { if (!it.exists()) it.mkdirs() }.absolutePath
+            )
+        ) {
+            Log.e(TAG, "Failed to initialize PointerScanner")
             exitProcess(1)
         }
 

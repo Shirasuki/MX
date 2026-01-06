@@ -12,3 +12,15 @@ lazy_static! {
     /// 使用多线程运行时，worker threads 数量为 CPU 核心数
     pub static ref TOKIO_RUNTIME: Runtime = Runtime::new().expect("Failed to create tokio runtime");
 }
+
+lazy_static! {
+    pub static ref PAGE_SIZE: usize = {
+        nix::unistd::sysconf(nix::unistd::SysconfVar::PAGE_SIZE)
+            .ok()
+            .flatten()
+            .filter(|&size| size > 0)
+            .map(|size| size as usize)
+            .unwrap_or(4096)
+    };
+    pub static ref PAGE_MASK: usize = !(*PAGE_SIZE - 1);
+}

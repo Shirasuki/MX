@@ -86,3 +86,5 @@ app/src/main/jniLibs/
 CLAUDE.md
 .claude/
 REFINE_SEARCH_IMPLEMENTATION_PLAN.md
+/nul
+/docs/
