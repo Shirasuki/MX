@@ -222,19 +222,7 @@ class ModuleListPopupDialog(
                 )
             }
 
-            // 内存大小（使用类型颜色）
-            if (showMemory) {
-                val sizeStart = spannable.length
-                spannable.append("${formatSize(module.size)} ")
-                spannable.setSpan(
-                    ForegroundColorSpan(typeColor),
-                    sizeStart,
-                    spannable.length,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-
-            // 路径/名称（使用稍暗的类型颜色）
+            // 路径/名称（使用类型颜色）
             if (showPath) {
                 val pathStart = spannable.length
                 val displayName = if (module.name.startsWith("[")) {
@@ -242,10 +230,22 @@ class ModuleListPopupDialog(
                 } else {
                     "'${module.name}'"
                 }
-                spannable.append(displayName)
+                spannable.append("$displayName ")
+                spannable.setSpan(
+                    ForegroundColorSpan(typeColor),
+                    pathStart,
+                    spannable.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            // 内存大小（使用稍暗的类型颜色）
+            if (showMemory) {
+                val sizeStart = spannable.length
+                spannable.append(formatSize(module.size))
                 spannable.setSpan(
                     ForegroundColorSpan(adjustAlpha(typeColor, 0.7f) or 0xFF000000.toInt()),
-                    pathStart,
+                    sizeStart,
                     spannable.length,
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
