@@ -1201,25 +1201,11 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
             floatingIconView.setImageResource(R.mipmap.ic_launcher)
             return
         }
-        runCatching {
-            val packages = packageManager.getPackagesForUid(process.uid)
-            val appIcon = packages?.firstOrNull()?.let {
-                packageManager.getApplicationIcon(it)
-            }
-            if (appIcon != null) {
-                fullscreenIconView.setImageDrawable(appIcon)
-                sidebarIconView.setImageDrawable(appIcon)
-                floatingIconView.setImageDrawable(appIcon)
-            } else {
-                fullscreenIconView.setImageResource(R.drawable.icon_android_24px)
-                sidebarIconView.setImageResource(R.drawable.icon_android_24px)
-                floatingIconView.setImageResource(R.drawable.icon_android_24px)
-            }
-        }.onFailure {
-            fullscreenIconView.setImageResource(R.drawable.icon_android_24px)
-            sidebarIconView.setImageResource(R.drawable.icon_android_24px)
-            floatingIconView.setImageResource(R.drawable.icon_android_24px)
-        }
+        
+        // 直接使用 DisplayProcessInfo 中已经获取好的 icon
+        fullscreenIconView.setImageDrawable(process.icon)
+        sidebarIconView.setImageDrawable(process.icon)
+        floatingIconView.setImageDrawable(process.icon)
     }
 
     private fun updateBottomInfoBar() {
