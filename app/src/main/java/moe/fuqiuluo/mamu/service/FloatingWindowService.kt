@@ -294,6 +294,14 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
                             )
                         }
                     }
+
+                    is UIActionEvent.UpdateSearchBadge -> {
+                        updateTabBadge(TAB_SEARCH, event.count, event.total)
+                    }
+
+                    is UIActionEvent.UpdateSavedAddressBadge -> {
+                        updateTabBadge(TAB_SAVED_ADDRESSES, event.count, null)
+                    }
                 }
             }
         }
@@ -492,7 +500,7 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
                                 )
                             }
                         }
-                    }.sortedByDescending { it.prio }
+                    }.sortedByDescending { it.rss }  // 按内存占用大小降序排序
                 }
 
                 val adapter = ProcessListAdapter(this@FloatingWindowService, processList)
@@ -931,6 +939,48 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         contentContainer.findViewById<View>(contentId)?.visibility = View.VISIBLE
     }
 
+    /**
+     * 更新 Tab Badge 显示数量
+     * @param tabIndex Tab 索引
+     * @param count 当前显示数量
+     * @param total 总数量（可选，用于显示 count/total 格式）
+     */
+    @SuppressLint("SetTextI18n")
+    private fun updateTabBadge(tabIndex: Int, count: Int, total: Int?) {
+        val tab = fullscreenBinding.tabLayout.getTabAt(tabIndex) ?: return
+
+        if (count <= 0 && (total == null || total <= 0)) {
+            // 清除 Badge
+            tab.removeBadge()
+        } else {
+            // 创建或更新 Badge
+            val badge = tab.orCreateBadge
+            badge.backgroundColor = getColor(R.color.floating_primary)
+            badge.badgeTextColor = getColor(android.R.color.white)
+            badge.maxCharacterCount = 6  // 允许显示更多字符
+
+            if (total != null && total > 0) {
+                // 显示 count/total 格式
+                badge.number = count
+                badge.clearNumber()
+                // 使用自定义文本显示 count/total
+                if (count > 9999) {
+                    badge.text = "9999+"
+                } else {
+                    badge.text = "$count"
+                }
+            } else {
+                // 只显示 count
+                if (count > 9999) {
+                    badge.text = "9999+"
+                } else {
+                    badge.number = count
+                }
+            }
+        }
+    }
+
+
     private fun initializeControllers() {
         // 先初始化 savedAddressController，因为 searchController 需要引用它
         savedAddressController = SavedAddressController(
@@ -1005,6 +1055,11 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
         searchController.showFuzzySearchDialogIfCompleted()
         // 重新显示指针扫描对话框 (正在扫描)
         searchController.showPointerScannerProgressIfNeeded()
+
+        // 如果没有绑定进程，自动弹出进程选择对话框
+        if (!WuwaDriver.isProcessBound) {
+            showProcessSelectionDialog()
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

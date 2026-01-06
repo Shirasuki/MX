@@ -53,4 +53,10 @@ sealed class UIActionEvent {
 
     /** 请求跳转到内存预览并定位到指定地址 */
     data class JumpToMemoryPreview(val address: Long) : UIActionEvent()
+
+    /** 更新搜索Tab的Badge数量 */
+    data class UpdateSearchBadge(val count: Int, val total: Int?) : UIActionEvent()
+
+    /** 更新保存地址Tab的Badge数量 */
+    data class UpdateSavedAddressBadge(val count: Int) : UIActionEvent()
 }

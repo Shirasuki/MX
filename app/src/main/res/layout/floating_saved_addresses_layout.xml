@@ -60,6 +60,15 @@
             android:textColor="@color/floating_text_primary"
             android:text="[0] Process Name [0 MB]" />
 
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/saved_count_text"
+            style="@style/FloatingText.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/floating_spacing_xs"
+            android:textColor="@color/floating_text_primary"
+            android:text="(0)" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/refresh_button"
             style="@style/FloatingButton.MaterialIcon.IconOnly"

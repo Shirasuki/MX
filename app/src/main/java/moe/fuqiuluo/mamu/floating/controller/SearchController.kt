@@ -370,11 +370,20 @@ class SearchController(
 
     @SuppressLint("SetTextI18n", "DefaultLocale")
     fun updateSearchResultCount(current: Int, total: Int?) {
+        // current = 页面大小, total = 总结果数量
+        // 显示格式: (总数量/页面大小)
         binding.searchCountText.text = if (total == null || total == 0) {
             "($current)"
         } else {
             val totalFormatted = String.format("%,d", total)
-            "($current/$totalFormatted)"
+            "($totalFormatted/$current)"
+        }
+
+        // 更新顶部Tab Badge - 显示总结果数量
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.UpdateSearchBadge(total ?: 0, null)
+            )
         }
 
         // 设置点击监听器，弹出过滤配置dialog

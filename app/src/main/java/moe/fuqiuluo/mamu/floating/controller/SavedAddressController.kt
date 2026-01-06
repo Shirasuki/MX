@@ -97,6 +97,7 @@ class SavedAddressController(
         updateProcessDisplay(null)
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
 
         subscribeToAddressEvents()
         subscribeToProcessStateEvents()
@@ -290,6 +291,19 @@ class SavedAddressController(
         }
     }
 
+    @SuppressLint("SetTextI18n")
+    private fun updateSavedCountText() {
+        val count = savedAddresses.size
+        binding.savedCountText.text = "($count)"
+
+        // 更新顶部Tab Badge
+        coroutineScope.launch {
+            FloatingEventBus.emitUIAction(
+                UIActionEvent.UpdateSavedAddressBadge(count)
+            )
+        }
+    }
+
     private fun setupToolbar() {
         val toolbar = binding.savedToolbar
 
@@ -460,6 +474,7 @@ class SavedAddressController(
         }
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
     }
 
     /**
@@ -481,6 +496,7 @@ class SavedAddressController(
         adapter.setAddresses(savedAddresses)
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
 
         notification.showSuccess("已保存 ${addresses.size} 个地址")
     }
@@ -493,6 +509,7 @@ class SavedAddressController(
         adapter.setAddresses(savedAddresses)
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
         notification.showSuccess("已删除")
     }
 
@@ -504,6 +521,7 @@ class SavedAddressController(
         adapter.setAddresses(emptyList())
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
     }
 
     /**
@@ -892,6 +910,7 @@ class SavedAddressController(
             adapter.setAddresses(savedAddresses)
             updateEmptyState()
             updateAddressCountBadge()
+            updateSavedCountText()
 
             if (failCount == 0) {
                 notification.showSuccess("已恢复并移除 $restoreCount 个地址")
@@ -917,6 +936,7 @@ class SavedAddressController(
         adapter.setAddresses(savedAddresses)
         updateEmptyState()
         updateAddressCountBadge()
+        updateSavedCountText()
 
         notification.showSuccess("已移除 ${selectedItems.size} 个地址")
     }
