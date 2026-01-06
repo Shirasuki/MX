@@ -27,7 +27,8 @@ class FastScrollerView @JvmOverloads constructor(
         private const val SCROLLBAR_WIDTH = 24f // 滚动条宽度（增大到 24dp）
         private const val THUMB_WIDTH = 16f // 实际滑块宽度
         private const val SCROLLBAR_MARGIN = 8f // 右边距
-        private const val THUMB_MIN_HEIGHT = 80f // 滑块最小高度（增大）
+        private const val THUMB_MIN_HEIGHT = 48f // 滑块最小高度
+        private const val THUMB_MAX_HEIGHT_RATIO = 0.4f // 滑块最大高度比例（轨道高度的40%）
         private const val TRACK_CORNER_RADIUS = 8f // 轨道圆角
         private const val THUMB_CORNER_RADIUS = 8f // 滑块圆角
         private const val FADE_DELAY = 2000L // 淡出延迟（增加到2秒）
@@ -135,9 +136,9 @@ class FastScrollerView @JvmOverloads constructor(
 
         trackRect.set(trackLeft, trackTop, trackRight, trackBottom)
 
-        // 计算滑块高度（根据可见内容比例）
+        // 计算滑块高度（根据可见内容比例，但限制最大高度）
         val visibleItemCount = layoutManager.findLastVisibleItemPosition() - firstVisiblePosition + 1
-        val thumbHeightRatio = min(1f, visibleItemCount.toFloat() / itemCount)
+        val thumbHeightRatio = min(THUMB_MAX_HEIGHT_RATIO, visibleItemCount.toFloat() / itemCount)
         val thumbHeight = max(THUMB_MIN_HEIGHT, trackHeight * thumbHeightRatio)
 
         // 计算滑块位置
@@ -266,7 +267,7 @@ class FastScrollerView @JvmOverloads constructor(
 
         val visibleItemCount = layoutManager.findLastVisibleItemPosition() -
                                layoutManager.findFirstVisibleItemPosition() + 1
-        val thumbHeightRatio = min(1f, visibleItemCount.toFloat() / itemCount)
+        val thumbHeightRatio = min(THUMB_MAX_HEIGHT_RATIO, visibleItemCount.toFloat() / itemCount)
         val thumbHeight = max(THUMB_MIN_HEIGHT, trackHeight * thumbHeightRatio)
 
         val thumbTop = trackTop + (trackHeight - thumbHeight) * scrollProgress

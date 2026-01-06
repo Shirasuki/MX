@@ -2,7 +2,6 @@ package moe.fuqiuluo.mamu.floating.controller
 
 import android.content.ClipboardManager
 import android.content.Context
-import android.graphics.Color
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -16,7 +15,6 @@ import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,15 +22,13 @@ import moe.fuqiuluo.mamu.R
 import moe.fuqiuluo.mamu.data.settings.memoryDisplayFormats
 import moe.fuqiuluo.mamu.data.settings.memoryRegionCacheInterval
 import moe.fuqiuluo.mamu.databinding.FloatingMemoryPreviewLayoutBinding
-import moe.fuqiuluo.mamu.driver.Disassembler
 import moe.fuqiuluo.mamu.driver.LocalMemoryOps
 import moe.fuqiuluo.mamu.driver.SearchEngine
 import moe.fuqiuluo.mamu.driver.WuwaDriver
-import moe.fuqiuluo.mamu.floating.adapter.MemoryPreviewAdapter
+import moe.fuqiuluo.mamu.floating.adapter.InfiniteMemoryAdapter
 import moe.fuqiuluo.mamu.floating.data.local.MemoryBackupManager
 import moe.fuqiuluo.mamu.floating.data.model.DisplayMemRegionEntry
 import moe.fuqiuluo.mamu.floating.data.model.DisplayValueType
-import moe.fuqiuluo.mamu.floating.data.model.FormattedValue
 import moe.fuqiuluo.mamu.floating.data.model.MemoryDisplayFormat
 import moe.fuqiuluo.mamu.floating.data.model.MemoryPreviewItem
 import moe.fuqiuluo.mamu.floating.data.model.MemoryRange
@@ -53,9 +49,6 @@ import moe.fuqiuluo.mamu.widget.NotificationOverlay
 import moe.fuqiuluo.mamu.widget.ToolbarAction
 import moe.fuqiuluo.mamu.widget.multiChoiceDialog
 import moe.fuqiuluo.mamu.widget.simpleSingleChoiceDialog
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import kotlin.math.min
 
 class MemoryPreviewController(
     context: Context,
@@ -66,122 +59,128 @@ class MemoryPreviewController(
     companion object {
         private val PAGE_SIZE = LocalMemoryOps.getPageSize()
         private const val TAG = "MemoryPreviewCtrl"
-        private val HEX_CHARS = "0123456789ABCDEF".toCharArray()
-
-        // ViewHolder 预创建数量
         private const val MEMORY_ROW_POOL_SIZE = 32
-        private const val NAVIGATION_POOL_SIZE = 2
-
-        // 导航历史最大数量
         private const val MAX_NAVIGATION_HISTORY = 100
+        private const val DEFAULT_PAGE_COUNT = 3  // 默认显示3页
     }
 
-    // 当前显示的格式列表
     private lateinit var currentFormats: MutableList<MemoryDisplayFormat>
-
-    // 当前地址范围
     private var currentStartAddress: Long = 0L
-
-    // 当前跳转的目标地址（用于高亮显示）
     private var targetAddress: Long? = null
 
-    // 导航历史记录
     private val navigationHistory = mutableListOf<Long>()
     private var navigationIndex = -1
-    private var isNavigating = false  // 防止前进后退时重复添加历史
+    private var isNavigating = false
 
-    // 缓存的内存区域列表（已分类和排序）
     private var memoryRegions: List<DisplayMemRegionEntry> = emptyList()
     private var memoryRegionsCacheTime: Long = 0L
 
-    // MMKV 实例
     private val mmkv by lazy { MMKV.defaultMMKV() }
 
-    // 列表适配器
-    private val adapter = MemoryPreviewAdapter(
-        onRowClick = { memoryRow ->
-            // 点击时显示编辑对话框
-            showModifyValueDialog(memoryRow)
-        },
-        onRowLongClick = { memoryRow ->
-            // 长按时显示地址操作菜单
-            showAddressActionDialog(memoryRow)
-            true
-        },
-        onNavigationClick = { targetAddress, isNext ->
-            // 翻页时清除高亮，直接跳转到页头
-            this.targetAddress = null
-            jumpToPage(targetAddress)
-        },
-        onSelectionChanged = { selectedCount ->
-            // 选中状态变化时的回调
-        }
-    )
+    private lateinit var adapter: InfiniteMemoryAdapter
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun initialize() {
-        // 从 MMKV 加载显示格式
         currentFormats = mmkv.memoryDisplayFormats.toMutableList()
 
+        setupAdapter()
         setupToolbar()
         setupRecyclerView()
         setupStatusBar()
         updateFormatDisplay()
 
         subscribeToNavigateEvents()
-
-        // 加载初始占位页面，提前创建所有 ViewHolder
         loadInitialPlaceholderPage()
     }
 
-    /**
-     * 加载初始占位页面
-     * 从 0x0 开始显示占位符内容，提前创建所有 ViewHolder
-     */
-    private fun loadInitialPlaceholderPage() {
-        currentStartAddress = 0L
-        targetAddress = null
-
-        // 计算对齐和格式
-        val alignment = MemoryDisplayFormat.calculateAlignment(currentFormats)
-        val maxRows = PAGE_SIZE / alignment
-
-        // 构建占位符列表
-        val items = mutableListOf<MemoryPreviewItem>()
-
-        // 添加占位符行
-        var address = 0L
-        repeat(maxRows) {
-            val placeholderValues = currentFormats.map { format ->
-                FormattedValue(format, "?", format.textColor)
+    private fun setupAdapter() {
+        adapter = InfiniteMemoryAdapter(
+            onRowClick = { memoryRow -> showModifyValueDialog(memoryRow) },
+            onRowLongClick = { memoryRow ->
+                showAddressActionDialog(memoryRow)
+                true
+            },
+            onSelectionChanged = { _ -> },
+            onDataRequest = { pageAlignedAddress, callback ->
+                requestPageData(pageAlignedAddress, callback)
+            },
+            onBoundaryReached = { isTop ->
+                handleBoundaryReached(isTop)
             }
-            items.add(
-                MemoryPreviewItem.MemoryRow(
-                    address = address,
-                    formattedValues = placeholderValues,
-                    memoryRange = MemoryRange.O,
-                    isHighlighted = false
-                )
-            )
-            address += alignment
-        }
-
-        // 添加下一页导航
-        items.add(MemoryPreviewItem.PageNavigation(PAGE_SIZE.toLong(), isNext = true))
-
-        adapter.setItems(items)
-        updateEmptyState()
+        )
+        adapter.setFormats(currentFormats)
     }
 
     /**
-     * 订阅导航到内存地址事件
+     * 处理边界到达事件
+     * @param isTop true 表示到达顶部边界，false 表示到达底部边界
      */
+    private fun handleBoundaryReached(isTop: Boolean) {
+        if (isTop) {
+            // 向上扩展，需要保持滚动位置
+            val layoutManager = binding.memoryPreviewRecyclerView.layoutManager as? LinearLayoutManager
+            val firstVisiblePosition = layoutManager?.findFirstVisibleItemPosition() ?: 0
+            val firstVisibleView = layoutManager?.findViewByPosition(firstVisiblePosition)
+            val offset = firstVisibleView?.top ?: 0
+            
+            val expanded = adapter.expandTop(1)
+            if (expanded) {
+                // 扩展后调整滚动位置，保持视觉上的连续性
+                val rowsPerPage = PAGE_SIZE / adapter.getAlignment()
+                val newPosition = firstVisiblePosition + rowsPerPage
+                layoutManager?.scrollToPositionWithOffset(newPosition, offset)
+            }
+        } else {
+            // 向下扩展，不需要调整滚动位置
+            adapter.expandBottom(1)
+        }
+    }
+
+    /**
+     * 请求页面数据（页面对齐的地址）
+     * 关键：确保 native 函数读取时地址是页面对齐的
+     */
+    private fun requestPageData(pageAlignedAddress: Long, callback: (ByteArray?) -> Unit) {
+        if (!WuwaDriver.isProcessBound) {
+            callback(null)
+            return
+        }
+
+        // 验证地址是否页面对齐
+        if (pageAlignedAddress % PAGE_SIZE != 0L) {
+            Log.e(TAG, "地址未对齐到页面边界: 0x${pageAlignedAddress.toString(16)}")
+            callback(null)
+            return
+        }
+
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val data = WuwaDriver.readMemory(pageAlignedAddress, PAGE_SIZE)
+                withContext(Dispatchers.Main) {
+                    callback(data)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "读取内存失败: 0x${pageAlignedAddress.toString(16)}", e)
+                withContext(Dispatchers.Main) {
+                    callback(null)
+                }
+            }
+        }
+    }
+
+    private fun loadInitialPlaceholderPage() {
+        currentStartAddress = 0L
+        targetAddress = null
+        val defaultRows = (DEFAULT_PAGE_COUNT * PAGE_SIZE) / adapter.getAlignment()
+        adapter.setAddressRange(0L, defaultRows)
+        updateEmptyState()
+    }
+
     private fun subscribeToNavigateEvents() {
         coroutineScope.launch {
             FloatingEventBus.navigateToMemoryAddressEvents.collect { event ->
-                // 跳转到指定地址
-                jumpToPage(event.address)
+                jumpToAddress(event.address)
             }
         }
     }
@@ -190,102 +189,18 @@ class MemoryPreviewController(
         val toolbar = binding.previewToolbar
 
         val actions = listOf(
-            ToolbarAction(
-                id = 1,
-                icon = R.drawable.calculate_24px,
-                label = "偏移量计算器"
-            ) {
-                showOffsetCalculator()
-            },
-
-
-            ToolbarAction(
-                id = 200,
-                icon = R.drawable.icon_arrow_left_alt_24px,
-                label = "后退"
-            ) {
-                navigateBack()
-            },
-
-            ToolbarAction(
-                id = 201,
-                icon = R.drawable.icon_arrow_right_alt_24px,
-                label = "前进"
-            ) {
-                navigateForward()
-            },
-
-            ToolbarAction(
-                id = 100,
-                icon = R.drawable.baseline_forward_24,
-                label = "转到"
-            ) {
-                showModuleListDialog()
-            },
-
-            ToolbarAction(
-                id = 2,
-                icon = R.drawable.icon_save_24px,
-                label = "保存"
-            ) {
-                saveSelectedToAddresses()
-            },
-
-            ToolbarAction(
-                id = 3,
-                icon = R.drawable.icon_edit_24px,
-                label = "修改"
-            ) {
-                showBatchModifyDialog()
-            },
-
-            ToolbarAction(
-                id = 4,
-                icon = R.drawable.flip_to_front_24px,
-                label = "交叉勾选"
-            ) {
-                crossSelectBetween()
-            },
-
-            ToolbarAction(
-                id = 5,
-                icon = R.drawable.search_check_24px,
-                label = "选定为搜索结果"
-            ) {
-                setSelectedAsSearchResults()
-            },
-
-            ToolbarAction(
-                id = 6,
-                icon = R.drawable.deselect_24px,
-                label = "清除选择"
-            ) {
-                adapter.clearSelection()
-            },
-
-            ToolbarAction(
-                id = 7,
-                icon = R.drawable.type_xor_24px,
-                label = "计算偏移异或"
-            ) {
-                calculateOffsetXor()
-            },
-
-            ToolbarAction(
-                id = 8,
-                icon = R.drawable.select_all_24px,
-                label = "全选"
-            ) {
-                adapter.selectAll()
-            },
-
-            ToolbarAction(
-                id = 9,
-                icon = R.drawable.flip_to_front_24px,
-                label = "反选"
-            ) {
-                adapter.invertSelection()
-            },
+            ToolbarAction(1, R.drawable.calculate_24px, "偏移量计算器") { showOffsetCalculator() },
+            ToolbarAction(200, R.drawable.icon_arrow_left_alt_24px, "后退") { navigateBack() },
+            ToolbarAction(201, R.drawable.icon_arrow_right_alt_24px, "前进") { navigateForward() },
+            ToolbarAction(100, R.drawable.baseline_forward_24, "转到") { showModuleListDialog() },
+            ToolbarAction(2, R.drawable.icon_save_24px, "保存") { saveSelectedToAddresses() },
+            ToolbarAction(3, R.drawable.icon_edit_24px, "修改") { showBatchModifyDialog() },
+            ToolbarAction(4, R.drawable.flip_to_front_24px, "交叉勾选") { crossSelectBetween() },
+            ToolbarAction(5, R.drawable.search_check_24px, "选定为搜索结果") { setSelectedAsSearchResults() },
+            ToolbarAction(6, R.drawable.deselect_24px, "清除选择") { adapter.clearSelection() },
+            ToolbarAction(7, R.drawable.type_xor_24px, "计算偏移异或") { calculateOffsetXor() },
+            ToolbarAction(8, R.drawable.select_all_24px, "全选") { adapter.selectAll() },
+            ToolbarAction(9, R.drawable.flip_to_front_24px, "反选") { adapter.invertSelection() },
         )
 
         toolbar.setActions(actions)
@@ -298,86 +213,53 @@ class MemoryPreviewController(
                 icons = icons,
                 showRadioButton = false,
                 onSingleChoice = { which ->
-                    if (which < actions.size) {
-                        actions[which].onClick.invoke()
-                    }
+                    if (which < actions.size) actions[which].onClick.invoke()
                 }
             )
         }
     }
 
     private fun setupRecyclerView() {
-        // 创建共享的 ViewPool 并设置预创建数量
         val viewPool = RecyclerView.RecycledViewPool().apply {
-            setMaxRecycledViews(MemoryPreviewAdapter.VIEW_TYPE_MEMORY_ROW, MEMORY_ROW_POOL_SIZE)
-            setMaxRecycledViews(MemoryPreviewAdapter.VIEW_TYPE_NAVIGATION, NAVIGATION_POOL_SIZE)
+            setMaxRecycledViews(0, MEMORY_ROW_POOL_SIZE)
         }
 
         binding.memoryPreviewRecyclerView.apply {
+            visibility = View.VISIBLE
             layoutManager = LinearLayoutManager(context)
             adapter = this@MemoryPreviewController.adapter
-
             setHasFixedSize(true)
-            if (itemAnimator != null && itemAnimator is SimpleItemAnimator) {
-                (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
-            }
-
-            // 设置共享 ViewPool
+            (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
             setRecycledViewPool(viewPool)
-
-            // 增加预取数量
-            (layoutManager as? LinearLayoutManager)?.apply {
-                initialPrefetchItemCount = 20
-            }
-
-            // 添加分界线
-            val divider = DividerItemDecoration(
-                context,
-                DividerItemDecoration.VERTICAL
-            )
-            addItemDecoration(divider)
+            (layoutManager as? LinearLayoutManager)?.initialPrefetchItemCount = 20
+            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+            
+            // 添加滚动监听器，检测边界并触发扩展
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val lm = recyclerView.layoutManager as? LinearLayoutManager ?: return
+                    val firstVisible = lm.findFirstVisibleItemPosition()
+                    val lastVisible = lm.findLastVisibleItemPosition()
+                    if (firstVisible != RecyclerView.NO_POSITION && lastVisible != RecyclerView.NO_POSITION) {
+                        this@MemoryPreviewController.adapter.checkBoundary(firstVisible, lastVisible)
+                    }
+                }
+            })
         }
 
-        // 绑定快速滚动条
         binding.fastScroller.attachToRecyclerView(binding.memoryPreviewRecyclerView)
-
-        // 后台预创建 ViewHolder
         preCreateViewHolders(viewPool)
     }
 
-    /**
-     * 后台预创建 ViewHolder，减少首次加载时的创建开销
-     */
     private fun preCreateViewHolders(viewPool: RecyclerView.RecycledViewPool) {
         coroutineScope.launch(Dispatchers.Default) {
             try {
-                val recyclerView = binding.memoryPreviewRecyclerView
-                val adapter = this@MemoryPreviewController.adapter
-
-                // 切到主线程创建 ViewHolder（必须在主线程操作 View）
                 withContext(Dispatchers.Main) {
-                    // 预创建 MemoryRow ViewHolder
                     repeat(MEMORY_ROW_POOL_SIZE) {
-                        val holder = adapter.createViewHolder(
-                            recyclerView,
-                            MemoryPreviewAdapter.VIEW_TYPE_MEMORY_ROW
-                        )
+                        val holder = adapter.createViewHolder(binding.memoryPreviewRecyclerView, 0)
                         viewPool.putRecycledView(holder)
                     }
-
-                    // 预创建 Navigation ViewHolder
-                    repeat(NAVIGATION_POOL_SIZE) {
-                        val holder = adapter.createViewHolder(
-                            recyclerView,
-                            MemoryPreviewAdapter.VIEW_TYPE_NAVIGATION
-                        )
-                        viewPool.putRecycledView(holder)
-                    }
-
-//                    Log.d(
-//                        TAG,
-//                        "预创建 ViewHolder 完成: MemoryRow=$MEMORY_ROW_POOL_SIZE, Navigation=$NAVIGATION_POOL_SIZE"
-//                    )
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "预创建 ViewHolder 失败: ${e.message}")
@@ -386,35 +268,18 @@ class MemoryPreviewController(
     }
 
     private fun setupStatusBar() {
-        // 点击筛选器状态 - 打开筛选器对话框
         binding.filterStatusText.setOnClickListener {
-            // TODO: 显示筛选器对话框
             notification.showWarning("筛选器功能待实现")
         }
-
-        // 点击格式显示 - 打开格式设置对话框
-        binding.formatDisplayText.setOnClickListener {
-            showFormatSettingsDialog()
-        }
-
-        // 刷新按钮
-        binding.refreshButton.setOnClickListener {
-            refreshCurrentPage()
-        }
+        binding.formatDisplayText.setOnClickListener { showFormatSettingsDialog() }
+        binding.refreshButton.setOnClickListener { refreshCurrentView() }
     }
 
-    /**
-     * 显示格式设置对话框
-     */
     private fun showFormatSettingsDialog() {
         val allFormats = MemoryDisplayFormat.getAllFormatsSortedByPriority().toTypedArray()
         val formatNames = allFormats.map { it.code + ": " + it.displayName }.toTypedArray()
         val formatColors = allFormats.map { it.textColor }.toIntArray()
-
-        // 创建当前选中状态的数组
-        val checkedItems = BooleanArray(allFormats.size) { index ->
-            currentFormats.contains(allFormats[index])
-        }
+        val checkedItems = BooleanArray(allFormats.size) { currentFormats.contains(allFormats[it]) }
 
         context.multiChoiceDialog(
             title = "选择显示数值格式",
@@ -422,108 +287,126 @@ class MemoryPreviewController(
             checkedItems = checkedItems,
             itemColors = formatColors,
             onMultiChoice = { newCheckedItems ->
-                // 更新选中的格式
                 currentFormats.clear()
                 newCheckedItems.forEachIndexed { index, isChecked ->
-                    if (isChecked) {
-                        currentFormats.add(allFormats[index])
-                    }
+                    if (isChecked) currentFormats.add(allFormats[index])
                 }
-
-                // 至少要选中一个格式
                 if (currentFormats.isEmpty()) {
                     currentFormats.add(MemoryDisplayFormat.DWORD)
                     notification.showWarning("至少需要选择一个显示格式")
                 }
-
-                // 保存到 MMKV
                 mmkv.memoryDisplayFormats = currentFormats
-
                 updateFormatDisplay()
-                // 格式改变时保持目标地址高亮
-                refreshCurrentPage()
+                adapter.setFormats(currentFormats)
+                refreshCurrentView()
             }
         )
     }
 
-    /**
-     * 更新格式显示文本（带颜色）
-     */
     private fun updateFormatDisplay() {
         val spanBuilder = SpannableStringBuilder()
-
         currentFormats.forEachIndexed { index, format ->
-            if (index > 0) {
-                spanBuilder.append(",")
-            }
-
+            if (index > 0) spanBuilder.append(",")
             val start = spanBuilder.length
             spanBuilder.append(format.code)
-            val end = spanBuilder.length
-
             spanBuilder.setSpan(
-                ForegroundColorSpan(format.textColor),
-                start,
-                end,
+                ForegroundColorSpan(format.textColor), start, spanBuilder.length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
-
         binding.formatDisplayText.text = spanBuilder
     }
 
-    /**
-     * 跳转到指定地址
-     * @param requestedAddress 用户请求跳转的地址（可能不对齐）
-     */
-    private fun jumpToPage(requestedAddress: Long) {
+    private fun jumpToAddress(requestedAddress: Long) {
         if (!WuwaDriver.isProcessBound) {
             notification.showError("未绑定进程")
             return
         }
 
-        // 计算页头地址（向下对齐到页边界，固定4KB页大小）
         val pageStartAddress = (requestedAddress / PAGE_SIZE) * PAGE_SIZE
+        val isPageAligned = requestedAddress == pageStartAddress
 
-        // 记录导航历史（仅在非前进后退操作时，且地址有变化）
         if (!isNavigating) {
-            // 检查是否与当前历史位置的地址不同
-            val currentHistoryAddress =
-                if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
-                    navigationHistory[navigationIndex]
-                } else {
-                    -1L
-                }
-
+            val currentHistoryAddress = if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
+                navigationHistory[navigationIndex]
+            } else -1L
             if (pageStartAddress != currentHistoryAddress) {
                 addToNavigationHistory(pageStartAddress)
             }
         }
 
         currentStartAddress = pageStartAddress
-
-        // 记录目标地址用于高亮
         targetAddress = requestedAddress
 
-        // 加载页面
-        loadPage(pageStartAddress, requestedAddress)
+        updateMemoryRegionsCache()
+
+        // 计算三页的行数
+        val defaultRows = (DEFAULT_PAGE_COUNT * PAGE_SIZE) / adapter.getAlignment()
+        
+        // 根据是否页面对齐决定起始地址
+        val startAddress = if (isPageAligned) {
+            // 页面对齐：从当前页开始，显示当前页+后两页
+            pageStartAddress
+        } else {
+            // 非页面对齐：从前一页开始，目标地址在中间
+            if (pageStartAddress >= PAGE_SIZE) pageStartAddress - PAGE_SIZE else 0L
+        }
+        
+        adapter.setAddressRange(startAddress, defaultRows)
+        adapter.setHighlightAddress(requestedAddress)
+        adapter.setMemoryRegions(memoryRegions)
+
+        scrollToAddress(requestedAddress, isPageAligned)
+        notification.showSuccess("已跳转到地址: ${String.format("%X", requestedAddress)}")
     }
 
-    /**
-     * 添加地址到导航历史
-     */
+    private fun scrollToAddress(address: Long, showAtTop: Boolean = false) {
+        val alignment = adapter.getAlignment()
+        val baseAddress = adapter.getBaseAddress()
+        val targetRow = ((address - baseAddress) / alignment).toInt()
+
+        val layoutManager = binding.memoryPreviewRecyclerView.layoutManager as? LinearLayoutManager
+        if (layoutManager != null && targetRow >= 0) {
+            val offset = if (showAtTop) {
+                0  // 显示在顶部
+            } else {
+                binding.memoryPreviewRecyclerView.height / 2  // 显示在中间
+            }
+            layoutManager.scrollToPositionWithOffset(targetRow, offset)
+        }
+    }
+
+    private fun updateMemoryRegionsCache() {
+        val cacheInterval = mmkv.memoryRegionCacheInterval.toLong()
+        val now = System.currentTimeMillis()
+        val cacheValid = cacheInterval > 0 && memoryRegions.isNotEmpty() &&
+                (now - memoryRegionsCacheTime) < cacheInterval
+
+        if (!cacheValid) {
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val regions = WuwaDriver.queryMemRegionsWithRetry()
+                        .divideToSimpleMemoryRangeParallel()
+                        .sortedBy { it.start }
+                    withContext(Dispatchers.Main) {
+                        memoryRegions = regions
+                        memoryRegionsCacheTime = System.currentTimeMillis()
+                        adapter.setMemoryRegions(regions)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "更新内存区域缓存失败", e)
+                }
+            }
+        }
+    }
+
     private fun addToNavigationHistory(address: Long) {
-        // 如果当前不在历史末尾，删除后面的记录
         if (navigationIndex >= 0 && navigationIndex < navigationHistory.size - 1) {
             navigationHistory.subList(navigationIndex + 1, navigationHistory.size).clear()
         }
-
-        // 避免连续重复地址
         if (navigationHistory.isEmpty() || navigationHistory.last() != address) {
             navigationHistory.add(address)
             navigationIndex = navigationHistory.size - 1
-
-            // 限制历史记录数量
             while (navigationHistory.size > MAX_NAVIGATION_HISTORY) {
                 navigationHistory.removeAt(0)
                 navigationIndex--
@@ -531,597 +414,53 @@ class MemoryPreviewController(
         }
     }
 
-    /**
-     * 后退到上一个地址
-     */
     private fun navigateBack() {
         if (navigationHistory.isEmpty() || navigationIndex <= 0) {
             notification.showWarning("已经是最早的记录")
             return
         }
-
         isNavigating = true
         navigationIndex--
-        val address = navigationHistory[navigationIndex]
-        jumpToPage(address)
+        jumpToAddress(navigationHistory[navigationIndex])
         isNavigating = false
-
         notification.showSuccess("后退 (${navigationIndex + 1}/${navigationHistory.size})")
     }
 
-    /**
-     * 前进到下一个地址
-     */
     private fun navigateForward() {
         if (navigationHistory.isEmpty() || navigationIndex >= navigationHistory.size - 1) {
             notification.showWarning("已经是最新的记录")
             return
         }
-
         isNavigating = true
         navigationIndex++
-        val address = navigationHistory[navigationIndex]
-        jumpToPage(address)
+        jumpToAddress(navigationHistory[navigationIndex])
         isNavigating = false
-
         notification.showSuccess("前进 (${navigationIndex + 1}/${navigationHistory.size})")
     }
 
-    /**
-     * 加载指定地址开始的一页数据
-     * @param pageStartAddress 页头地址（必须已对齐到 PAGE_SIZE）
-     * @param highlightAddress 要高亮的地址（可选）
-     */
-    private fun loadPage(pageStartAddress: Long, highlightAddress: Long? = null) {
-//        val startTime = System.currentTimeMillis()
-//        Log.d(TAG, "━━━━━ loadPage 开始 ━━━━━")
-//        Log.d(
-//            TAG,
-//            "地址: 0x${
-//                pageStartAddress.toString(16).uppercase()
-//            }, 高亮: ${highlightAddress?.let { "0x${it.toString(16).uppercase()}" } ?: "无"}")
-
-        // 检查页头地址是否对齐
-        if (pageStartAddress % PAGE_SIZE != 0L) {
-            throw IllegalArgumentException("pageStartAddress must be aligned to PAGE_SIZE ($PAGE_SIZE bytes)")
-        }
-
-        if (!WuwaDriver.isProcessBound) {
-            notification.showError("未绑定进程")
-            return
-        }
-
-        // 预计算固定值（在循环外计算一次）
-        val alignment = MemoryDisplayFormat.calculateAlignment(currentFormats)
-        val hexByteSize = MemoryDisplayFormat.calculateHexByteSize(currentFormats)
-        val formats = currentFormats
-//        val t1 = System.currentTimeMillis()
-//        Log.d(
-//            TAG,
-//            "[1] 计算对齐: alignment=$alignment, hexByteSize=$hexByteSize, 耗时=${t1 - startTime}ms"
-//        )
-
-        // 整个流程在 Default 线程执行，减少调度开销
-        coroutineScope.launch(Dispatchers.Default) {
-            try {
-//            val t2 = System.currentTimeMillis()
-//            Log.d(TAG, "[2] 协程启动, 耗时=${t2 - t1}ms")
-
-                // 检查内存区域缓存是否有效
-                val cacheInterval = mmkv.memoryRegionCacheInterval.toLong()
-                val now = System.currentTimeMillis()
-                val cacheValid = cacheInterval > 0 &&
-                        memoryRegions.isNotEmpty() &&
-                        (now - memoryRegionsCacheTime) < cacheInterval
-
-                // 并行：查询内存区域（如果缓存失效）+ 读取内存
-                val regionsDeferred = if (!cacheValid) {
-                    async {
-                        WuwaDriver.queryMemRegionsWithRetry().divideToSimpleMemoryRangeParallel()
-                            .sortedBy { it.start }
-                    }
-                } else null
-
-                val memoryDeferred = async(Dispatchers.IO) {
-                    WuwaDriver.readMemory(pageStartAddress, PAGE_SIZE)
-                }
-
-                val sortedRegions = if (regionsDeferred != null) {
-                    val regions = regionsDeferred.await()
-                    memoryRegions = regions
-                    memoryRegionsCacheTime = now
-                    regions
-                } else {
-                    memoryRegions
-                }
-//            val t3 = System.currentTimeMillis()
-//            Log.d(
-//                TAG,
-//                "[3] 查询内存区域: 区域数=${sortedRegions.size}, 缓存=${cacheValid}, 耗时=${t3 - t2}ms"
-//            )
-
-                val memoryData = memoryDeferred.await()
-//                Log.d(
-//                    TAG,
-//                    "[4] 读取内存: 地址=0x${
-//                        pageStartAddress.toString(16).uppercase()
-//                    }, 大小=${memoryData?.size ?: 0}bytes, 结果=${if (memoryData != null) "成功" else "失败(null)"}"
-//                )
-
-                // 构建最终列表
-                val items = mutableListOf<MemoryPreviewItem>()
-                val maxRows = PAGE_SIZE / alignment
-                var highlightedRowIndex = -1
-
-                // 添加上一页导航（如果不是第一页）
-                if (pageStartAddress > 0) {
-                    val prevAddress = (pageStartAddress - PAGE_SIZE).coerceAtLeast(0)
-                    items.add(MemoryPreviewItem.PageNavigation(prevAddress, isNext = false))
-                }
-
-                if (memoryData == null) {
-                    // 内存读取失败，显示占位符
-//                    Log.w(
-//                        TAG,
-//                        "内存读取失败: pageStartAddress=0x${
-//                            pageStartAddress.toString(16).uppercase()
-//                        }, 进程=${WuwaDriver.currentBindPid}"
-//                    )
-                    withContext(Dispatchers.Main) {
-                        notification.showError(
-                            "内存读取失败: 地址 0x${
-                                pageStartAddress.toString(16).uppercase()
-                            } 可能不可访问"
-                        )
-                    }
-
-                    var address = pageStartAddress
-                    repeat(maxRows) {
-                        val isHighlighted = highlightAddress != null &&
-                                highlightAddress >= address &&
-                                highlightAddress < address + alignment
-                        if (isHighlighted) {
-                            highlightedRowIndex = items.size
-                        }
-
-                        val placeholderValues = formats.map { format ->
-                            FormattedValue(format, "?", format.textColor)
-                        }
-                        items.add(
-                            MemoryPreviewItem.MemoryRow(
-                                address = address,
-                                formattedValues = placeholderValues,
-                                memoryRange = findMemoryRangeBinary(address, sortedRegions),
-                                isHighlighted = isHighlighted
-                            )
-                        )
-                        address += alignment
-                    }
-                } else {
-                    // 解析内存数据（已经在 Default 线程）
-                    val parseResult = parseMemoryData(
-                        memoryData = memoryData,
-                        pageStartAddress = pageStartAddress,
-                        highlightAddress = highlightAddress,
-                        alignment = alignment,
-                        hexByteSize = hexByteSize,
-                        formats = formats,
-                        sortedRegions = sortedRegions
-                    )
-                    highlightedRowIndex = if (pageStartAddress > 0) {
-                        parseResult.highlightedRowIndex + 1 // 加上上一页导航的位置
-                    } else {
-                        parseResult.highlightedRowIndex
-                    }
-                    items.addAll(parseResult.rows)
-                }
-//            val t5 = System.currentTimeMillis()
-//            Log.d(TAG, "[5] 解析内存完成: 解析${items.size}行, 耗时=${t5 - t4}ms")
-
-                // 添加下一页导航
-                val nextAddress = pageStartAddress + PAGE_SIZE
-                items.add(MemoryPreviewItem.PageNavigation(nextAddress, isNext = true))
-
-                // 切回主线程更新 UI
-                withContext(Dispatchers.Main) {
-                    adapter.setItems(items)
-                    updateEmptyState()
-//                val t6 = System.currentTimeMillis()
-//                Log.d(TAG, "[6] 更新UI完成: 耗时=${t6 - t5}ms")
-
-                    // 滚动到高亮的行，放在视觉中间位置
-                    if (highlightedRowIndex >= 0) {
-                        val layoutManager =
-                            binding.memoryPreviewRecyclerView.layoutManager as? LinearLayoutManager
-                        if (layoutManager != null) {
-                            // 计算偏移量使目标居中
-                            val recyclerHeight = binding.memoryPreviewRecyclerView.height
-                            val offset = recyclerHeight / 2
-                            layoutManager.scrollToPositionWithOffset(highlightedRowIndex, offset)
-                        }
-                    }
-
-                    notification.showSuccess(
-                        "已跳转到地址: ${
-                            String.format(
-                                "%X",
-                                pageStartAddress
-                            )
-                        }"
-                    )
-//                val totalTime = System.currentTimeMillis() - startTime
-//                Log.d(TAG, "━━━━━ loadPage 完成: 总耗时=${totalTime}ms ━━━━━\n")
-                }
-            } catch (e: Exception) {
-                Log.e(
-                    TAG,
-                    "loadPage 异常: pageStartAddress=0x${
-                        pageStartAddress.toString(16).uppercase()
-                    }",
-                    e
-                )
-                withContext(Dispatchers.Main) {
-                    notification.showError("加载内存页失败: ${e.message}")
-                }
-            }
-        }
+    private fun refreshCurrentView() {
+        adapter.refreshAll()
+        notification.showSuccess("已刷新")
     }
 
-    /**
-     * 内存解析结果
-     */
-    private data class ParseResult(
-        val rows: List<MemoryPreviewItem.MemoryRow>,
-        val rowCount: Int,
-        val highlightedRowIndex: Int
-    )
-
-    private fun parseMemoryData(
-        memoryData: ByteArray,
-        pageStartAddress: Long,
-        highlightAddress: Long?,
-        alignment: Int,
-        hexByteSize: Int,
-        formats: List<MemoryDisplayFormat>,
-        sortedRegions: List<DisplayMemRegionEntry>
-    ): ParseResult {
-        val rows = mutableListOf<MemoryPreviewItem.MemoryRow>()
-        val buffer = ByteBuffer.wrap(memoryData).order(ByteOrder.LITTLE_ENDIAN)
-        val maxRows = PAGE_SIZE / alignment
-        var highlightedRowIndex = -1
-        var currentAddress = pageStartAddress
-
-        // 预分配 StringBuilder 用于十六进制转换
-        val hexBuilder = StringBuilder(hexByteSize * 2)
-
-        while (buffer.remaining() >= alignment && rows.size < maxRows) {
-            // 记录当前行的起始位置
-            val rowStartPos = buffer.position()
-            val formattedValues = ArrayList<FormattedValue>(formats.size)
-
-            // 为每种格式解析值
-            for (format in formats) {
-                val formattedValue = parseValueFast(
-                    buffer, currentAddress, format, hexByteSize, hexBuilder, sortedRegions
-                )
-                formattedValues.add(formattedValue)
-            }
-
-            // 使用二分查找获取内存区域
-            val memoryRange = findMemoryRangeBinary(currentAddress, sortedRegions)
-
-            // 检查该行是否包含高亮地址
-            val isHighlighted = highlightAddress != null &&
-                    highlightAddress >= currentAddress &&
-                    highlightAddress < currentAddress + alignment
-
-            if (isHighlighted) {
-                highlightedRowIndex = rows.size
-            }
-
-            rows.add(
-                MemoryPreviewItem.MemoryRow(
-                    currentAddress,
-                    formattedValues,
-                    memoryRange,
-                    isHighlighted
-                )
-            )
-
-            // 移动 buffer 到下一行
-            buffer.position(rowStartPos + alignment)
-            currentAddress += alignment
-        }
-
-        return ParseResult(rows, rows.size, highlightedRowIndex)
-    }
-
-    /**
-     * 快速解析内存值
-     */
-    private fun parseValueFast(
-        buffer: ByteBuffer,
-        address: Long,
-        format: MemoryDisplayFormat,
-        hexByteSize: Int,
-        hexBuilder: StringBuilder,
-        sortedRegions: List<DisplayMemRegionEntry>
-    ): FormattedValue {
-        val startPos = buffer.position()
-
-        try {
-            return when (format) {
-                MemoryDisplayFormat.HEX_LITTLE_ENDIAN, MemoryDisplayFormat.HEX_BIG_ENDIAN -> {
-                    if (buffer.remaining() < hexByteSize) {
-                        return FormattedValue(format, "---", Color.WHITE)
-                    }
-
-                    // 快速十六进制转换
-                    hexBuilder.setLength(0)
-                    val bytes = ByteArray(hexByteSize)
-                    buffer.get(bytes)
-
-                    if (format == MemoryDisplayFormat.HEX_LITTLE_ENDIAN) {
-                        for (b in bytes) {
-                            hexBuilder.append(HEX_CHARS[(b.toInt() shr 4) and 0x0F])
-                            hexBuilder.append(HEX_CHARS[b.toInt() and 0x0F])
-                        }
-                    } else {
-                        for (i in bytes.lastIndex downTo 0) {
-                            val b = bytes[i]
-                            hexBuilder.append(HEX_CHARS[(b.toInt() shr 4) and 0x0F])
-                            hexBuilder.append(HEX_CHARS[b.toInt() and 0x0F])
-                        }
-                    }
-
-                    // 将十六进制值解析为地址（快速版本）
-                    buffer.position(startPos)
-                    val valueAsAddress: Long? = when (hexByteSize) {
-                        8 -> buffer.long.takeIf { it >= 0 }
-                        4 -> buffer.int.toLong() and 0xFFFFFFFFL
-                        2 -> buffer.short.toLong() and 0xFFFFL
-                        else -> null
-                    }
-
-                    // 使用二分查找获取颜色
-                    val color = if (valueAsAddress != null) {
-                        findExecutableRegionBinary(valueAsAddress, sortedRegions)?.range?.color
-                            ?: Color.WHITE
-                    } else {
-                        Color.WHITE
-                    }
-
-                    FormattedValue(format, hexBuilder.toString(), color)
-                }
-
-                MemoryDisplayFormat.DWORD -> {
-                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                    FormattedValue(format, buffer.int.toString())
-                }
-
-                MemoryDisplayFormat.QWORD -> {
-                    if (buffer.remaining() < 8) return FormattedValue(format, "---")
-                    FormattedValue(format, buffer.long.toString())
-                }
-
-                MemoryDisplayFormat.WORD -> {
-                    if (buffer.remaining() < 2) return FormattedValue(format, "---")
-                    FormattedValue(format, buffer.short.toString())
-                }
-
-                MemoryDisplayFormat.BYTE -> {
-                    if (buffer.remaining() < 1) return FormattedValue(format, "---")
-                    FormattedValue(format, buffer.get().toString())
-                }
-
-                MemoryDisplayFormat.FLOAT -> {
-                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                    FormattedValue(format, "%.6f".format(buffer.float))
-                }
-
-                MemoryDisplayFormat.DOUBLE -> {
-                    if (buffer.remaining() < 8) return FormattedValue(format, "---")
-                    FormattedValue(format, "%.10f".format(buffer.double))
-                }
-
-                MemoryDisplayFormat.UTF16_LE -> {
-                    if (buffer.remaining() < 2) return FormattedValue(format, "---")
-                    val charValue = buffer.short.toInt().toChar()
-                    val displayChar = if (charValue.isLetterOrDigit() || charValue.isWhitespace()) {
-                        charValue.toString()
-                    } else {
-                        "."
-                    }
-                    FormattedValue(format, "\"$displayChar\"")
-                }
-
-                MemoryDisplayFormat.STRING_EXPR -> {
-                    if (buffer.remaining() < 1) return FormattedValue(format, "---")
-                    val bytes = ByteArray(min(4, buffer.remaining()))
-                    buffer.get(bytes)
-                    val displayString = buildString(bytes.size) {
-                        for (b in bytes) {
-                            append(if (b in 32..126) b.toInt().toChar() else '.')
-                        }
-                    }
-                    FormattedValue(format, "'$displayString'")
-                }
-
-                MemoryDisplayFormat.ARM32 -> {
-                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                    val bytes = ByteArray(4)
-                    buffer.get(bytes)
-                    try {
-                        val results = Disassembler.disassembleARM32(bytes, address, count = 1)
-                        if (results.isNotEmpty()) {
-                            val insn = results[0]
-                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
-                        } else {
-                            FormattedValue(format, "???")
-                        }
-                    } catch (e: Exception) {
-                        FormattedValue(format, "err")
-                    }
-                }
-
-                MemoryDisplayFormat.THUMB -> {
-                    if (buffer.remaining() < 2) return FormattedValue(format, "---")
-                    val bytes = ByteArray(2)
-                    buffer.get(bytes)
-                    try {
-                        val results = Disassembler.disassembleThumb(bytes, address, count = 1)
-                        if (results.isNotEmpty()) {
-                            val insn = results[0]
-                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
-                        } else {
-                            FormattedValue(format, "???")
-                        }
-                    } catch (e: Exception) {
-                        FormattedValue(format, "err")
-                    }
-                }
-
-                MemoryDisplayFormat.ARM64 -> {
-                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                    val bytes = ByteArray(4)
-                    buffer.get(bytes)
-                    try {
-                        val results = Disassembler.disassembleARM64(bytes, address, count = 1)
-                        if (results.isNotEmpty()) {
-                            val insn = results[0]
-                            FormattedValue(format, "${insn.mnemonic} ${insn.operands}")
-                        } else {
-                            FormattedValue(format, "???")
-                        }
-                    } catch (e: Exception) {
-                        FormattedValue(format, "err")
-                    }
-                }
-
-                MemoryDisplayFormat.ARM64_PSEUDO -> {
-                    if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                    val bytes = ByteArray(4)
-                    buffer.get(bytes)
-                    try {
-                        val results = Disassembler.generatePseudoCode(
-                            Disassembler.Architecture.ARM64,
-                            bytes,
-                            address,
-                            count = 1
-                        )
-                        if (results.isNotEmpty()) {
-                            val insn = results[0]
-                            // 优先显示伪代码，如果没有则显示汇编
-                            val displayText = insn.pseudoCode ?: "${insn.mnemonic} ${insn.operands}"
-                            FormattedValue(format, displayText)
-                        } else {
-                            FormattedValue(format, "???")
-                        }
-                    } catch (e: Exception) {
-                        FormattedValue(format, "err")
-                    }
-                }
-
-                else -> FormattedValue(format, "TODO(${format.code})")
-            }
-        } finally {
-            buffer.position(startPos)
-        }
-    }
-
-    /**
-     * 二分查找获取地址所属的内存区域
-     */
-    private fun findMemoryRangeBinary(
-        address: Long,
-        sortedRegions: List<DisplayMemRegionEntry>
-    ): MemoryRange? {
-        if (sortedRegions.isEmpty()) return null
-
-        var low = 0
-        var high = sortedRegions.lastIndex
-
-        while (low <= high) {
-            val mid = (low + high) ushr 1
-            val region = sortedRegions[mid]
-
-            when {
-                address < region.start -> high = mid - 1
-                address >= region.end -> low = mid + 1
-                else -> return region.range // 找到包含该地址的区域
-            }
-        }
-        return null
-    }
-
-    /**
-     * 二分查找获取可执行内存区域（用于 HEX 值颜色判断）
-     */
-    private fun findExecutableRegionBinary(
-        address: Long,
-        sortedRegions: List<DisplayMemRegionEntry>
-    ): DisplayMemRegionEntry? {
-        if (sortedRegions.isEmpty()) return null
-
-        var low = 0
-        var high = sortedRegions.lastIndex
-
-        while (low <= high) {
-            val mid = (low + high) ushr 1
-            val region = sortedRegions[mid]
-
-            when {
-                address < region.start -> high = mid - 1
-                address >= region.end -> low = mid + 1
-                else -> return if (region.isExecutable) region else null
-            }
-        }
-        return null
-    }
-
-    /**
-     * 刷新当前页
-     */
-    private fun refreshCurrentPage() {
-        if (currentStartAddress > 0) {
-            // 刷新时保持当前的页头地址和高亮地址
-            loadPage(currentStartAddress, targetAddress)
-        } else {
-            notification.showWarning("请先选择起始地址")
-        }
-    }
-
-    /**
-     * 显示修改内存值对话框
-     */
     private fun showAddressActionDialog(memoryRow: MemoryPreviewItem.MemoryRow) {
         if (!WuwaDriver.isProcessBound) {
             notification.showError("未绑定进程")
             return
         }
 
-        val clipboardManager =
-            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
-        // 获取当前内存值
+        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val defaultType = DisplayValueType.DWORD
+
         coroutineScope.launch {
-            // 异步读取当前内存值
             val currentValue = withContext(Dispatchers.IO) {
                 try {
-                    val bytes =
-                        WuwaDriver.readMemory(memoryRow.address, defaultType.memorySize.toInt())
-                    if (bytes != null) {
-                        ValueTypeUtils.bytesToDisplayValue(bytes, defaultType)
-                    } else {
-                        "?"
-                    }
-                } catch (e: Exception) {
-                    "?"
-                }
+                    val bytes = WuwaDriver.readMemory(memoryRow.address, defaultType.memorySize.toInt())
+                    if (bytes != null) ValueTypeUtils.bytesToDisplayValue(bytes, defaultType) else "?"
+                } catch (e: Exception) { "?" }
             }
 
-            val dialog = AddressActionDialog(
+            AddressActionDialog(
                 context = context,
                 notification = notification,
                 clipboardManager = clipboardManager,
@@ -1131,24 +470,15 @@ class MemoryPreviewController(
                 coroutineScope = coroutineScope,
                 callbacks = object : AddressActionDialog.Callbacks {
                     override fun onShowOffsetCalculator(address: Long) {
-                        // 调用偏移量计算器，传入当前地址作为初始基址
                         coroutineScope.launch {
                             FloatingEventBus.emitUIAction(
-                                UIActionEvent.ShowOffsetCalculatorDialog(
-                                    initialBaseAddress = address
-                                )
+                                UIActionEvent.ShowOffsetCalculatorDialog(initialBaseAddress = address)
                             )
                         }
                     }
-
-                    override fun onJumpToAddress(address: Long) {
-                        // 直接跳转到地址（已经在内存预览页面）
-                        jumpToPage(address)
-                    }
+                    override fun onJumpToAddress(address: Long) { jumpToAddress(address) }
                 }
-            )
-
-            dialog.show()
+            ).show()
         }
     }
 
@@ -1158,29 +488,18 @@ class MemoryPreviewController(
             return
         }
 
-        val clipboardManager =
-            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
-        // 使用 DWORD 作为默认类型，读取当前值
+        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val defaultType = DisplayValueType.DWORD
+
         coroutineScope.launch {
-            // 异步读取当前内存值
             val currentValue = withContext(Dispatchers.IO) {
                 try {
-                    val bytes =
-                        WuwaDriver.readMemory(memoryRow.address, defaultType.memorySize.toInt())
-                    if (bytes != null) {
-                        ValueTypeUtils.bytesToDisplayValue(bytes, defaultType)
-                    } else {
-                        ""
-                    }
-                } catch (e: Exception) {
-                    ""
-                }
+                    val bytes = WuwaDriver.readMemory(memoryRow.address, defaultType.memorySize.toInt())
+                    if (bytes != null) ValueTypeUtils.bytesToDisplayValue(bytes, defaultType) else ""
+                } catch (e: Exception) { "" }
             }
 
-            // 在主线程显示对话框
-            val dialog = ModifyValueDialog(
+            ModifyValueDialog(
                 context = context,
                 notification = notification,
                 clipboardManager = clipboardManager,
@@ -1190,84 +509,41 @@ class MemoryPreviewController(
                 onConfirm = { addr, oldValue, newValue, valueType ->
                     try {
                         val dataBytes = ValueTypeUtils.parseExprToBytes(newValue, valueType)
-
-                        // 保存备份
                         MemoryBackupManager.saveBackup(addr, oldValue, valueType)
-
                         val success = WuwaDriver.writeMemory(addr, dataBytes)
                         if (success) {
-                            // 发送事件通知其他界面同步更新
                             coroutineScope.launch {
                                 FloatingEventBus.emitAddressValueChanged(
-                                    AddressValueChangedEvent(
-                                        address = addr,
-                                        newValue = newValue,
-                                        valueType = valueType.nativeId,
-                                        source = AddressValueChangedEvent.Source.MEMORY_PREVIEW
-                                    )
+                                    AddressValueChangedEvent(addr, newValue, valueType.nativeId,
+                                        AddressValueChangedEvent.Source.MEMORY_PREVIEW)
                                 )
                             }
-
-                            // 刷新当前页显示最新值
-                            refreshCurrentPage()
-
-                            notification.showSuccess(
-                                context.getString(
-                                    R.string.modify_success_message,
-                                    String.format("%X", addr)
-                                )
-                            )
+                            val pageAddress = (addr / PAGE_SIZE) * PAGE_SIZE
+                            adapter.refreshPage(pageAddress)
+                            notification.showSuccess(context.getString(R.string.modify_success_message, String.format("%X", addr)))
                         } else {
-                            notification.showError(
-                                context.getString(
-                                    R.string.modify_failed_message,
-                                    String.format("%X", addr)
-                                )
-                            )
+                            notification.showError(context.getString(R.string.modify_failed_message, String.format("%X", addr)))
                         }
                     } catch (e: IllegalArgumentException) {
-                        notification.showError(
-                            context.getString(
-                                R.string.error_invalid_value_format,
-                                e.message ?: "Unknown error"
-                            )
-                        )
+                        notification.showError(context.getString(R.string.error_invalid_value_format, e.message ?: "Unknown error"))
                     } catch (e: Exception) {
-                        notification.showError(
-                            context.getString(
-                                R.string.error_modify_failed,
-                                e.message ?: "Unknown error"
-                            )
-                        )
+                        notification.showError(context.getString(R.string.error_modify_failed, e.message ?: "Unknown error"))
                     }
                 }
-            )
-
-            dialog.show()
+            ).show()
         }
     }
 
-    /**
-     * 显示偏移量计算器
-     */
     private fun showOffsetCalculator() {
-        // 使用当前显示的页面起始地址作为初始基址
-        val initialBaseAddress = if (adapter.getSelectedCount() > 0) adapter.getSelectedAddresses()
-            .first() else currentStartAddress
+        val initialBaseAddress = if (adapter.getSelectedCount() > 0) {
+            adapter.getSelectedAddresses().first()
+        } else currentStartAddress
 
         coroutineScope.launch {
-            FloatingEventBus.emitUIAction(
-                UIActionEvent.ShowOffsetCalculatorDialog(
-                    initialBaseAddress = initialBaseAddress
-                )
-            )
+            FloatingEventBus.emitUIAction(UIActionEvent.ShowOffsetCalculatorDialog(initialBaseAddress))
         }
     }
 
-    /**
-     * 显示模块内存列表对话框
-     * 用于快速跳转到指定模块的内存地址
-     */
     private fun showModuleListDialog() {
         if (!WuwaDriver.isProcessBound) {
             notification.showError("未绑定进程")
@@ -1275,70 +551,38 @@ class MemoryPreviewController(
         }
 
         val currentPid = WuwaDriver.currentBindPid
-        if (currentPid <= 0) {
-            notification.showError("无效的进程 PID")
-            return
-        }
-
-        // 先检查进程是否存活
-        if (!WuwaDriver.isProcessAlive(currentPid)) {
-            notification.showError("目标进程已退出 (PID: $currentPid)")
+        if (currentPid <= 0 || !WuwaDriver.isProcessAlive(currentPid)) {
+            notification.showError("目标进程已退出")
             return
         }
 
         coroutineScope.launch {
             try {
-                // 在后台线程查询内存区域（每次都获取最新数据）
-                val regions = withContext(Dispatchers.IO) {
-                    WuwaDriver.queryMemRegionsWithRetry(currentPid)
-                }
-
-                // 转换为 DisplayMemRegionEntry 并按地址排序（由小到大）
-                val modules = regions
-                    .divideToSimpleMemoryRange()
-                    .sortedBy { it.start }
+                val regions = withContext(Dispatchers.IO) { WuwaDriver.queryMemRegionsWithRetry(currentPid) }
+                val modules = regions.divideToSimpleMemoryRange().sortedBy { it.start }
 
                 if (modules.isEmpty()) {
                     notification.showWarning("未找到任何模块")
                     return@launch
                 }
 
-                // 显示模块列表对话框
                 ModuleListDialog(
                     context = context,
                     modules = modules,
                     notification = notification,
                     onModuleSelected = { selectedModule ->
-                        // 跳转到选中模块的起始地址
-                        jumpToPage(selectedModule.start)
-                        notification.showSuccess(
-                            "已跳转到: ${
-                                selectedModule.name.substringAfterLast(
-                                    "/"
-                                )
-                            }"
-                        )
+                        jumpToAddress(selectedModule.start)
+                        notification.showSuccess("已跳转到: ${selectedModule.name.substringAfterLast("/")}")
                     },
-                    onGoto = { address ->
-                        jumpToPage(address)
-                    }
+                    onGoto = { address -> jumpToAddress(address) }
                 ).show()
-
             } catch (e: Exception) {
                 Log.e(TAG, "加载模块列表失败", e)
-                // 检查是否是进程退出导致的
-                if (WuwaDriver.currentBindPid > 0 && !WuwaDriver.isProcessAlive(WuwaDriver.currentBindPid)) {
-                    notification.showError("目标进程已退出")
-                } else {
-                    notification.showError("加载模块列表失败: ${e.message ?: "未知错误"}")
-                }
+                notification.showError("加载模块列表失败: ${e.message ?: "未知错误"}")
             }
         }
     }
 
-    /**
-     * 保存选中的地址到Saved Address
-     */
     private fun saveSelectedToAddresses() {
         val selectedAddresses = adapter.getSelectedAddresses()
         if (selectedAddresses.isEmpty()) {
@@ -1346,58 +590,32 @@ class MemoryPreviewController(
             return
         }
 
-        // 获取选中的行
-        val selectedRows = adapter.getAllItems()
-            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
-            .filter { selectedAddresses.contains(it.address) }
-
+        val selectedRows = adapter.getSelectedRows()
         coroutineScope.launch {
-            FloatingEventBus.emitSaveMemoryPreview(
-                SaveMemoryPreviewEvent(
-                    selectedItems = selectedRows,
-                    ranges = memoryRegions
-                )
-            )
+            FloatingEventBus.emitSaveMemoryPreview(SaveMemoryPreviewEvent(selectedRows, memoryRegions))
             notification.showSuccess("已保存 ${selectedRows.size} 个地址")
         }
     }
 
-    /**
-     * 显示批量修改对话框
-     */
     private fun showBatchModifyDialog() {
         val selectedAddresses = adapter.getSelectedAddresses()
         if (selectedAddresses.isEmpty()) {
             notification.showWarning("未选择任何项目")
             return
         }
-
         if (!WuwaDriver.isProcessBound) {
             notification.showError("未绑定进程")
             return
         }
 
-        // 获取选中的行
-        val selectedRows = adapter.getAllItems()
-            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
-            .filter { selectedAddresses.contains(it.address) }
-
-        // 转换为SavedAddress格式（BatchModifyValueDialog需要）
+        val selectedRows = adapter.getSelectedRows()
         val tempAddresses = selectedRows.map { row ->
-            SavedAddress(
-                address = row.address,
-                name = "0x${row.address.toString(16).uppercase()}",
-                valueType = DisplayValueType.DWORD.nativeId,
-                value = "",
-                isFrozen = false,
-                range = row.memoryRange ?: MemoryRange.O
-            )
+            SavedAddress(row.address, "0x${row.address.toString(16).uppercase()}",
+                DisplayValueType.DWORD.nativeId, "", false, row.memoryRange ?: MemoryRange.O)
         }
 
-        val clipboardManager =
-            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
-        val dialog = BatchModifyValueDialog(
+        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        BatchModifyValueDialog(
             context = context,
             notification = notification,
             clipboardManager = clipboardManager,
@@ -1405,40 +623,21 @@ class MemoryPreviewController(
             onConfirm = { items, newValue, valueType ->
                 batchModifyMemoryValues(items.map { it.address }, newValue, valueType)
             }
-        )
-
-        dialog.show()
+        ).show()
     }
 
-    /**
-     * 批量修改内存值
-     */
-    private fun batchModifyMemoryValues(
-        addresses: List<Long>,
-        newValue: String,
-        valueType: DisplayValueType
-    ) {
+    private fun batchModifyMemoryValues(addresses: List<Long>, newValue: String, valueType: DisplayValueType) {
         coroutineScope.launch {
             try {
                 val dataBytes = ValueTypeUtils.parseExprToBytes(newValue, valueType)
-
-                // 准备批量写入参数
-                val addrs = addresses.toLongArray()
-                val dataArray = Array(addresses.size) { dataBytes }
-
-                // 批量写入内存
                 val results = withContext(Dispatchers.IO) {
-                    WuwaDriver.batchWriteMemory(addrs, dataArray)
+                    WuwaDriver.batchWriteMemory(addresses.toLongArray(), Array(addresses.size) { dataBytes })
                 }
-
-                // 统计结果
                 val successCount = results.count { it }
                 val failureCount = results.size - successCount
-
                 if (failureCount == 0) {
                     notification.showSuccess("成功修改 $successCount 个地址")
-                    // 刷新当前页面
-                    refreshCurrentPage()
+                    adapter.refreshAll()
                 } else {
                     notification.showWarning("成功: $successCount, 失败: $failureCount")
                 }
@@ -1450,9 +649,6 @@ class MemoryPreviewController(
         }
     }
 
-    /**
-     * 交叉勾选：选中最小和最大选中项之间的所有项
-     */
     private fun crossSelectBetween() {
         val selectedAddresses = adapter.getSelectedAddresses()
         if (selectedAddresses.size < 2) {
@@ -1460,32 +656,19 @@ class MemoryPreviewController(
             return
         }
 
-        // 获取所有MemoryRow items
-        val allItems = adapter.getAllItems()
-            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
-
-        // 找到选中项的索引
-        val selectedIndices = allItems.mapIndexedNotNull { index, row ->
-            if (selectedAddresses.contains(row.address)) index else null
+        val minAddress = selectedAddresses.minOrNull() ?: return
+        val maxAddress = selectedAddresses.maxOrNull() ?: return
+        val alignment = adapter.getAlignment()
+        val addressesToSelect = mutableListOf<Long>()
+        var addr = minAddress
+        while (addr <= maxAddress) {
+            addressesToSelect.add(addr)
+            addr += alignment
         }
-
-        if (selectedIndices.size < 2) return
-
-        val minIndex = selectedIndices.minOrNull() ?: return
-        val maxIndex = selectedIndices.maxOrNull() ?: return
-
-        // 选中min到max之间的所有地址
-        val addressesToSelect = allItems
-            .subList(minIndex, maxIndex + 1)
-            .map { it.address }
-
         adapter.selectAddresses(addressesToSelect)
         notification.showSuccess("已交叉选中 ${addressesToSelect.size} 个地址")
     }
 
-    /**
-     * 将选中的地址设为搜索结果
-     */
     private fun setSelectedAsSearchResults() {
         val selectedAddresses = adapter.getSelectedAddresses()
         if (selectedAddresses.isEmpty()) {
@@ -1493,47 +676,26 @@ class MemoryPreviewController(
             return
         }
 
-        val selectedRows = adapter.getAllItems()
-            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
-            .filter { selectedAddresses.contains(it.address) }
-
+        val selectedRows = adapter.getSelectedRows()
         coroutineScope.launch {
-            val addresses = selectedRows.map { it.address }
             val types = Array(selectedRows.size) { DisplayValueType.DWORD }
-
             val success = withContext(Dispatchers.IO) {
-                SearchEngine.addResultsFromAddresses(addresses, types)
+                SearchEngine.addResultsFromAddresses(selectedRows.map { it.address }, types)
             }
-
             if (success) {
                 val totalCount = SearchEngine.getTotalResultCount()
                 notification.showSuccess("已将 ${selectedRows.size} 个地址设为搜索结果")
-
-                // 创建内存范围
                 val ranges = selectedRows.map { row ->
-                    val size = DisplayValueType.DWORD.memorySize
-                    DisplayMemRegionEntry(
-                        start = row.address,
-                        end = row.address + size,
-                        type = 0x03,
-                        name = row.memoryRange?.displayName ?: "Unknown",
-                        range = row.memoryRange ?: MemoryRange.O
-                    )
+                    DisplayMemRegionEntry(row.address, row.address + DisplayValueType.DWORD.memorySize,
+                        0x03, row.memoryRange?.displayName ?: "Unknown", row.memoryRange ?: MemoryRange.O)
                 }
-
-                // 发送事件更新搜索tab
-                FloatingEventBus.emitSearchResultsUpdated(
-                    SearchResultsUpdatedEvent(totalCount, ranges)
-                )
+                FloatingEventBus.emitSearchResultsUpdated(SearchResultsUpdatedEvent(totalCount, ranges))
             } else {
                 notification.showError("设置搜索结果失败")
             }
         }
     }
 
-    /**
-     * 计算偏移异或（通过Service显示对话框）
-     */
     private fun calculateOffsetXor() {
         val selectedAddresses = adapter.getSelectedAddresses()
         if (selectedAddresses.size < 2) {
@@ -1541,26 +703,13 @@ class MemoryPreviewController(
             return
         }
 
-        val selectedRows = adapter.getAllItems()
-            .filterIsInstance<MemoryPreviewItem.MemoryRow>()
-            .filter { selectedAddresses.contains(it.address) }
-
-        // 转换为SavedAddress格式
+        val selectedRows = adapter.getSelectedRows()
         val tempAddresses = selectedRows.map { row ->
-            SavedAddress(
-                address = row.address,
-                name = "0x${row.address.toString(16).uppercase()}",
-                valueType = DisplayValueType.DWORD.nativeId,
-                value = "",
-                isFrozen = false,
-                range = row.memoryRange ?: MemoryRange.O
-            )
+            SavedAddress(row.address, "0x${row.address.toString(16).uppercase()}",
+                DisplayValueType.DWORD.nativeId, "", false, row.memoryRange ?: MemoryRange.O)
         }
-
         coroutineScope.launch {
-            FloatingEventBus.emitUIAction(
-                UIActionEvent.ShowOffsetXorDialog(tempAddresses)
-            )
+            FloatingEventBus.emitUIAction(UIActionEvent.ShowOffsetXorDialog(tempAddresses))
         }
     }
 
