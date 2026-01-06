@@ -60,7 +60,7 @@ object FloatingEventBus {
 
     // 导航到内存地址事件流
     private val _navigateToMemoryAddressEvents = MutableSharedFlow<NavigateToMemoryAddressEvent>(
-        replay = 1,  // 保留最新事件，确保Tab切换后订阅者能收到
+        replay = 0,  // 1？保留最新事件，确保Tab切换后订阅者能收到
         extraBufferCapacity = 4
     )
     val navigateToMemoryAddressEvents: SharedFlow<NavigateToMemoryAddressEvent> = _navigateToMemoryAddressEvents.asSharedFlow()
