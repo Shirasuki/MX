@@ -423,9 +423,32 @@ class InfiniteMemoryAdapter(
             // 值
             if (pageData != null) {
                 val offsetInPage = (currentAddress - pageAddress).toInt()
-                if (offsetInPage >= 0 && offsetInPage + alignment <= pageData.size) {
-                    val buffer = ByteBuffer.wrap(pageData, offsetInPage, alignment)
-                        .order(ByteOrder.LITTLE_ENDIAN)
+                val requiredBytes = hexByteSize
+                val availableInCurrentPage = pageData.size - offsetInPage
+                
+                // 检查是否需要跨页读取
+                val dataBuffer: ByteArray? = if (offsetInPage >= 0 && availableInCurrentPage >= requiredBytes) {
+                    // 当前页面有足够数据
+                    pageData.copyOfRange(offsetInPage, offsetInPage + requiredBytes)
+                } else if (offsetInPage >= 0 && availableInCurrentPage > 0) {
+                    // 需要跨页读取：从当前页和下一页合并数据
+                    val nextPageAddress = pageAddress + PAGE_SIZE
+                    val nextPageData = getPageData(nextPageAddress)
+                    if (nextPageData != null) {
+                        val combined = ByteArray(requiredBytes)
+                        // 从当前页复制可用数据
+                        System.arraycopy(pageData, offsetInPage, combined, 0, availableInCurrentPage)
+                        // 从下一页复制剩余数据
+                        val remainingBytes = requiredBytes - availableInCurrentPage
+                        if (remainingBytes <= nextPageData.size) {
+                            System.arraycopy(nextPageData, 0, combined, availableInCurrentPage, remainingBytes)
+                            combined
+                        } else null
+                    } else null
+                } else null
+                
+                if (dataBuffer != null) {
+                    val buffer = ByteBuffer.wrap(dataBuffer).order(ByteOrder.LITTLE_ENDIAN)
                     
                     currentFormats.forEachIndexed { index, format ->
                         if (index > 0) spanBuilder.append("; ")
@@ -440,7 +463,7 @@ class InfiniteMemoryAdapter(
                             start, spanBuilder.length,
                             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
-                        buffer.position(offsetInPage)
+                        buffer.position(0)
                     }
                 } else {
                     appendPlaceholder()
@@ -513,12 +536,31 @@ class InfiniteMemoryAdapter(
             
             val formattedValues = if (pageData != null) {
                 val offsetInPage = (address - pageAddress).toInt()
-                if (offsetInPage >= 0 && offsetInPage + alignment <= pageData.size) {
-                    val buffer = ByteBuffer.wrap(pageData, offsetInPage, alignment)
-                        .order(ByteOrder.LITTLE_ENDIAN)
+                val requiredBytes = hexByteSize
+                val availableInCurrentPage = pageData.size - offsetInPage
+                
+                // 检查是否需要跨页读取
+                val dataBuffer: ByteArray? = if (offsetInPage >= 0 && availableInCurrentPage >= requiredBytes) {
+                    pageData.copyOfRange(offsetInPage, offsetInPage + requiredBytes)
+                } else if (offsetInPage >= 0 && availableInCurrentPage > 0) {
+                    val nextPageAddress = pageAddress + PAGE_SIZE
+                    val nextPageData = pageCache[nextPageAddress]
+                    if (nextPageData != null) {
+                        val combined = ByteArray(requiredBytes)
+                        System.arraycopy(pageData, offsetInPage, combined, 0, availableInCurrentPage)
+                        val remainingBytes = requiredBytes - availableInCurrentPage
+                        if (remainingBytes <= nextPageData.size) {
+                            System.arraycopy(nextPageData, 0, combined, availableInCurrentPage, remainingBytes)
+                            combined
+                        } else null
+                    } else null
+                } else null
+                
+                if (dataBuffer != null) {
+                    val buffer = ByteBuffer.wrap(dataBuffer).order(ByteOrder.LITTLE_ENDIAN)
                     currentFormats.map { format ->
                         val value = parseValue(buffer, format)
-                        buffer.position(offsetInPage)
+                        buffer.position(0)
                         value
                     }
                 } else {
@@ -577,11 +619,11 @@ class InfiniteMemoryAdapter(
                     }
                     MemoryDisplayFormat.FLOAT -> {
                         if (buffer.remaining() < 4) return FormattedValue(format, "---")
-                        FormattedValue(format, "%.6f".format(buffer.float))
+                        FormattedValue(format, "%.6g".format(buffer.float))
                     }
                     MemoryDisplayFormat.DOUBLE -> {
                         if (buffer.remaining() < 8) return FormattedValue(format, "---")
-                        FormattedValue(format, "%.10f".format(buffer.double))
+                        FormattedValue(format, "%.10g".format(buffer.double))
                     }
                     MemoryDisplayFormat.UTF16_LE -> {
                         if (buffer.remaining() < 2) return FormattedValue(format, "---")
@@ -675,11 +717,32 @@ class InfiniteMemoryAdapter(
                 
                 val formattedValues = if (pageData != null) {
                     val offsetInPage = (address - pageAddress).toInt()
-                    if (offsetInPage >= 0 && offsetInPage + alignment <= pageData.size) {
-                        val buffer = ByteBuffer.wrap(pageData, offsetInPage, alignment)
-                            .order(ByteOrder.LITTLE_ENDIAN)
+                    val requiredBytes = hexByteSize
+                    val availableInCurrentPage = pageData.size - offsetInPage
+                    
+                    // 检查是否需要跨页读取
+                    val dataBuffer: ByteArray? = if (offsetInPage >= 0 && availableInCurrentPage >= requiredBytes) {
+                        pageData.copyOfRange(offsetInPage, offsetInPage + requiredBytes)
+                    } else if (offsetInPage >= 0 && availableInCurrentPage > 0) {
+                        val nextPageAddress = pageAddress + PAGE_SIZE
+                        val nextPageData = pageCache[nextPageAddress]
+                        if (nextPageData != null) {
+                            val combined = ByteArray(requiredBytes)
+                            System.arraycopy(pageData, offsetInPage, combined, 0, availableInCurrentPage)
+                            val remainingBytes = requiredBytes - availableInCurrentPage
+                            if (remainingBytes <= nextPageData.size) {
+                                System.arraycopy(nextPageData, 0, combined, availableInCurrentPage, remainingBytes)
+                                combined
+                            } else null
+                        } else null
+                    } else null
+                    
+                    if (dataBuffer != null) {
+                        val buffer = ByteBuffer.wrap(dataBuffer).order(ByteOrder.LITTLE_ENDIAN)
                         currentFormats.map { format ->
-                            parseValueStatic(buffer, format, address)
+                            val value = parseValueStatic(buffer, format, address)
+                            buffer.position(0)
+                            value
                         }
                     } else {
                         currentFormats.map { FormattedValue(it, "?", it.textColor) }

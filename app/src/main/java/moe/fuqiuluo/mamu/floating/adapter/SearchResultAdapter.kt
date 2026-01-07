@@ -322,6 +322,30 @@ class SearchResultAdapter(
 
     companion object {
         private const val PAYLOAD_SELECTION_CHANGED = "selection_changed"
+        
+        /**
+         * 根据数据类型格式化显示值
+         * 对于浮点类型，确保显示为浮点数格式（如 1 -> 1.0）
+         */
+        private fun formatValueByType(value: String, type: DisplayValueType): String {
+            return try {
+                when (type) {
+                    DisplayValueType.FLOAT -> {
+                        // 直接解析为浮点数并格式化显示
+                        val floatValue = value.toFloatOrNull() ?: return value
+                        "%.6g".format(floatValue)
+                    }
+                    DisplayValueType.DOUBLE -> {
+                        // 直接解析为双精度浮点数并格式化显示
+                        val doubleValue = value.toDoubleOrNull() ?: return value
+                        "%.10g".format(doubleValue)
+                    }
+                    else -> value
+                }
+            } catch (e: Exception) {
+                value
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -367,8 +391,9 @@ class SearchResultAdapter(
                         // 地址
                         addressText.text = item.address.toString(16).uppercase()
 
-                        // 当前值
-                        valueText.text = item.value
+                        // 当前值 - 根据数据类型格式化显示
+                        val valueType = item.displayValueType ?: DisplayValueType.DWORD
+                        valueText.text = formatValueByType(item.value, valueType)
 
                         // 备份值（旧值）
                         val backup = MemoryBackupManager.getBackup(item.address)
@@ -383,7 +408,6 @@ class SearchResultAdapter(
                         pointerChainText.visibility = View.GONE
 
                         // 类型简称和颜色
-                        val valueType = item.displayValueType ?: DisplayValueType.DWORD
                         typeText.apply {
                             text = valueType.code
                             setTextColor(valueType.textColor)
@@ -403,8 +427,9 @@ class SearchResultAdapter(
                         // 地址
                         addressText.text = item.address.toString(16).uppercase()
 
-                        // 当前值
-                        valueText.text = item.value
+                        // 当前值 - 根据数据类型格式化显示
+                        val valueType = item.displayValueType ?: DisplayValueType.DWORD
+                        valueText.text = formatValueByType(item.value, valueType)
 
                         // 备份值（旧值）
                         val backup = MemoryBackupManager.getBackup(item.address)
@@ -419,7 +444,6 @@ class SearchResultAdapter(
                         pointerChainText.visibility = View.GONE
 
                         // 类型简称和颜色
-                        val valueType = item.displayValueType ?: DisplayValueType.DWORD
                         typeText.apply {
                             text = valueType.code
                             setTextColor(valueType.textColor)

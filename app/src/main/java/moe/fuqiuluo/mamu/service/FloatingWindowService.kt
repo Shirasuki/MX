@@ -947,34 +947,50 @@ class FloatingWindowService : Service(), ProcessDeathMonitor.Callback {
      */
     @SuppressLint("SetTextI18n")
     private fun updateTabBadge(tabIndex: Int, count: Int, total: Int?) {
-        val tab = fullscreenBinding.tabLayout.getTabAt(tabIndex) ?: return
-
+        // 更新顶部 TabLayout 的 Badge（竖屏模式）
+        val tab = fullscreenBinding.tabLayout.getTabAt(tabIndex)
+        // 更新侧边栏 NavigationRail 的 Badge（横屏模式）
+        val menuItemId = getNavigationItemIdByIndex(tabIndex)
+        
         if (count <= 0 && (total == null || total <= 0)) {
             // 清除 Badge
-            tab.removeBadge()
+            tab?.removeBadge()
+            fullscreenBinding.sidebarNavigationRail.removeBadge(menuItemId)
         } else {
-            // 创建或更新 Badge
-            val badge = tab.orCreateBadge
-            badge.backgroundColor = getColor(R.color.floating_primary)
-            badge.badgeTextColor = getColor(android.R.color.white)
-            badge.maxCharacterCount = 6  // 允许显示更多字符
-
-            if (total != null && total > 0) {
-                // 显示 count/total 格式
-                badge.number = count
-                badge.clearNumber()
-                // 使用自定义文本显示 count/total
-                if (count > 9999) {
-                    badge.text = "9999+"
+            // 计算显示文本
+            val badgeText = if (count > 9999) "9999+" else "$count"
+            
+            // 更新 TabLayout Badge
+            tab?.let {
+                val badge = it.orCreateBadge
+                badge.backgroundColor = getColor(R.color.floating_primary)
+                badge.badgeTextColor = getColor(android.R.color.white)
+                badge.maxCharacterCount = 6
+                if (total != null && total > 0) {
+                    badge.clearNumber()
+                    badge.text = badgeText
                 } else {
-                    badge.text = "$count"
+                    if (count > 9999) {
+                        badge.text = badgeText
+                    } else {
+                        badge.number = count
+                    }
                 }
+            }
+            
+            // 更新 NavigationRail Badge
+            val railBadge = fullscreenBinding.sidebarNavigationRail.getOrCreateBadge(menuItemId)
+            railBadge.backgroundColor = getColor(R.color.floating_primary)
+            railBadge.badgeTextColor = getColor(android.R.color.white)
+            railBadge.maxCharacterCount = 6
+            if (total != null && total > 0) {
+                railBadge.clearNumber()
+                railBadge.text = badgeText
             } else {
-                // 只显示 count
                 if (count > 9999) {
-                    badge.text = "9999+"
+                    railBadge.text = badgeText
                 } else {
-                    badge.number = count
+                    railBadge.number = count
                 }
             }
         }
