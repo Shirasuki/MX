@@ -762,8 +762,10 @@ class InfiniteMemoryAdapter(
             updateBackground(isSelected, isHighlighted)
         }
 
-        private fun createMemoryRow(position: Int): MemoryPreviewItem.MemoryRow {
-            val address = rowToAddress(position)
+        private fun createMemoryRow(adapterPosition: Int): MemoryPreviewItem.MemoryRow {
+            // adapterPosition 在固定页面模式下包含顶部导航项，需要转换为实际行索引
+            val rowIndex = positionToRowIndex(adapterPosition)
+            val address = rowToAddress(rowIndex)
             val pageAddress = getPageAddress(address)
             val pageData = pageCache[pageAddress]
             
