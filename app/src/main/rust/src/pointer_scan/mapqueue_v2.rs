@@ -140,6 +140,13 @@ impl<T: Copy> MapQueue<T> {
         self.len = 0;
     }
 
+    /// 截断到指定长度（不释放内存）
+    pub fn truncate(&mut self, new_len: usize) {
+        if new_len < self.len {
+            self.len = new_len;
+        }
+    }
+
     /// 预留容量
     pub fn reserve(&mut self, new_capacity: usize) -> Result<()> {
         if new_capacity <= self.capacity {

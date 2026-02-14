@@ -30,25 +30,20 @@ suspend fun Array<MemRegionEntry>.divideToSimpleMemoryRangeParallel(): List<Disp
         }.awaitAll().flatten()
 
         // 后处理：将 .bss 段关联到前一个 lib（参考 C++ 实现 memextend.cpp:88-102）
-//    var prevEntry: DisplayMemRegionEntry? = null
-//    classified.map { entry ->
-//        if (entry.range == MemoryRange.Cb && prevEntry != null &&
-//            (prevEntry.range == MemoryRange.Cd ||
-//             prevEntry.range == MemoryRange.Oa ||
-//             prevEntry.range == MemoryRange.Xs ||
-//             prevEntry.range == MemoryRange.Xa ||
-//             prevEntry.range == MemoryRange.Xx)) {
-//            // 提取库名（去掉路径）并加上 :bss 后缀
-//            val libName = prevEntry.name.substringAfterLast('/')
-//            entry.copy(name = "$libName:bss")
-//        } else {
-//            entry
-//        }.also {
-//            prevEntry = it
-//        }
-//    }
-
-        return@coroutineScope classified
+        var lastSoEntry: DisplayMemRegionEntry? = null
+        return@coroutineScope classified.map { entry ->
+            if (entry.range == MemoryRange.Cd || entry.range == MemoryRange.Oa ||
+                entry.range == MemoryRange.Xs || entry.range == MemoryRange.Xa ||
+                entry.range == MemoryRange.Xx) {
+                lastSoEntry = entry
+            }
+            if (entry.range == MemoryRange.Cb && lastSoEntry != null) {
+                val libName = lastSoEntry!!.name.substringAfterLast('/')
+                entry.copy(name = "$libName.bss")
+            } else {
+                entry
+            }
+        }
     }
 
 fun Array<MemRegionEntry>.divideToSimpleMemoryRange(): List<DisplayMemRegionEntry> {
@@ -62,25 +57,20 @@ fun Array<MemRegionEntry>.divideToSimpleMemoryRange(): List<DisplayMemRegionEntr
     }
 
     // 后处理：将 .bss 段关联到前一个 lib（参考 C++ 实现 memextend.cpp:88-102）
-//    var prevEntry: DisplayMemRegionEntry? = null
-//    return classified.map { entry ->
-//        if (entry.range == MemoryRange.Cb && prevEntry != null &&
-//            (prevEntry.range == MemoryRange.Cd ||
-//             prevEntry.range == MemoryRange.Oa ||
-//             prevEntry.range == MemoryRange.Xs ||
-//             prevEntry.range == MemoryRange.Xa ||
-//             prevEntry.range == MemoryRange.Xx)) {
-//            // 提取库名（去掉路径）并加上 :bss 后缀
-//            val libName = prevEntry.name.substringAfterLast('/')
-//            entry.copy(name = "$libName:bss")
-//        } else {
-//            entry
-//        }.also {
-//            prevEntry = it
-//        }
-//    }
-
-    return classified
+    var lastSoEntry: DisplayMemRegionEntry? = null
+    return classified.map { entry ->
+        if (entry.range == MemoryRange.Cd || entry.range == MemoryRange.Oa ||
+            entry.range == MemoryRange.Xs || entry.range == MemoryRange.Xa ||
+            entry.range == MemoryRange.Xx) {
+            lastSoEntry = entry
+        }
+        if (entry.range == MemoryRange.Cb && lastSoEntry != null) {
+            val libName = lastSoEntry!!.name.substringAfterLast('/')
+            entry.copy(name = "$libName.bss")
+        } else {
+            entry
+        }
+    }
 }
 
 private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemRegionEntry? {

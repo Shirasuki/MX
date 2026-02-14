@@ -121,7 +121,7 @@ class PointerScanDialog(
                 binding.inputMaxResults.text?.toString()?.toIntOrNull() ?: 0
             } catch (e: Exception) {
                 0
-            }.coerceIn(0, 100000)
+            }.coerceIn(0, Int.MAX_VALUE)
 
             val isLayerBFS = binding.switchLayerBfs.isChecked
 
@@ -187,7 +187,8 @@ class PointerScanDialog(
                 maxOffset = maxOffset,
                 align = 4, // 对齐固定为4
                 regions = regions,
-                isLayerBFS = isLayerBFS
+                isLayerBFS = isLayerBFS,
+                maxResults = maxResults
             )
 
             if (success) {

@@ -237,6 +237,8 @@ pub enum ScanPhase {
     Cancelled = 4,
     /// Scan encountered an error
     Error = 5,
+    /// Phase 3: Writing chains to file
+    WritingFile = 6,
 }
 
 impl From<i32> for ScanPhase {
@@ -248,6 +250,7 @@ impl From<i32> for ScanPhase {
             3 => ScanPhase::Completed,
             4 => ScanPhase::Cancelled,
             5 => ScanPhase::Error,
+            6 => ScanPhase::WritingFile,
             _ => ScanPhase::Idle,
         }
     }
@@ -395,11 +398,13 @@ pub struct VmAreaData {
     pub name: String,
     /// 模块计数（同名模块的序号）
     pub count: i32,
+    /// 同名模块首段基址（用于计算统一偏移）
+    pub first_base: u64,
 }
 
 impl VmAreaData {
     pub fn new(start: u64, end: u64, range: MemRange, name: String, count: i32) -> Self {
-        Self { start, end, range, name, count }
+        Self { start, end, range, name, count, first_base: start }
     }
 
     pub fn from_static(vma: &VmStaticData) -> Self {
@@ -409,6 +414,7 @@ impl VmAreaData {
             range: if vma.is_static { MemRange::CData } else { MemRange::Other },
             name: vma.name.clone(),
             count: vma.index as i32,
+            first_base: vma.first_module_base_addr,
         }
     }
 

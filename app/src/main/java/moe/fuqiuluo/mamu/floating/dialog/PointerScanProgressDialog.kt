@@ -47,6 +47,7 @@ class PointerScanProgressDialog(
         val phaseText = when (phase) {
             PointerScanner.Phase.SCANNING_POINTERS -> "扫描指针中... ($pointersFound)"
             PointerScanner.Phase.BUILDING_CHAINS -> "构建链中..."
+            PointerScanner.Phase.WRITING_FILE -> "写入文件中... ($chainsFound)"
             PointerScanner.Phase.COMPLETED -> "完成"
             PointerScanner.Phase.CANCELLED -> "已取消"
             PointerScanner.Phase.ERROR -> "错误"

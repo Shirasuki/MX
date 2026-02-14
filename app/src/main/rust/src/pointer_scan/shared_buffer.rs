@@ -201,6 +201,18 @@ impl PointerScanSharedBuffer {
         self.write_chains_found(chains_found);
         self.update_heartbeat();
     }
+
+    /// Update progress for Phase 3 (writing file).
+    pub fn update_writing_progress(&self, written: i32, total: i32, chains_written: i64) {
+        let progress = if total > 0 {
+            (written as f32 / total as f32 * 100.0) as i32
+        } else {
+            0
+        };
+        self.write_progress(progress);
+        self.write_chains_found(chains_written);
+        self.update_heartbeat();
+    }
 }
 
 impl Default for PointerScanSharedBuffer {

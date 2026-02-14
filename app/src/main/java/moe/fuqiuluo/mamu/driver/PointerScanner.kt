@@ -63,6 +63,7 @@ object PointerScanner {
         const val COMPLETED = 3
         const val CANCELLED = 4
         const val ERROR = 5
+        const val WRITING_FILE = 6
     }
 
     /** Error code constants. */
@@ -213,7 +214,8 @@ object PointerScanner {
         maxOffset: Int = 0x1000,
         align: Int = 4,
         regions: List<MemoryRegionInfo>,
-        isLayerBFS: Boolean
+        isLayerBFS: Boolean,
+        maxResults: Int = 0
     ): Boolean {
         if (!isInitialized) {
             return false
@@ -242,7 +244,8 @@ object PointerScanner {
             regionAddresses,
             regionNames,
             staticFlags,
-            isLayerBFS
+            isLayerBFS,
+            maxResults
         )
     }
 
@@ -285,6 +288,7 @@ object PointerScanner {
         Phase.COMPLETED -> "Completed"
         Phase.CANCELLED -> "Cancelled"
         Phase.ERROR -> "Error"
+        Phase.WRITING_FILE -> "Writing File"
         else -> "Unknown"
     }
 
@@ -314,7 +318,8 @@ object PointerScanner {
         regions: LongArray,
         regionNames: Array<String>,
         staticFlags: BooleanArray,
-        isLayerBFS: Boolean
+        isLayerBFS: Boolean,
+        maxResults: Int
     ): Boolean
     private external fun nativeIsScanning(): Boolean
     private external fun nativeRequestCancel()

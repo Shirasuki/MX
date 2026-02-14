@@ -66,7 +66,7 @@ pub fn jni_set_pointer_scan_buffer(mut env: JNIEnv, _class: JObject, buffer: JOb
 /// * `regions` - Memory regions as [start1, end1, start2, end2, ...]
 /// * `region_names` - Names of the regions
 /// * `static_flags` - Boolean flags indicating if each region is static
-#[jni_method(70, "moe/fuqiuluo/mamu/driver/PointerScanner", "nativeStartScan", "(JIII[J[Ljava/lang/String;[ZZ)Z")]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/PointerScanner", "nativeStartScan", "(JIII[J[Ljava/lang/String;[ZZI)Z")]
 pub fn jni_start_pointer_scan(
     mut env: JNIEnv,
     _class: JObject,
@@ -77,7 +77,8 @@ pub fn jni_start_pointer_scan(
     regions: JLongArray,
     region_names: JObjectArray,
     static_flags: JObject, // jbooleanArray
-    is_layer_bfs: jboolean
+    is_layer_bfs: jboolean,
+    max_results: jint
 ) -> jboolean {
     (|| -> JniResult<jboolean> {
         // Parse regions
@@ -167,7 +168,8 @@ pub fn jni_start_pointer_scan(
             align as u32,
             scan_regions,
             static_modules,
-            is_layer_bfs == 1u8
+            is_layer_bfs == 1u8,
+            max_results as u32
         )?;
 
         Ok(JNI_TRUE)

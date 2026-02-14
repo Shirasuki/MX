@@ -4,13 +4,11 @@
 //! 使用第一阶段构建的指针库来查找所有可能的路径。
 //!
 //! ## 算法
-//! 使用来自 PointerScan-rust 的 BFS V2 算法：
-//! - MapQueue (tmpfile + mmap) 避免内存爆炸
-//! - PointerDir 隐式树结构 (start/end 索引)
-//! - 多级 BFS 迭代，二分查找优化
-//! - 直接写入文件，避免内存问题
+//! - BFS V2: MapQueue + PointerDir 隐式树（保留）
+//! - BFS V3: 合并 Phase 1 + Phase 2，前缀和优化，统一 MapQueue 存储
 
 pub mod bfs_v2;
+pub mod bfs_v3;
 
-// Re-export BFS V2 scanner
-pub use bfs_v2::{BfsV2Scanner, ScanResult};
+// Re-export BFS V3 scanner as default
+pub use bfs_v3::{BfsV3Scanner, ProgressPhase, ScanResult};
