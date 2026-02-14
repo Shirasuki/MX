@@ -66,7 +66,7 @@ pub fn jni_set_pointer_scan_buffer(mut env: JNIEnv, _class: JObject, buffer: JOb
 /// * `regions` - Memory regions as [start1, end1, start2, end2, ...]
 /// * `region_names` - Names of the regions
 /// * `static_flags` - Boolean flags indicating if each region is static
-#[jni_method(70, "moe/fuqiuluo/mamu/driver/PointerScanner", "nativeStartScan", "(JIII[J[Ljava/lang/String;[ZZI)Z")]
+#[jni_method(70, "moe/fuqiuluo/mamu/driver/PointerScanner", "nativeStartScan", "(JIII[J[Ljava/lang/String;[Z[IZI)Z")]
 pub fn jni_start_pointer_scan(
     mut env: JNIEnv,
     _class: JObject,
@@ -77,6 +77,7 @@ pub fn jni_start_pointer_scan(
     regions: JLongArray,
     region_names: JObjectArray,
     static_flags: JObject, // jbooleanArray
+    perm_flags: JIntArray,
     is_layer_bfs: jboolean,
     max_results: jint
 ) -> jboolean {
@@ -101,6 +102,14 @@ pub fn jni_start_pointer_scan(
         let mut static_data = vec![0u8; flags_len];
         env.get_boolean_array_region(&static_flags_jarray, 0, &mut static_data)?;
 
+        // Get permission flags
+        let perm_len = env.get_array_length(&perm_flags)? as usize;
+        let mut perm_data = vec![0i32; perm_len];
+        env.get_int_array_region(&perm_flags, 0, &mut perm_data)?;
+
+        const MEM_READABLE: i32 = 0x01;
+        const MEM_WRITABLE: i32 = 0x02;
+
         let mut scan_regions = Vec::with_capacity(region_count);
         let mut static_modules = Vec::new();
 
@@ -113,6 +122,14 @@ pub fn jni_start_pointer_scan(
             let name: String = env.get_string(&name_jstr)?.into();
 
             let is_static = static_data[i] != 0;
+            let perms = if i < perm_len { perm_data[i] } else { 0 };
+            let is_readable = (perms & MEM_READABLE) != 0;
+            let is_writable = (perms & MEM_WRITABLE) != 0;
+
+            // 跳过不可读也不可写的段
+            if !is_readable && !is_writable {
+                continue;
+            }
 
             scan_regions.push(ScanRegion {
                 start,

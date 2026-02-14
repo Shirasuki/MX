@@ -225,12 +225,14 @@ object PointerScanner {
         val regionAddresses = LongArray(regions.size * 2)
         val regionNames = Array(regions.size) { "" }
         val staticFlags = BooleanArray(regions.size)
+        val permFlagsArray = IntArray(regions.size)
 
         regions.forEachIndexed { index, region ->
             regionAddresses[index * 2] = region.start
             regionAddresses[index * 2 + 1] = region.end
             regionNames[index] = region.name
             staticFlags[index] = region.isStatic
+            permFlagsArray[index] = region.permFlags
         }
 
         resetSharedBuffer()
@@ -244,6 +246,7 @@ object PointerScanner {
             regionAddresses,
             regionNames,
             staticFlags,
+            permFlagsArray,
             isLayerBFS,
             maxResults
         )
@@ -318,6 +321,7 @@ object PointerScanner {
         regions: LongArray,
         regionNames: Array<String>,
         staticFlags: BooleanArray,
+        permFlags: IntArray,
         isLayerBFS: Boolean,
         maxResults: Int
     ): Boolean
@@ -337,7 +341,8 @@ data class MemoryRegionInfo(
     val start: Long,
     val end: Long,
     val name: String,
-    val isStatic: Boolean
+    val isStatic: Boolean,
+    val permFlags: Int = 0
 ) {
     val size: Long get() = end - start
 
