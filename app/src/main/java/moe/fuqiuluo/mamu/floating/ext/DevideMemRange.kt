@@ -242,7 +242,7 @@ private fun classifyRegion(entry: MemRegionEntry, procName: String): DisplayMemR
                     }
                 }
 
-                if (entry.name.contains("malloc") || entry.name.contains("scudo:secondary")) {
+                if (entry.name.contains("malloc") || entry.name.contains("anon:scudo:")) {
                     return@run MemoryRange.Ca
                 }
 
