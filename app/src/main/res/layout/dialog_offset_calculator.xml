@@ -171,6 +171,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="none"
                 android:gravity="top"
+                android:minLines="3"
                 android:maxLines="999"
                 android:padding="@dimen/floating_spacing_xs"
                 android:textIsSelectable="true"

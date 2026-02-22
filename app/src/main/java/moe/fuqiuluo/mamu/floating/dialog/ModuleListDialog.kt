@@ -30,6 +30,7 @@ class ModuleListDialog(
 ) : BaseDialog(context) {
 
     private var currentFocusedInput: EditText? = null
+    private lateinit var binding: DialogModuleListBinding
 
     // 历史记录（静态保存，跨实例共享）
     companion object {
@@ -45,7 +46,7 @@ class ModuleListDialog(
 
     @SuppressLint("SetTextI18n")
     override fun setupDialog() {
-        val binding = DialogModuleListBinding.inflate(LayoutInflater.from(dialog.context))
+        binding = DialogModuleListBinding.inflate(LayoutInflater.from(dialog.context))
         dialog.setContentView(binding.root)
 
         // 应用透明度设置
@@ -143,16 +144,14 @@ class ModuleListDialog(
 
         ModuleListPopupDialog(context, title, filteredModules) { selectedModule ->
             addToHistory(selectedModule)
-            onModuleSelected(selectedModule)
-            dialog.dismiss()
+            fillAddressInput(selectedModule.start)
         }.show()
     }
 
     private fun showAllModulesPopup() {
         ModuleListPopupDialog(context, "全部模块", modules) { selectedModule ->
             addToHistory(selectedModule)
-            onModuleSelected(selectedModule)
-            dialog.dismiss()
+            fillAddressInput(selectedModule.start)
         }.show()
     }
 
@@ -172,8 +171,7 @@ class ModuleListDialog(
 
         ModuleListPopupDialog(context, "历史记录", historyModules) { selectedModule ->
             addToHistory(selectedModule)
-            onModuleSelected(selectedModule)
-            dialog.dismiss()
+            fillAddressInput(selectedModule.start)
         }.show()
     }
 
@@ -190,8 +188,7 @@ class ModuleListDialog(
                     highlightModule = targetModule
                 ) { selectedModule ->
                     addToHistory(selectedModule)
-                    onModuleSelected(selectedModule)
-                    dialog.dismiss()
+                    fillAddressInput(selectedModule.start)
                 }.show()
             } else {
                 notification.showWarning("未找到包含该地址的模块")
@@ -211,6 +208,15 @@ class ModuleListDialog(
         } catch (e: Exception) {
             notification.showError("地址格式错误")
         }
+    }
+
+    /**
+     * 将地址填入输入框（而非直接跳转）
+     */
+    private fun fillAddressInput(address: Long) {
+        val addressText = String.format("%X", address)
+        binding.inputAddress.setText(addressText)
+        binding.inputAddress.setSelection(addressText.length)
     }
 
     private fun addToHistory(module: DisplayMemRegionEntry) {

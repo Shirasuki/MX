@@ -45,7 +45,7 @@ class ProcessListAdapter(
 
         fun bind(processInfo: DisplayProcessInfo, position: Int) {
             binding.apply {
-                processRss.text = formatBytes(processInfo.rss * 1024, 0)
+                processRss.text = formatBytes(processInfo.rss * 1024)
                 processName.text = processInfo.validName
                 processDetails.text = "[${processInfo.pid}]"
                 processIcon.setImageDrawable(processInfo.icon)

@@ -113,6 +113,17 @@ class SearchResultAdapter(
     }
 
     /**
+     * 更新搜索结果列表（保持滚动位置）
+     * 用于刷新值时，数据数量不变，只更新内容
+     * @param newResults 新的搜索结果列表
+     */
+    fun updateResults(newResults: List<SearchResultItem>) {
+        results.clear()
+        results.addAll(newResults)
+        notifyItemRangeChanged(0, newResults.size)
+    }
+
+    /**
      * 根据地址更新单个搜索结果项的值
      * @param address 要更新的地址
      * @param newValue 新的值（不包含备份信息，备份值会在 ViewHolder 中自动显示）

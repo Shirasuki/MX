@@ -386,7 +386,7 @@ class SearchController(
         process?.let {
             val memoryB = (it.rss * 1024)
             binding.processInfoText.text =
-                "[${it.pid}] ${it.name} [${formatBytes(memoryB, 0)}]"
+                "[${it.pid}] ${it.name} [${formatBytes(memoryB)}]"
             binding.processStatusIcon.setIconResource(R.drawable.icon_pause_24px)
         } ?: run {
             binding.processInfoText.text = "未选择进程"
@@ -437,7 +437,12 @@ class SearchController(
                 }
 
                 if (offset == 0) {
-                    searchResultAdapter.setResults(addresses)
+                    if (addresses.size == searchResultAdapter.itemCount) {
+                        // 数量相同，使用 updateResults 保持滚动位置
+                        searchResultAdapter.updateResults(addresses)
+                    } else {
+                        searchResultAdapter.setResults(addresses)
+                    }
                     showEmptyState(false)
                 } else {
                     searchResultAdapter.addResults(addresses)
@@ -1411,8 +1416,7 @@ class SearchController(
     }
 
     private fun onPointerScanCompleted(ranges: List<DisplayMemRegionEntry>, chains: List<PointerChainResult>) {
-        // 清空现有搜索结果
-        SearchEngine.clearSearchResults()
+        // 不清空原生搜索结果，保留用户的搜索数据
         searchResultAdapter.clearResults()
 
         // 将指针链结果转换为 PointerChainResultItem

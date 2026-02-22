@@ -65,6 +65,9 @@ class AddressActionDialog(
     interface Callbacks {
         fun onShowOffsetCalculator(address: Long)
         fun onJumpToAddress(address: Long)
+        fun onJumpToPointer(fromAddress: Long, toAddress: Long) {
+            onJumpToAddress(toAddress)
+        }
     }
 
     /**
@@ -150,14 +153,21 @@ class AddressActionDialog(
             ActionItem("偏移量计算器", R.drawable.calculate_24px) {
                 dismiss()
                 callbacks.onShowOffsetCalculator(address)
-            },
-            ActionItem(
+            }
+        )
+
+        // 内存预览界面已经在查看该地址，不需要"转到此地址"
+        if (source != AddressActionSource.MEMORY_PREVIEW) {
+            actions.add(ActionItem(
                 "转到此地址: ${"%X".format(address)}",
                 R.drawable.icon_arrow_right_alt_24px
             ) {
                 dismiss()
                 callbacks.onJumpToAddress(address)
-            },
+            })
+        }
+
+        actions.addAll(listOf(
             ActionItem(
                 "跳转到指针: ${(pointerAddress ?: 0).toString(16).uppercase()}",
                 R.drawable.icon_arrow_right_alt_24px
@@ -167,7 +177,7 @@ class AddressActionDialog(
                     notification.showError("指针异常无法跳转")
                     return@ActionItem
                 }
-                callbacks.onJumpToAddress(addr)
+                callbacks.onJumpToPointer(address, addr)
                 notification.showSuccess("跳转到指针: 0x${addr.toString(16).uppercase()}")
             },
             ActionItem("复制此地址: ${"%X".format(address)}", R.drawable.content_copy_24px) {
@@ -182,7 +192,7 @@ class AddressActionDialog(
             ActionItem("复制反16进制值: $reverseHexString", R.drawable.content_copy_24px) {
                 copyToClipboard("reverse_hex_value", reverseHexString, "反16进制")
             }
-        )
+        ))
 
         // 根据内存预览界面的 displayFormats 添加额外复制选项
         if (source == AddressActionSource.MEMORY_PREVIEW && displayFormats != null) {

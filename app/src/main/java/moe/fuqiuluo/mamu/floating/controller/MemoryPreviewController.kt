@@ -601,6 +601,16 @@ class MemoryPreviewController(
                         )
                     }
                     override fun onJumpToAddress(address: Long) { jumpToAddress(address) }
+                    override fun onJumpToPointer(fromAddress: Long, toAddress: Long) {
+                        // 确保来源地址在导航历史中，以便后退时能回到长按的位置
+                        val currentHistoryAddress = if (navigationIndex >= 0 && navigationIndex < navigationHistory.size) {
+                            navigationHistory[navigationIndex]
+                        } else -1L
+                        if (fromAddress != currentHistoryAddress) {
+                            addToNavigationHistory(fromAddress)
+                        }
+                        jumpToAddress(toAddress)
+                    }
                 },
                 source = AddressActionSource.MEMORY_PREVIEW,
                 displayFormats = currentFormats
